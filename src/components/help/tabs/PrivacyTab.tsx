@@ -55,19 +55,46 @@ export default function PrivacyTab() {
         </table>
       </div>
 
-      <div className="glass rounded-xl p-5">
-        <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-1">Audit Log</h3>
-        <p className="text-slate-500 text-sm mb-3">Every write and export operation is logged with the action, affected entity, role, detail payload, and source IP. The log is append-only and cannot be modified through the application.</p>
-        <pre className="bg-slate-100 dark:bg-black/40 rounded-lg p-3 text-xs text-slate-500 dark:text-slate-400 font-mono overflow-x-auto">{`action           | entity  | user_role  | detail                                              | source_ip   | at
------------------+---------+------------+-----------------------------------------------------+-------------+---------------------------
-create_client    | client  | caseworker | {"full_name":"A. Hassan","program":"settlement"}     | 142.250.x.x | 2026-06-04 09:15:23
-view_clients     | clients | caseworker | {"program":"settlement","count":47}                 | 142.250.x.x | 2026-06-04 09:18:44
-export           | ircc    | admin      | {"funder":"ircc","rows":312,"period":"Q1 2026"}     | 198.51.x.x  | 2026-06-04 09:22:11
-ai_query         | query   | caseworker | {"question":"Clients who achieved employment?"}     | 142.250.x.x | 2026-06-04 09:30:44
-generate_report  | report  | admin      | {"funder":"ircc","period":"Q1 2026","cached":false} | 198.51.x.x  | 2026-06-04 09:31:02
-export           | eo      | admin      | {"funder":"eo","rows":189,"period":"Q1 2026"}       | 198.51.x.x  | 2026-06-04 09:35:17
-create_client    | client  | caseworker | {"full_name":"M. Osei","program":"employment"}      | 142.250.x.x | 2026-06-04 10:02:08
-generate_report  | report  | admin      | {"funder":"uw","period":"Q1 2026","cached":true}    | 198.51.x.x  | 2026-06-04 10:15:44`}</pre>
+      <div className="glass rounded-xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.08]">
+          <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200">Audit Log</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Every write and export operation is logged. Append-only — cannot be modified through the application.</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-100 dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
+                <th className="text-left px-4 py-2.5 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">Action</th>
+                <th className="text-left px-4 py-2.5 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">Entity</th>
+                <th className="text-left px-4 py-2.5 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">Role</th>
+                <th className="text-left px-4 py-2.5 text-slate-500 dark:text-slate-400 font-medium hidden lg:table-cell">Detail</th>
+                <th className="text-left px-4 py-2.5 text-slate-500 dark:text-slate-400 font-medium hidden md:table-cell whitespace-nowrap">Source IP</th>
+                <th className="text-left px-4 py-2.5 text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { action:"create_client",   entity:"client",   role:"caseworker", detail:'{"full_name":"A. Hassan","program":"settlement"}',     ip:"142.250.x.x", at:"2026-06-04 09:15:23", roleColor:"text-indigo-600 dark:text-indigo-400" },
+                { action:"view_clients",    entity:"clients",  role:"caseworker", detail:'{"program":"settlement","count":47}',                  ip:"142.250.x.x", at:"2026-06-04 09:18:44", roleColor:"text-indigo-600 dark:text-indigo-400" },
+                { action:"export",          entity:"ircc",     role:"admin",      detail:'{"funder":"ircc","rows":312,"period":"Q1 2026"}',       ip:"198.51.x.x",  at:"2026-06-04 09:22:11", roleColor:"text-emerald-600 dark:text-emerald-400" },
+                { action:"ai_query",        entity:"query",    role:"caseworker", detail:'{"question":"Clients who achieved employment?"}',       ip:"142.250.x.x", at:"2026-06-04 09:30:44", roleColor:"text-indigo-600 dark:text-indigo-400" },
+                { action:"generate_report", entity:"report",   role:"admin",      detail:'{"funder":"ircc","period":"Q1 2026","cached":false}',   ip:"198.51.x.x",  at:"2026-06-04 09:31:02", roleColor:"text-emerald-600 dark:text-emerald-400" },
+                { action:"export",          entity:"eo",       role:"admin",      detail:'{"funder":"eo","rows":189,"period":"Q1 2026"}',         ip:"198.51.x.x",  at:"2026-06-04 09:35:17", roleColor:"text-emerald-600 dark:text-emerald-400" },
+                { action:"create_client",   entity:"client",   role:"caseworker", detail:'{"full_name":"M. Osei","program":"employment"}',        ip:"142.250.x.x", at:"2026-06-04 10:02:08", roleColor:"text-indigo-600 dark:text-indigo-400" },
+                { action:"generate_report", entity:"report",   role:"admin",      detail:'{"funder":"uw","period":"Q1 2026","cached":true}',      ip:"198.51.x.x",  at:"2026-06-04 10:15:44", roleColor:"text-emerald-600 dark:text-emerald-400" },
+              ].map((row, i) => (
+                <tr key={i} className="border-b border-slate-50 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                  <td className="px-4 py-2.5 font-mono text-emerald-700 dark:text-emerald-400 whitespace-nowrap">{row.action}</td>
+                  <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">{row.entity}</td>
+                  <td className={`px-4 py-2.5 whitespace-nowrap ${row.roleColor}`}>{row.role}</td>
+                  <td className="px-4 py-2.5 font-mono text-slate-400 dark:text-slate-500 hidden lg:table-cell max-w-xs truncate">{row.detail}</td>
+                  <td className="px-4 py-2.5 text-slate-400 dark:text-slate-500 hidden md:table-cell font-mono whitespace-nowrap">{row.ip}</td>
+                  <td className="px-4 py-2.5 text-slate-400 dark:text-slate-500 font-mono whitespace-nowrap">{row.at}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
