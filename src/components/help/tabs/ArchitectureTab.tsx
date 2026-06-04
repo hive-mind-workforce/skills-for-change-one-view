@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { X } from "lucide-react"
+import { X, Copy, CheckCircle, Maximize2 } from "lucide-react"
 import { useTheme } from "next-themes"
 
 const LAYERS = [
@@ -40,8 +40,55 @@ const LAYERS = [
 
 const ARCH_DIAGRAMS = [
   {
+    title: "Database Schema (ERD)",
+    description: "Five tables with referential integrity. clients and enrolments are the core entities; outcomes, audit_log, and report_cache hang off them.",
+    id: "arch-erd",
+    code: `erDiagram
+    clients {
+        uuid id PK
+        string full_name
+        string primary_language
+        string immigration_stream
+        timestamp created_at
+    }
+    enrolments {
+        uuid id PK
+        uuid client_id FK
+        string program
+        string funder
+        boolean consent_cross_program
+        timestamp enrolled_at
+    }
+    outcomes {
+        uuid id PK
+        uuid enrolment_id FK
+        string tier
+        string label
+        boolean achieved
+        timestamp recorded_at
+    }
+    audit_log {
+        uuid id PK
+        string action
+        string entity
+        jsonb detail
+        string user_role
+        string source_ip
+        timestamp at
+    }
+    report_cache {
+        uuid id PK
+        string funder
+        string period
+        text narrative
+        timestamp created_at
+    }
+    clients ||--o{ enrolments : "enrolled in"
+    enrolments ||--o{ outcomes : "tracks"`,
+  },
+  {
     title: "System Context",
-    description: "OneView sits between intake sources and funder reporting systems. All data paths converge on one Postgres database.",
+    description: "OneView sits between intake sources (Microsoft Forms, Salesforce, direct UI) and funder reporting systems. All data paths converge on one Postgres database.",
     id: "arch-context",
     code: `graph TB
     subgraph intake [Intake Sources]
@@ -56,7 +103,7 @@ const ARCH_DIAGRAMS = [
     end
     subgraph funders [Funder Systems]
         IC[iCARE - IRCC]
-        EO[EOIS-CaMS - EO]
+        EO[EOIS-CaMS - Employment Ontario]
         UW[United Way Portal]
         CT[City of Toronto]
     end
@@ -72,23 +119,80 @@ const ARCH_DIAGRAMS = [
   },
   {
     title: "Data Flow",
-    description: "Client data enters once, SQL aggregates it, and the LLM writes narrative around verified figures only.",
+    description: "From intake to funder report: client data enters once, SQL aggregates it, the LLM writes narrative around verified figures only.",
     id: "arch-flow",
     code: `flowchart LR
     A[Client Intake] --> B[POST /api/clients]
     B --> C[(clients)]
     B --> D[(enrolments)]
-    D --> E[(outcomes)]
-    C & D & E --> F[SQL aggregation]
-    F --> G[Dashboard]
+    D --> E[(outcomes\nseeded at intake)]
+    C & D & E --> F[GET /api/clients\nSQL aggregation]
+    F --> G[Dashboard metrics]
     F --> H[POST /api/export]
-    H --> I[Funder CSV]
+    H --> I[Funder CSV\nper spec]
     F --> J[POST /api/draft-report]
-    J --> K[SQL metrics JSON]
-    K --> L[LLM narrative]
+    J --> K[SQL metrics\nas JSON]
+    K --> L[LLM narrative\ngrounded in data]
+    L --> M[(report_cache)]
     I -->|Staff uploads| N[Funder portal]`,
   },
+  {
+    title: "RBAC Permissions",
+    description: "Four roles with explicit access boundaries. AI Agent uses a Bearer token for API-only access to export and query endpoints.",
+    id: "arch-rbac",
+    code: `graph LR
+    subgraph roles [Roles]
+        AD[Admin]
+        CW[Caseworker]
+        VI[Viewer]
+        AG[AI Agent]
+    end
+    subgraph pages [Features]
+        DA[Dashboard]
+        IN[Intake]
+        EX[Export]
+        AI[AI Reports]
+        HE[Help]
+    end
+    AD -->|full access| DA & IN & EX & AI & HE
+    CW -->|read + create| DA
+    CW -->|create clients| IN
+    CW -->|Q and A only| AI
+    CW -->|read| HE
+    VI -->|read only| DA & HE
+    AG -->|Bearer token| EX & AI`,
+  },
+  {
+    title: "Privacy Architecture",
+    description: "Consent and compliance enforced structurally. The PHI Wall is a database constraint — not a policy document.",
+    id: "arch-privacy",
+    code: `flowchart TD
+    A[Data request] --> B{Program?}
+    B -->|mental_health| C[PHI Wall\nAlways excluded\nPHIPA enforced]
+    B -->|settlement / language| D[Federal Privacy Act\nPurpose limitation]
+    B -->|employment / trades| E[FIPPA Ontario\nCollection limitation]
+    B -->|youth| F[CYFSA Part X\nEnhanced minor protections]
+    D & E & F --> G{Cross-program\nconsent on record?}
+    G -->|No| H[Program-scoped\ndata only]
+    G -->|Yes| I[Cross-program view\nexcluding mental_health]
+    C --> J[Siloed permanently\nnever aggregated]`,
+  },
 ]
+
+function CopyButton({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    navigator.clipboard.writeText(code)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button onClick={copy} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] rounded transition-colors">
+      {copied ? <CheckCircle size={12} className="text-emerald-400" /> : <Copy size={12} />}
+      {copied ? "Copied" : "Copy source"}
+    </button>
+  )
+}
 
 function MermaidDiagram({ code, id }: { code: string; id: string }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -105,14 +209,26 @@ function MermaidDiagram({ code, id }: { code: string; id: string }) {
           startOnLoad: false,
           theme: isDark ? "dark" : "default",
           themeVariables: isDark ? {
-            background: "transparent", primaryColor: "#10b981",
-            primaryTextColor: "#e2e8f0", primaryBorderColor: "#10b981",
-            lineColor: "#475569", secondaryColor: "#1e293b",
-            tertiaryColor: "#0f172a", fontFamily: "Inter, sans-serif",
+            background: "transparent",
+            primaryColor: "#10b981",
+            primaryTextColor: "#e2e8f0",
+            primaryBorderColor: "#10b981",
+            lineColor: "#475569",
+            secondaryColor: "#1e293b",
+            tertiaryColor: "#0f172a",
+            edgeLabelBackground: "#0f172a",
+            clusterBkg: "#0f172a",
+            clusterBorder: "#334155",
+            titleColor: "#e2e8f0",
+            nodeTextColor: "#e2e8f0",
+            fontFamily: "Inter, sans-serif",
           } : {
-            background: "transparent", primaryColor: "#10b981",
-            primaryTextColor: "#1e293b", primaryBorderColor: "#10b981",
-            lineColor: "#94a3b8", fontFamily: "Inter, sans-serif",
+            background: "transparent",
+            primaryColor: "#10b981",
+            primaryTextColor: "#1e293b",
+            primaryBorderColor: "#10b981",
+            lineColor: "#94a3b8",
+            fontFamily: "Inter, sans-serif",
           },
         })
         const { svg } = await mermaid.render(`mermaid-${id}`, code)
@@ -129,11 +245,35 @@ function MermaidDiagram({ code, id }: { code: string; id: string }) {
 
 interface Node { id:string; name:string; icon:string; color:string; desc:string; steps:string[]; code:string }
 
+interface DiagramEntry { title: string; description: string; id: string; code: string }
+
 export default function ArchitectureTab() {
   const [selected, setSelected] = useState<Node|null>(null)
+  const [zoomed, setZoomed] = useState<DiagramEntry|null>(null)
 
   return (
     <div className="space-y-8">
+
+    {zoomed && (
+      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col animate-fade-in" onClick={() => setZoomed(null)}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]" onClick={e => e.stopPropagation()}>
+          <div>
+            <h3 className="font-sora text-lg text-white">{zoomed.title}</h3>
+            <p className="text-slate-400 text-xs mt-0.5">{zoomed.description}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <CopyButton code={zoomed.code} />
+            <button onClick={() => setZoomed(null)} className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/[0.08]">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto p-6 bg-[#050510]" onClick={e => e.stopPropagation()}>
+          <MermaidDiagram code={zoomed.code} id={`zoom-${zoomed.id}`} />
+        </div>
+      </div>
+    )}
+
     <div className="flex gap-6 relative">
       <div className={`flex-1 space-y-3 transition-all duration-300 ${selected ? "opacity-60 md:opacity-100" : ""}`}>
         {LAYERS.map(layer => (
@@ -199,9 +339,17 @@ export default function ArchitectureTab() {
     <div className="space-y-6">
       {ARCH_DIAGRAMS.map((d) => (
         <div key={d.id} className="glass rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06]">
-            <h3 className="font-sora text-base text-slate-900 dark:text-white">{d.title}</h3>
-            <p className="text-slate-500 text-xs mt-0.5">{d.description}</p>
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-sora text-base text-slate-900 dark:text-white">{d.title}</h3>
+              <p className="text-slate-500 text-xs mt-0.5">{d.description}</p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <CopyButton code={d.code} />
+              <button onClick={() => setZoomed(d)} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] rounded transition-colors">
+                <Maximize2 size={12} /> Expand
+              </button>
+            </div>
           </div>
           <div className="p-5 bg-slate-50 dark:bg-[#050510]">
             <MermaidDiagram code={d.code} id={d.id} />
