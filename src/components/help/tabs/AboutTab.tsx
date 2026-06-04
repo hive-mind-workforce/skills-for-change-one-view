@@ -24,10 +24,9 @@ const LONG_TERM = [
 ]
 
 const FEASIBILITY = [
-  { label: "Week 1", desc: "Deploy to any hosting provider with a Postgres database. New intakes go into OneView directly. Power Automate bridges existing Forms submissions. Staff see a unified dashboard immediately.", color: "text-emerald-400" },
-  { label: "30–90 days", desc: "AI tooling maps and migrates historical Salesforce records into OneView's Postgres schema. Data deduplication and validation in hours, not months of manual work.", color: "text-indigo-400" },
-  { label: "3–6 months", desc: "All intake flows through OneView natively. Microsoft Forms retired. Salesforce client tracking retired. Quarterly reports generated in minutes from live data.", color: "text-amber-400" },
-  { label: "12 months", desc: "Full system of record. OneView's API is the integration point for iCARE, EOIS-CaMS, and any future funder portals. AI drafts all funder narratives. Zero dependency on external form or CRM tools.", color: "text-violet-400" },
+  { label: "Week 1", desc: "Deploy to any hosting provider with a Postgres database. New intakes go into OneView directly. Power Automate bridges existing Forms submissions during transition. Staff see a unified dashboard immediately.", color: "text-emerald-400" },
+  { label: "Month 1–2", desc: "AI tooling maps and migrates historical Salesforce records into OneView's Postgres schema. Data deduplication and validation in hours, not months of manual work. Staff begin using native OneView intake alongside the transition.", color: "text-indigo-400" },
+  { label: "Month 3–6", desc: "Microsoft Forms and Salesforce client tracking fully retired. OneView is the system of record. All intake, outcomes, and funder reporting run through OneView's backend. AI drafts funder narratives from live data. Target: full replacement within 6 months.", color: "text-amber-400" },
 ]
 
 export default function AboutTab() {
@@ -116,7 +115,7 @@ export default function AboutTab() {
 
       <div className="glass rounded-xl p-6">
         <h3 className="font-sora text-lg text-slate-200 mb-5">Migration Path</h3>
-        <div className="grid sm:grid-cols-4 gap-3">
+        <div className="grid sm:grid-cols-3 gap-3">
           {FEASIBILITY.map((f, i) => (
             <div key={i} className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
               <div className={`font-sora text-sm mb-2 ${f.color}`}>{f.label}</div>
