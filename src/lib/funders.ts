@@ -93,6 +93,17 @@ export function generateCSV(funder: string, clients: any[]): { headers: string[]
   return { headers: config.csvHeaders, rows }
 }
 
+export function generateCSVFromExport(funder: string, clients: any[]): { headers: string[]; rows: string[][] } {
+  const config = FUNDERS[funder]
+  if (!config) return { headers: [], rows: [] }
+  const rows = clients.map(c => {
+    const outcomes: any[] = Array.isArray(c.outcomes) ? c.outcomes : []
+    const row = config.mapRow(c, c, outcomes)
+    return config.csvHeaders.map(h => row[h] ?? "")
+  })
+  return { headers: config.csvHeaders, rows }
+}
+
 export function programToFunder(program: string): string {
   return PROGRAM_TO_FUNDER[program] ?? "ircc"
 }

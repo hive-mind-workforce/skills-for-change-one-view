@@ -490,6 +490,54 @@ export async function getClientSurvey(clientId: string) {
   return result.rows[0] ?? null
 }
 
+export async function getClientsForExport(programs: string[]) {
+  const programList = programs.join("','")
+  const result = await sql.query(
+    `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
+      e.id as enrolment_id, e.program, e.funder, e.consent_cross_program, e.enrolled_at,
+      json_agg(json_build_object('tier', o.tier, 'label', o.label, 'achieved', o.achieved)) FILTER (WHERE o.id IS NOT NULL) as outcomes
+     FROM clients c
+     JOIN enrolments e ON e.client_id = c.id
+     LEFT JOIN outcomes o ON o.enrolment_id = e.id
+     WHERE e.program = ANY($1::text[])
+     GROUP BY c.id, e.id
+     ORDER BY e.enrolled_at DESC`,
+    [programs]
+  )
+  return result.rows
+}
+
+export async function getRecentClients(limit = 20) {
+  const result = await sql.query(
+    `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.stage,
+      c.country_of_origin, c.created_at,
+      e.program, e.funder, e.enrolled_at,
+      COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
+      COUNT(o.id) as outcomes_total
+     FROM clients c
+     JOIN enrolments e ON e.client_id = c.id
+     LEFT JOIN outcomes o ON o.enrolment_id = e.id
+     GROUP BY c.id, e.id
+     ORDER BY c.created_at DESC
+     LIMIT $1`,
+    [limit]
+  )
+  return result.rows
+}
+
+export async function getMonthlyIntakeTrend() {
+  const result = await sql`
+    SELECT
+      TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YY') as month,
+      DATE_TRUNC('month', created_at) as month_date,
+      COUNT(*) as count
+    FROM clients
+    WHERE created_at >= NOW() - INTERVAL '12 months'
+    GROUP BY month_date
+    ORDER BY month_date ASC`
+  return result.rows
+}
+
 export async function getSurveyStats() {
   const [aggRes, totalClientsRes] = await Promise.all([
     sql`

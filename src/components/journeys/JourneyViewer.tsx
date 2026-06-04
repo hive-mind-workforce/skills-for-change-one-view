@@ -66,6 +66,15 @@ export default function JourneyViewer() {
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set())
 
   const [survey, setSurvey] = useState<Survey | null>(null)
+  const [recentClients, setRecentClients] = useState<any[]>([])
+
+  // Load recent clients on mount for quick access
+  useEffect(() => {
+    fetch("/api/recent-clients")
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setRecentClients(data) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const clientId = searchParams.get("clientId")
@@ -212,11 +221,34 @@ export default function JourneyViewer() {
         )}
       </div>
 
-      {!selected && !journey && (
+      {!selected && !journey && recentClients.length > 0 && (
+        <div className="space-y-3" data-tour="recent-clients">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Recent Clients</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {recentClients.slice(0, 10).map((c: any) => (
+              <button
+                key={c.id}
+                onClick={() => selectClient(c)}
+                className="flex items-center gap-3 px-4 py-3 glass glass-hover rounded-xl border border-slate-200 dark:border-white/[0.08] text-left transition-colors"
+              >
+                <div className="w-9 h-9 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 text-xs font-bold flex-shrink-0">
+                  {c.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-slate-800 dark:text-slate-200 text-sm font-medium truncate">{c.full_name}</div>
+                  <div className="text-slate-500 dark:text-slate-400 text-xs truncate">{c.program} · {c.primary_language}</div>
+                </div>
+                <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!selected && !journey && recentClients.length === 0 && (
         <div className="glass rounded-xl p-8 text-center">
           <Users size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
           <p className="text-slate-500 dark:text-slate-400 text-sm">Search for a client to view their program journey, outcomes, and consent status.</p>
-          <p className="text-slate-400 dark:text-slate-600 text-xs mt-1">Try "Amara", "Carlos", or any name from the dataset.</p>
         </div>
       )}
 

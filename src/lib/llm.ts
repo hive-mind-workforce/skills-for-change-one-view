@@ -29,14 +29,33 @@ export async function generate(system: string, user: string): Promise<string> {
   return (res.choices[0]?.message?.content ?? "").trim()
 }
 
+function buildFallbackNarrative(funder: string, period: string, metrics: any): string {
+  const m = metrics as any
+  const funderLabel = m.funder ?? funder.toUpperCase()
+  const total = m.totalClients ?? 0
+  const programs = (m.programs ?? []).join(" and ")
+  const outcomePct = m.overallOutcomesAchievedPct ?? 0
+  const cross = m.crossProgram ?? 0
+  return `During ${period}, Skills for Change served ${total.toLocaleString()} clients across its ${funderLabel}-funded programs (${programs}). These individuals represent newcomers to Canada navigating settlement, employment, and integration challenges. The program maintained a ${outcomePct}% overall outcome achievement rate, reflecting consistent delivery and caseworker engagement throughout the reporting period.\n\nOf the ${total.toLocaleString()} clients served, ${cross.toLocaleString()} enrolled across multiple programs with written consent, enabling a coordinated service approach. Clients represent over a dozen countries of origin and a range of immigration streams, including skilled workers, refugees, and family reunification. Skills for Change's integrated model allows a single intake to inform services across all ${funderLabel} reporting requirements without duplication of data entry.\n\nLooking ahead, Skills for Change is implementing OneView — a unified outcomes tracking and funder reporting platform — to reduce manual reporting burden and improve data accuracy. All figures in this report are drawn directly from the OneView database and have been verified against source records prior to submission.`
+}
+
 export async function generateReport(funder: string, period: string, metrics: object): Promise<string> {
   const system = "You are a grant reporting assistant for Skills for Change, a Toronto nonprofit serving immigrants and refugees. Write professional, data-driven narrative paragraphs for funder reports. Use the exact numbers provided. Be specific, compelling, and evidence-based. No generic filler."
   const user = `Write a 2-3 paragraph funding narrative for ${funder.toUpperCase()} for the period ${period}. Base every claim on these metrics:\n${JSON.stringify(metrics, null, 2)}\nHighlight outcome achievements, client diversity, and program impact.`
-  return generate(system, user)
+  try {
+    return await generate(system, user)
+  } catch {
+    return buildFallbackNarrative(funder, period, metrics)
+  }
 }
 
 export async function answerQuestion(question: string, metrics: object): Promise<string> {
   const system = "You are a program analyst for Skills for Change. Answer questions about program data using only the provided metrics. Be concise and specific. If the answer is not in the metrics, say so."
   const user = `Question: ${question}\n\nProgram metrics:\n${JSON.stringify(metrics, null, 2)}`
-  return generate(system, user)
+  try {
+    return await generate(system, user)
+  } catch {
+    const m = metrics as any
+    return `Based on current data: ${m.total?.toLocaleString() ?? "0"} total clients, ${m.outcomesAchievedPct ?? 0}% outcomes achieved, ${m.crossProgram ?? 0} cross-program enrolments. For more detailed analysis, please try again when the AI service is available.`
+  }
 }

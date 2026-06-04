@@ -305,7 +305,7 @@ export default function PipelineBoard() {
   return (
     <div>
       <SummaryRow data={data} />
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-4 overflow-x-auto pb-4" data-tour="pipeline-board">
         {STAGES.map(stage => (
           <Column
             key={stage.id}

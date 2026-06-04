@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sora.variable} ${inter.variable}`} suppressHydrationWarning>
       <body className="bg-[var(--ov-bg)] text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200" style={{ fontFamily: "var(--font-inter, Inter, sans-serif)" }}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           {children}
           <DemoTour />
           <Toaster theme="system" position="top-right" />

@@ -13,26 +13,23 @@ export default function DemoTour() {
       const role = new URLSearchParams(window.location.search).get("role") ?? "admin"
       const qs = window.location.search
 
-      function waitForElement(selector: string, timeout = 4000): Promise<boolean> {
+      function waitForElement(selector: string, timeout = 5000): Promise<boolean> {
         if (document.querySelector(selector)) return Promise.resolve(true)
         return new Promise(resolve => {
           const start = Date.now()
           const id = setInterval(() => {
             if (document.querySelector(selector)) {
-              clearInterval(id)
-              resolve(true)
+              clearInterval(id); resolve(true)
             } else if (Date.now() - start > timeout) {
-              clearInterval(id)
-              resolve(false)
+              clearInterval(id); resolve(false)
             }
           }, 100)
         })
       }
 
-      // Always start from dashboard so first-step elements are present
       if (window.location.pathname !== "/") {
         router.push(`/${qs}`)
-        await waitForElement("#dashboard-hero", 4000)
+        await waitForElement("#dashboard-hero", 5000)
       }
 
       const driverObj = driver({
@@ -44,6 +41,7 @@ export default function DemoTour() {
         popoverClass: "oneview-tour",
       })
 
+      // ── ADMIN: full E2E flow ──────────────────────────────────────────────
       const adminJourney = [
         {
           element: "#dashboard-hero",
@@ -62,34 +60,114 @@ export default function DemoTour() {
           },
         },
         {
-          element: "#program-chart",
+          element: "[data-tour=analytics]",
           popover: {
-            title: "Program breakdown at a glance",
-            description: "Employment and Trades are at capacity. Settlement has room. This context goes straight into funder narratives; no manual chart building.",
+            title: "Step 1: Understand the data",
+            description: "Marcus opens Analytics. World map, monthly intake trend, program performance, demographic breakdown, and satisfaction scores — all from the same database, no pivot tables.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/analytics${qs}`)
+              waitForElement("#analytics-hero-metrics", 5000).then(() => driverObj.moveNext())
+            },
+          },
+        },
+        {
+          element: "#analytics-hero-metrics",
+          popover: {
+            title: "Four numbers that matter to every funder",
+            description: "Satisfaction rate, placement rate, drop-off rate, and survey responses. Each is computed from real data; nothing is hand-entered. Marcus screenshots this for the board deck.",
+            side: "bottom",
+          },
+        },
+        {
+          element: "#analytics-trend",
+          popover: {
+            title: "Intake is accelerating",
+            description: "The monthly trend shows whether intake capacity is growing or contracting. Funders ask about this every cycle; the answer used to require pulling three spreadsheets.",
             side: "top",
+          },
+        },
+        {
+          element: "[data-tour=pipeline]",
+          popover: {
+            title: "Step 2: Check pipeline health",
+            description: "Marcus opens Pipeline. Every client is on a board from Outreach to Complete. He can see which programs have bottlenecks before writing the narrative.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/pipeline${qs}`)
+              waitForElement("[data-tour=pipeline-board]", 5000).then(() => driverObj.moveNext())
+            },
+          },
+        },
+        {
+          element: "[data-tour=pipeline-board]",
+          popover: {
+            title: "8 stages, every client tracked",
+            description: "Outreach → Vetting → Eligibility → Intake → Training → Placement → Complete → Survey. When a caseworker moves a client, the dashboard and reports update instantly.",
+            side: "bottom",
+          },
+        },
+        {
+          element: "[data-tour=intake]",
+          popover: {
+            title: "Step 3: Register a new client",
+            description: "A new client just walked in. Amara clicks Register a Client. The same form covers all programs; she enters the client's details once, not once per funder.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/intake${qs}`)
+              waitForElement("#intake-form", 5000).then(() => driverObj.moveNext())
+            },
+          },
+        },
+        {
+          element: "#intake-form",
+          popover: {
+            title: "One submission, all programs",
+            description: "Name, language, immigration stream, program. Selecting the program automatically resolves the funder. OneView seeds outcome tiers at intake; no follow-up data entry required.",
+            side: "right",
+          },
+        },
+        {
+          element: "[data-tour=journeys]",
+          popover: {
+            title: "Step 4: Review a client journey",
+            description: "Marcus clicks Journeys. He picks a client, sees their full timeline: enrolments, outcome tier progress, case notes from every caseworker, and the exit survey score.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/journeys${qs}`)
+              waitForElement("[data-tour=recent-clients]", 5000).then(() => driverObj.moveNext())
+            },
+          },
+        },
+        {
+          element: "[data-tour=recent-clients]",
+          popover: {
+            title: "Recent clients, one click away",
+            description: "The last 10 registered clients are shown immediately. No search required. Click any card to pull their full journey, notes, and survey results.",
+            side: "bottom",
           },
         },
         {
           element: "[data-tour=export]",
           popover: {
-            title: "Step 1: Generate the IRCC submission",
-            description: "Marcus clicks Export. He selects IRCC. OneView shapes the CSV to iCARE's exact column specification: 312 client records, ready for bulk upload in seconds.",
+            title: "Step 5: Generate the IRCC submission",
+            description: "Marcus clicks Export. He selects IRCC. OneView shapes the CSV to iCARE's exact column specification: all matching clients, correct headers, ready for bulk upload in seconds.",
             side: "right",
             onNextClick: () => {
               router.push(`/export${qs}`)
-              waitForElement("[data-tour=ai]", 4000).then(() => driverObj.moveNext())
+              waitForElement("[data-tour=ai]", 5000).then(() => driverObj.moveNext())
             },
           },
         },
         {
           element: "[data-tour=ai]",
           popover: {
-            title: "Step 2: Generate the narrative report",
-            description: "CSV filed. Now the written report. Marcus opens AI Report Writer. SQL has already computed all the figures; the AI writes prose around verified numbers only. No hallucinations.",
+            title: "Step 6: Generate the narrative report",
+            description: "CSV filed. Now the written report. Marcus opens AI Report Writer. SQL has already computed all the figures; the AI writes prose around verified numbers only.",
             side: "right",
             onNextClick: () => {
               router.push(`/ai${qs}`)
-              waitForElement("#ai-hero,main", 4000).then(() => driverObj.moveNext())
+              waitForElement("#ai-hero,main", 5000).then(() => driverObj.moveNext())
             },
           },
         },
@@ -102,6 +180,7 @@ export default function DemoTour() {
         },
       ]
 
+      // ── CASEWORKER flow ───────────────────────────────────────────────────
       const caseworkerJourney = [
         {
           element: "#dashboard-hero",
@@ -127,7 +206,7 @@ export default function DemoTour() {
             side: "right",
             onNextClick: () => {
               router.push(`/intake${qs}`)
-              waitForElement("#intake-form", 4000).then(() => driverObj.moveNext())
+              waitForElement("#intake-form", 5000).then(() => driverObj.moveNext())
             },
           },
         },
@@ -140,14 +219,28 @@ export default function DemoTour() {
           },
         },
         {
+          element: "[data-tour=journeys]",
           popover: {
-            title: "Outcomes tracking starts at registration",
-            description: "When Amara submits, OneView seeds three outcome tiers (immediate, intermediate, and ultimate) for the client's program. No follow-up data entry. No separate outcomes spreadsheet. The system tracks from day one.",
+            title: "Follow up on existing clients",
+            description: "Amara opens Journeys to check on a client she saw last week. She can see outcomes progress, add a case note from today's call, and view the exit survey if it's been completed.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/journeys${qs}`)
+              waitForElement("[data-tour=recent-clients]", 5000).then(() => driverObj.moveNext())
+            },
+          },
+        },
+        {
+          element: "[data-tour=recent-clients]",
+          popover: {
+            title: "Recent clients, one click away",
+            description: "The last 10 registered clients appear automatically. Amara finds her client instantly without typing, clicks the card, and sees the full journey timeline.",
             showButtons: ["close"],
           },
         },
       ]
 
+      // ── VIEWER flow ───────────────────────────────────────────────────────
       const viewerJourney = [
         {
           element: "#dashboard-hero",
@@ -166,11 +259,23 @@ export default function DemoTour() {
           },
         },
         {
-          element: "#program-chart",
+          element: "[data-tour=analytics]",
           popover: {
-            title: "Relative program performance",
-            description: "Mental Health and Employment are at capacity. Youth has room to grow. This context shapes the board's priorities, visible at a glance. No presentation needed.",
-            side: "top",
+            title: "Deep analytics, no PII",
+            description: "The Analytics page shows world map, demographic breakdown, monthly trend, and program performance. All aggregate; no individual client data is visible to viewers.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/analytics${qs}`)
+              waitForElement("#analytics-hero-metrics", 5000).then(() => driverObj.moveNext())
+            },
+          },
+        },
+        {
+          element: "#analytics-hero-metrics",
+          popover: {
+            title: "Satisfaction and outcomes at a glance",
+            description: "Satisfaction rate, placement rate, drop-off rate. The board uses these four numbers in every funding conversation.",
+            side: "bottom",
           },
         },
         {
@@ -179,12 +284,6 @@ export default function DemoTour() {
             title: "Full documentation: always available",
             description: "The About section includes architecture diagrams, privacy compliance maps, and the full migration plan. Accessible to all roles including Viewer.",
             side: "right",
-          },
-        },
-        {
-          popover: {
-            title: "Access boundaries enforced by the system",
-            description: "Intake, Export, and AI Report Writer are locked for Viewers. The system enforces this structurally; no accidental access to PII, no funder data exposure. Role switching is in the top bar.",
             showButtons: ["close"],
           },
         },
