@@ -1,6 +1,6 @@
 "use client"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts"
-import { programColor, programLabel } from "@/lib/helpers"
+import { programColor, programLabel, programShortLabel } from "@/lib/helpers"
 
 interface ProgramChartProps {
   data: { program: string; count: number }[]
@@ -23,7 +23,7 @@ export default function ProgramChart({ data }: ProgramChartProps) {
         <XAxis
           dataKey="program"
           tick={{ fill: "#94a3b8", fontSize: 11 }}
-          tickFormatter={(v) => v.substring(0, 6)}
+          tickFormatter={(v) => programShortLabel(v)}
           axisLine={false}
           tickLine={false}
         />

@@ -7,6 +7,17 @@ export function formatNumber(n: number): string {
   return n.toLocaleString("en-CA")
 }
 
+const PROGRAM_SHORT_LABELS: Record<string, string> = {
+  settlement: "Settlement",
+  employment: "Employment",
+  language: "LINC",
+  mental_health: "Mental Health",
+  trades: "Trades",
+  mentoring: "Mentoring",
+  youth: "Youth",
+  women: "Women's",
+}
+
 const PROGRAM_LABELS: Record<string, string> = {
   settlement: "Settlement Services",
   employment: "Employment Services",
@@ -38,6 +49,10 @@ const PROGRAM_COLORS: Record<string, string> = {
 
 export function programLabel(p: string): string {
   return PROGRAM_LABELS[p] ?? p
+}
+
+export function programShortLabel(p: string): string {
+  return PROGRAM_SHORT_LABELS[p] ?? p
 }
 
 export function funderLabel(f: string): string {

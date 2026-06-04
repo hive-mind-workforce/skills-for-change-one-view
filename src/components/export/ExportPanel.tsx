@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { Download, Zap, FileText } from "lucide-react"
 import NarrativePanel from "./NarrativePanel"
+import { FUNDERS as FUNDER_CONFIGS } from "@/lib/funders"
 
 const FUNDERS = [
   { key:"ircc", label:"IRCC", sub:"Immigration, Refugees and Citizenship Canada", programs:["Settlement Services","LINC Language Training"], color:"#10b981", stat:"7,130 clients", photo:"https://images.unsplash.com/photo-1569025690938-a00729c9e1f9?w=400&q=60" },
@@ -87,9 +88,16 @@ export default function ExportPanel() {
               <FileText size={14} /> {showColumns ? "Hide" : "Preview"} Columns
             </button>
           </div>
-          {showColumns && (
-            <div className="bg-black/30 rounded-lg p-3 text-xs text-emerald-300 font-mono">
-              <p className="text-slate-400 mb-1">CSV columns for {selectedFunder?.label}:</p>
+          {showColumns && selected && FUNDER_CONFIGS[selected] && (
+            <div className="bg-black/30 rounded-lg p-4">
+              <p className="text-slate-400 text-xs mb-3">CSV columns for {selectedFunder?.label} ({FUNDER_CONFIGS[selected].csvHeaders.length} columns):</p>
+              <div className="flex flex-wrap gap-1.5">
+                {FUNDER_CONFIGS[selected].csvHeaders.map((col, i) => (
+                  <span key={col} className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs font-mono text-emerald-300">
+                    <span className="text-emerald-500/50">{i + 1}</span> {col}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>

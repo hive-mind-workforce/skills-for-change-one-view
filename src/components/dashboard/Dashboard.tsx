@@ -48,7 +48,7 @@ export default function Dashboard() {
           <h1 className="font-sora text-6xl md:text-8xl text-white drop-shadow-[0_0_40px_rgba(16,185,129,0.4)]">
             {formatNumber(metrics.total ?? 19140)}
           </h1>
-          <p className="text-slate-200 text-2xl mt-2 font-light">Lives in Motion</p>
+          <p className="text-slate-200 text-2xl mt-2 font-light">Potential Meets Opportunity</p>
           <p className="text-slate-400 mt-1">Building welcoming and equitable communities since 1982</p>
           <div className="flex flex-wrap justify-center gap-2 mt-5">
             {Object.keys(byProgram).map(p => (
