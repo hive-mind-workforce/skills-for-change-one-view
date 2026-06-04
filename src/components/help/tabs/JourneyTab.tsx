@@ -12,8 +12,8 @@ export default function JourneyTab() {
   return (
     <div className="space-y-8">
       <div className="glass rounded-xl p-6">
-        <h2 className="font-sora text-2xl text-white mb-1">Amara's Journey</h2>
-        <p className="text-slate-400 text-sm">How one client moves through multiple programs while her privacy is protected at every step.</p>
+        <h2 className="font-sora text-2xl text-slate-900 dark:text-white mb-1">Amara's Journey</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">How one client moves through multiple programs while her privacy is protected at every step.</p>
       </div>
 
       <div className="space-y-4">
@@ -23,7 +23,7 @@ export default function JourneyTab() {
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0" style={{background:`${step.color}22`,border:`2px solid ${step.color}50`}}>
                 {step.icon}
               </div>
-              {i < STEPS.length - 1 && <div className="w-px flex-1 mt-2 bg-white/[0.08]" />}
+              {i < STEPS.length - 1 && <div className="w-px flex-1 mt-2 bg-slate-200 dark:bg-white/[0.08]" />}
             </div>
             <div className={`flex-1 glass rounded-xl p-4 mb-4 ${step.phiWall ? "border-rose-500/30" : ""}`} style={step.phiWall ? {borderColor:"rgba(244,63,94,0.3)"} : {}}>
               <div className="flex items-center gap-2 mb-2">
@@ -37,15 +37,15 @@ export default function JourneyTab() {
                   </span>
                 )}
               </div>
-              <p className="text-slate-400 text-sm mb-3">{step.desc}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">{step.desc}</p>
               {step.phiWall ? (
                 <div className="flex items-start gap-2 p-3 bg-rose-500/10 rounded-lg border border-rose-500/20">
                   <Lock size={14} className="text-rose-400 mt-0.5 flex-shrink-0" />
                   <p className="text-rose-300 text-xs">PHIPA hard rule: Mental Health records are ALWAYS siloed. This record is invisible in cross-program view regardless of consent level. Enforced at SQL level.</p>
                 </div>
               ) : (
-                <div className="flex items-start gap-2 p-3 bg-white/[0.03] rounded-lg border border-white/[0.06]">
-                  <span className="text-emerald-400 mt-0.5 text-xs">🔐</span>
+                <div className="flex items-start gap-2 p-3 bg-slate-50 dark:bg-white/[0.03] rounded-lg border border-slate-100 dark:border-white/[0.06]">
+                  <span className="text-emerald-500 dark:text-emerald-400 mt-0.5 text-xs">🔐</span>
                   <p className="text-slate-500 text-xs">{step.privacy}</p>
                 </div>
               )}

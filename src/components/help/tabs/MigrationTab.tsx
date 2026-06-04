@@ -97,24 +97,24 @@ export default function MigrationTab() {
             <div className="text-slate-600 text-xs mt-1">Hosting + database + AI APIs, no per-seat licensing</div>
           </div>
         </div>
-        <div className="flex items-start gap-2 mt-4 p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg">
+        <div className="flex items-start gap-2 mt-4 p-3 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.06] rounded-lg">
           <AlertCircle size={13} className="text-slate-500 mt-0.5 flex-shrink-0" />
           <p className="text-slate-500 text-xs leading-relaxed">All figures are illustrative estimates. Actual costs depend on hosting provider, Salesforce contract terms, data volume, and existing Microsoft 365 coverage.</p>
         </div>
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-sora text-lg text-slate-200 flex items-center gap-2"><Calendar size={16} className="text-slate-400" />Migration Timeline</h3>
+        <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200 flex items-center gap-2"><Calendar size={16} className="text-slate-500 dark:text-slate-400" />Migration Timeline</h3>
         {PHASES.map((phase, i) => (
           <div key={i} className={`glass rounded-xl p-6 border ${phase.border}`}>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <span className={`font-sora text-lg ${phase.color}`}>{phase.label}</span>
               <div className="flex flex-wrap gap-3">
-                <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <Clock size={12} className="text-slate-500" />{phase.totalEffort}
+                <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <Clock size={12} className="text-slate-400 dark:text-slate-500" />{phase.totalEffort}
                 </span>
-                <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <DollarSign size={12} className="text-slate-500" />{phase.cost} <span className="text-slate-600">({phase.costNote})</span>
+                <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <DollarSign size={12} className="text-slate-400 dark:text-slate-500" />{phase.cost} <span className="text-slate-400 dark:text-slate-600">({phase.costNote})</span>
                 </span>
               </div>
             </div>
@@ -123,9 +123,9 @@ export default function MigrationTab() {
                 <div key={j} className={`flex items-start justify-between gap-3 p-2.5 ${phase.bg} rounded-lg`}>
                   <div className="flex items-start gap-2">
                     <CheckCircle size={12} className={`${phase.color} mt-0.5 flex-shrink-0`} />
-                    <span className="text-slate-300 text-sm">{t.task}</span>
+                    <span className="text-slate-600 dark:text-slate-300 text-sm">{t.task}</span>
                   </div>
-                  <span className="text-slate-600 text-xs whitespace-nowrap flex-shrink-0">{t.effort}</span>
+                  <span className="text-slate-400 dark:text-slate-600 text-xs whitespace-nowrap flex-shrink-0">{t.effort}</span>
                 </div>
               ))}
             </div>
@@ -134,20 +134,20 @@ export default function MigrationTab() {
       </div>
 
       <div className="glass rounded-xl p-6">
-        <h3 className="font-sora text-lg text-slate-200 mb-4">Current System: Annual Cost Breakdown</h3>
+        <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-4">Current System: Annual Cost Breakdown</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/[0.06]">
+              <tr className="border-b border-slate-100 dark:border-white/[0.06]">
                 <th className="text-left text-slate-500 text-xs pb-3 pr-4">Item</th>
                 <th className="text-left text-slate-500 text-xs pb-3 pr-4 whitespace-nowrap">Est. Annual</th>
                 <th className="text-left text-slate-500 text-xs pb-3">Notes</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
               {CURRENT_COSTS.map((row, i) => (
                 <tr key={i}>
-                  <td className="py-3 pr-4 text-slate-300 whitespace-nowrap">{row.item}</td>
+                  <td className="py-3 pr-4 text-slate-700 dark:text-slate-300 whitespace-nowrap">{row.item}</td>
                   <td className="py-3 pr-4 text-rose-400 font-mono text-xs whitespace-nowrap">{row.annual}</td>
                   <td className="py-3 text-slate-500 text-xs leading-relaxed">{row.notes}</td>
                 </tr>
@@ -158,20 +158,20 @@ export default function MigrationTab() {
       </div>
 
       <div className="glass rounded-xl p-6">
-        <h3 className="font-sora text-lg text-slate-200 mb-4">OneView: Annual Cost Breakdown</h3>
+        <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-4">OneView: Annual Cost Breakdown</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-white/[0.06]">
+              <tr className="border-b border-slate-100 dark:border-white/[0.06]">
                 <th className="text-left text-slate-500 text-xs pb-3 pr-4">Item</th>
                 <th className="text-left text-slate-500 text-xs pb-3 pr-4 whitespace-nowrap">Est. Annual</th>
                 <th className="text-left text-slate-500 text-xs pb-3">Notes</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
               {ONEVIEW_COSTS.map((row, i) => (
                 <tr key={i}>
-                  <td className="py-3 pr-4 text-slate-300 whitespace-nowrap">{row.item}</td>
+                  <td className="py-3 pr-4 text-slate-700 dark:text-slate-300 whitespace-nowrap">{row.item}</td>
                   <td className="py-3 pr-4 text-emerald-400 font-mono text-xs whitespace-nowrap">{row.annual}</td>
                   <td className="py-3 text-slate-500 text-xs leading-relaxed">{row.notes}</td>
                 </tr>

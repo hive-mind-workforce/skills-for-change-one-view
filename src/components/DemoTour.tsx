@@ -13,10 +13,26 @@ export default function DemoTour() {
       const role = new URLSearchParams(window.location.search).get("role") ?? "admin"
       const qs = window.location.search
 
+      function waitForElement(selector: string, timeout = 4000): Promise<boolean> {
+        if (document.querySelector(selector)) return Promise.resolve(true)
+        return new Promise(resolve => {
+          const start = Date.now()
+          const id = setInterval(() => {
+            if (document.querySelector(selector)) {
+              clearInterval(id)
+              resolve(true)
+            } else if (Date.now() - start > timeout) {
+              clearInterval(id)
+              resolve(false)
+            }
+          }, 100)
+        })
+      }
+
       // Always start from dashboard so first-step elements are present
       if (window.location.pathname !== "/") {
         router.push(`/${qs}`)
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await waitForElement("#dashboard-hero", 4000)
       }
 
       const driverObj = driver({
@@ -61,7 +77,7 @@ export default function DemoTour() {
             side: "right",
             onNextClick: () => {
               router.push(`/export${qs}`)
-              setTimeout(() => driverObj.moveNext(), 400)
+              waitForElement("[data-tour=ai]", 4000).then(() => driverObj.moveNext())
             },
           },
         },
@@ -73,7 +89,7 @@ export default function DemoTour() {
             side: "right",
             onNextClick: () => {
               router.push(`/ai${qs}`)
-              setTimeout(() => driverObj.moveNext(), 400)
+              waitForElement("#ai-hero,main", 4000).then(() => driverObj.moveNext())
             },
           },
         },
@@ -111,7 +127,7 @@ export default function DemoTour() {
             side: "right",
             onNextClick: () => {
               router.push(`/intake${qs}`)
-              setTimeout(() => driverObj.moveNext(), 400)
+              waitForElement("#intake-form", 4000).then(() => driverObj.moveNext())
             },
           },
         },

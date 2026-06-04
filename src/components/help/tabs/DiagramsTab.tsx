@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
+import { useTheme } from "next-themes"
 import { Copy, CheckCircle } from "lucide-react"
 
 const DIAGRAMS = [
@@ -146,7 +147,7 @@ function CopyButton({ code }: { code: string }) {
     setTimeout(() => setCopied(false), 2000)
   }
   return (
-    <button onClick={copy} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-200 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded transition-colors">
+    <button onClick={copy} className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] rounded transition-colors">
       {copied ? <CheckCircle size={12} className="text-emerald-400" /> : <Copy size={12} />}
       {copied ? "Copied" : "Copy source"}
     </button>
@@ -156,6 +157,8 @@ function CopyButton({ code }: { code: string }) {
 function MermaidDiagram({ code, id }: { code: string; id: string }) {
   const ref = useRef<HTMLDivElement>(null)
   const [error, setError] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === "dark"
 
   useEffect(() => {
     let cancelled = false
@@ -164,8 +167,8 @@ function MermaidDiagram({ code, id }: { code: string; id: string }) {
         const mermaid = (await import("mermaid")).default
         mermaid.initialize({
           startOnLoad: false,
-          theme: "dark",
-          themeVariables: {
+          theme: isDark ? "dark" : "default",
+          themeVariables: isDark ? {
             background: "transparent",
             primaryColor: "#10b981",
             primaryTextColor: "#e2e8f0",
@@ -179,6 +182,13 @@ function MermaidDiagram({ code, id }: { code: string; id: string }) {
             titleColor: "#e2e8f0",
             nodeTextColor: "#e2e8f0",
             fontFamily: "Inter, sans-serif",
+          } : {
+            background: "transparent",
+            primaryColor: "#10b981",
+            primaryTextColor: "#1e293b",
+            primaryBorderColor: "#10b981",
+            lineColor: "#94a3b8",
+            fontFamily: "Inter, sans-serif",
           },
         })
         const { svg } = await mermaid.render(`mermaid-${id}`, code)
@@ -191,7 +201,7 @@ function MermaidDiagram({ code, id }: { code: string; id: string }) {
     }
     render()
     return () => { cancelled = true }
-  }, [code, id])
+  }, [code, id, isDark])
 
   if (error) return <p className="text-slate-500 text-xs p-4">Diagram rendering unavailable in this environment.</p>
   return <div ref={ref} className="w-full overflow-x-auto" />
@@ -200,17 +210,17 @@ function MermaidDiagram({ code, id }: { code: string; id: string }) {
 export default function DiagramsTab() {
   return (
     <div className="space-y-8">
-      <p className="text-slate-500 text-sm">Engineering diagrams in Mermaid format. Each diagram is AI agent readable — copy the source for use in prompts, CI pipelines, or documentation tools.</p>
+      <p className="text-slate-500 dark:text-slate-500 text-sm">Engineering diagrams in Mermaid format. Each diagram is AI agent readable — copy the source for use in prompts, CI pipelines, or documentation tools.</p>
       {DIAGRAMS.map((d, i) => (
         <div key={i} className="glass rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/[0.06] flex items-start justify-between gap-4">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-start justify-between gap-4">
             <div>
-              <h3 className="font-sora text-base text-white">{d.title}</h3>
+              <h3 className="font-sora text-base text-slate-900 dark:text-white">{d.title}</h3>
               <p className="text-slate-500 text-xs mt-0.5">{d.description}</p>
             </div>
             <CopyButton code={d.code} />
           </div>
-          <div className="p-5 bg-[#050510]">
+          <div className="p-5 bg-slate-50 dark:bg-[#050510]">
             <MermaidDiagram code={d.code} id={`d${i}`} />
           </div>
         </div>

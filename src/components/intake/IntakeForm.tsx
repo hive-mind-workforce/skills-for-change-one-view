@@ -50,8 +50,8 @@ export default function IntakeForm() {
     }
   }
 
-  const inputClass = (field: string) => `w-full bg-white/[0.04] border ${errors[field]?"border-rose-500":"border-white/[0.1]"} rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60 transition-colors`
-  const labelClass = "block text-slate-400 text-sm mb-1.5"
+  const inputClass = (field: string) => `w-full ov-input border ${errors[field]?"border-rose-500":"border-[var(--ov-input-border)]"} rounded-lg px-3 py-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60 transition-colors`
+  const labelClass = "block text-slate-500 dark:text-slate-400 text-sm mb-1.5"
 
   return (
     <form id="intake-form" onSubmit={submit} className="glass rounded-xl p-6 space-y-5">
@@ -83,7 +83,7 @@ export default function IntakeForm() {
         </div>
         <div>
           <label className={labelClass}>Funder</label>
-          <div className="w-full bg-white/[0.02] border border-white/[0.06] rounded-lg px-3 py-2.5 text-slate-400 text-sm">{FUNDER_LABELS[funder]}</div>
+          <div className="w-full bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded-lg px-3 py-2.5 text-slate-500 dark:text-slate-400 text-sm">{FUNDER_LABELS[funder]}</div>
         </div>
       </div>
       {form.program === "mental_health" && (

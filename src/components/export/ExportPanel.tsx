@@ -43,8 +43,8 @@ export default function ExportPanel() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-sora text-3xl text-white">Funder Export</h1>
-        <p className="text-slate-400 mt-1">Generate funder-specific reports instantly, shaped to their exact column specification.</p>
+        <h1 className="font-sora text-3xl text-slate-900 dark:text-white">Funder Export</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Generate funder-specific reports instantly, shaped to their exact column specification.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -52,7 +52,7 @@ export default function ExportPanel() {
           <button
             key={f.key}
             onClick={() => setSelected(f.key)}
-            className={`glass-hover text-left rounded-xl border overflow-hidden transition-all ${selected===f.key ? "border-emerald-400/50 ring-1 ring-emerald-400/30" : "border-white/[0.08]"}`}
+            className={`glass-hover text-left rounded-xl border overflow-hidden transition-all ${selected===f.key ? "border-emerald-400/50 ring-1 ring-emerald-400/30" : "border-slate-200 dark:border-white/[0.08]"}`}
           >
             <div className="relative h-24">
               <img src={f.photo} alt={f.label} className="w-full h-full object-cover" />
@@ -76,21 +76,21 @@ export default function ExportPanel() {
 
       {selected && (
         <div className="glass rounded-xl p-5 space-y-4 animate-fade-in">
-          <h2 className="font-medium text-slate-200">Export Options: {selectedFunder?.label}</h2>
+          <h2 className="font-medium text-slate-700 dark:text-slate-200">Export Options: {selectedFunder?.label}</h2>
           <div className="flex flex-wrap gap-3">
             <button onClick={downloadCSV} className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-medium rounded-lg transition-colors">
               <Download size={14} /> Download CSV
             </button>
-            <button onClick={generateNarrative} className="flex items-center gap-2 px-4 py-2 glass border border-white/[0.1] hover:border-white/[0.2] text-slate-200 text-sm rounded-lg transition-colors">
-              <Zap size={14} className="text-amber-400" /> Generate AI Report
+            <button onClick={generateNarrative} className="flex items-center gap-2 px-4 py-2 glass border border-slate-200 dark:border-white/[0.1] hover:border-slate-300 dark:hover:border-white/[0.2] text-slate-700 dark:text-slate-200 text-sm rounded-lg transition-colors">
+              <Zap size={14} className="text-amber-500 dark:text-amber-400" /> Generate AI Report
             </button>
-            <button onClick={() => setShowColumns(!showColumns)} className="flex items-center gap-2 px-4 py-2 glass border border-white/[0.08] text-slate-400 text-sm rounded-lg transition-colors">
+            <button onClick={() => setShowColumns(!showColumns)} className="flex items-center gap-2 px-4 py-2 glass border border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-slate-400 text-sm rounded-lg transition-colors">
               <FileText size={14} /> {showColumns ? "Hide" : "Preview"} Columns
             </button>
           </div>
           {showColumns && selected && FUNDER_CONFIGS[selected] && (
-            <div className="bg-black/30 rounded-lg p-4">
-              <p className="text-slate-400 text-xs mb-3">CSV columns for {selectedFunder?.label} ({FUNDER_CONFIGS[selected].csvHeaders.length} columns):</p>
+            <div className="bg-slate-100 dark:bg-black/30 rounded-lg p-4">
+              <p className="text-slate-500 dark:text-slate-400 text-xs mb-3">CSV columns for {selectedFunder?.label} ({FUNDER_CONFIGS[selected].csvHeaders.length} columns):</p>
               <div className="flex flex-wrap gap-1.5">
                 {FUNDER_CONFIGS[selected].csvHeaders.map((col, i) => (
                   <span key={col} className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs font-mono text-emerald-300">
@@ -114,23 +114,23 @@ export default function ExportPanel() {
       )}
 
       <div className="glass rounded-xl p-5">
-        <h2 className="font-sora text-lg text-slate-200 mb-4">Integration Story</h2>
+        <h2 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-4">Integration Story</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {[
             { title:"Microsoft Forms", desc:"Power Automate webhook. 20 min setup, zero staff behavior change.", icon:"📋", color:"text-blue-400" },
             { title:"Salesforce", desc:"REST webhook from Salesforce to OneView. Additive, not replacement.", icon:"☁️", color:"text-cyan-400" },
             { title:"iCARE / EOIS-CaMS", desc:"CSV export shaped to government spec. Compliant bulk upload.", icon:"🏛️", color:"text-amber-400" },
           ].map((item, i) => (
-            <div key={i} className="flex gap-3 p-4 bg-white/[0.02] rounded-xl border border-white/[0.06]">
+            <div key={i} className="flex gap-3 p-4 bg-slate-50 dark:bg-white/[0.02] rounded-xl border border-slate-100 dark:border-white/[0.06]">
               <span className="text-2xl">{item.icon}</span>
               <div>
                 <p className={`font-medium text-sm ${item.color}`}>{item.title}</p>
-                <p className="text-slate-400 text-xs mt-0.5">{item.desc}</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{item.desc}</p>
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-4 flex items-center gap-6 text-sm text-slate-400">
+        <div className="mt-4 flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
           <span><strong className="text-emerald-400">4</strong> funders</span>
           <span><strong className="text-indigo-400">8</strong> programs</span>
           <span><strong className="text-amber-400">1</strong> system of record</span>

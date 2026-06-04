@@ -8,7 +8,7 @@ import AIPanel from "@/components/ai/AIPanel"
 
 export default function AIPage() {
   return (
-    <div className="min-h-screen bg-[#060610] relative">
+    <div className="min-h-screen bg-[var(--ov-bg)] relative flex flex-col">
       <div className="fixed inset-0 mesh-bg pointer-events-none" aria-hidden />
       <div className="fixed inset-0 grid-overlay opacity-[0.4] pointer-events-none" aria-hidden />
       <Suspense fallback={null}><Header /></Suspense>

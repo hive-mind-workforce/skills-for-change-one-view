@@ -28,7 +28,7 @@ export default function Dashboard() {
     </div>
   )
 
-  if (error) return <div className="p-8 text-rose-400">Error loading data: {error}</div>
+  if (error) return <div className="p-8 text-rose-500 dark:text-rose-400">Error loading data: {error}</div>
 
   const metrics = data?.metrics ?? {}
   const clients = data?.clients ?? []
@@ -42,7 +42,7 @@ export default function Dashboard() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1600&q=60')" }}
         />
-        <div className="absolute inset-0 bg-[#060610]/80" />
+        <div className="absolute inset-0 bg-[#060610]/75" />
         <div className="relative z-10 text-center py-16 px-4">
           <p className="text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
           <h1 className="font-sora text-6xl md:text-8xl text-white drop-shadow-[0_0_40px_rgba(16,185,129,0.4)]">
@@ -68,12 +68,12 @@ export default function Dashboard() {
       </section>
 
       <section id="program-chart" className="glass rounded-xl p-5">
-        <h2 className="font-sora text-lg text-slate-200 mb-4">Program Breakdown</h2>
+        <h2 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-4">Program Breakdown</h2>
         <ProgramChart data={chartData} />
       </section>
 
       <section>
-        <h2 className="font-sora text-lg text-slate-200 mb-4">Recent Clients</h2>
+        <h2 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-4">Recent Clients</h2>
         <RecentClients clients={clients.slice(0, 10)} />
       </section>
     </div>

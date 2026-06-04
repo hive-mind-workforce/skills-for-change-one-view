@@ -215,3 +215,49 @@ export async function logAudit(action: string, entity: string, detail: object, u
     INSERT INTO audit_log (action, entity, detail, user_role, source_ip)
     VALUES (${action}, ${entity}, ${JSON.stringify(detail)}, ${userRole}, ${sourceIp})`
 }
+
+export async function getAuditLog(limit = 50, offset = 0) {
+  const result = await sql`
+    SELECT id, action, entity, detail, user_role, source_ip, at
+    FROM audit_log
+    ORDER BY at DESC
+    LIMIT ${limit} OFFSET ${offset}`
+  return result.rows
+}
+
+export async function getAuditLogCount() {
+  const result = await sql`SELECT COUNT(*) as c FROM audit_log`
+  return parseInt(result.rows[0].c)
+}
+
+export async function searchClients(query: string, limit = 20) {
+  const like = `%${query}%`
+  const result = await sql`
+    SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
+      COUNT(e.id) as enrolment_count,
+      array_agg(DISTINCT e.program) FILTER (WHERE e.program IS NOT NULL) as programs
+    FROM clients c
+    LEFT JOIN enrolments e ON e.client_id = c.id
+    WHERE c.full_name ILIKE ${like}
+    GROUP BY c.id
+    ORDER BY c.full_name
+    LIMIT ${limit}`
+  return result.rows
+}
+
+export async function getClientJourney(clientId: string) {
+  const clientRes = await sql`SELECT * FROM clients WHERE id = ${clientId}`
+  if (!clientRes.rows[0]) return null
+  const enrolRes = await sql`
+    SELECT e.id, e.program, e.funder, e.consent_cross_program, e.enrolled_at,
+      json_agg(
+        json_build_object('id', o.id, 'tier', o.tier, 'label', o.label, 'achieved', o.achieved, 'recorded_at', o.recorded_at)
+        ORDER BY CASE o.tier WHEN 'immediate' THEN 1 WHEN 'intermediate' THEN 2 ELSE 3 END
+      ) as outcomes
+    FROM enrolments e
+    LEFT JOIN outcomes o ON o.enrolment_id = e.id
+    WHERE e.client_id = ${clientId}
+    GROUP BY e.id
+    ORDER BY e.enrolled_at ASC`
+  return { client: clientRes.rows[0], enrolments: enrolRes.rows }
+}

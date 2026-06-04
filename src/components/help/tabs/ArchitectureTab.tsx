@@ -58,8 +58,8 @@ export default function ArchitectureTab() {
                   onClick={() => setSelected(selected?.id === node.id ? null : node)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                     selected?.id === node.id
-                      ? "ring-2 ring-offset-0 bg-white/[0.08] text-white"
-                      : "glass hover:bg-white/[0.06] text-slate-300 hover:text-white"
+                      ? "ring-2 ring-offset-0 bg-slate-100 dark:bg-white/[0.08] text-slate-900 dark:text-white"
+                      : "glass hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                   }`}
                   style={{ borderLeft: `3px solid ${node.color}`, ...(selected?.id === node.id ? {ringColor: node.color} : {}) }}
                 >
@@ -74,22 +74,22 @@ export default function ArchitectureTab() {
 
       {selected && (
         <div className="w-80 flex-shrink-0 glass rounded-xl overflow-hidden animate-fade-in sticky top-4 self-start max-h-[80vh] overflow-y-auto">
-          <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between" style={{background:`linear-gradient(90deg,${selected.color}22,transparent)`}}>
+          <div className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.08] flex items-center justify-between" style={{background:`linear-gradient(90deg,${selected.color}22,transparent)`}}>
             <div className="flex items-center gap-2">
               <span className="text-xl">{selected.icon}</span>
-              <span className="font-sora text-sm text-white">{selected.name}</span>
+              <span className="font-sora text-sm text-slate-900 dark:text-white">{selected.name}</span>
             </div>
-            <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-white transition-colors">
+            <button onClick={() => setSelected(null)} className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
               <X size={16} />
             </button>
           </div>
           <div className="p-4 space-y-4">
-            <p className="text-slate-400 text-sm leading-relaxed">{selected.desc}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{selected.desc}</p>
             <div>
               <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">Flow</div>
               <ol className="space-y-1.5">
                 {selected.steps.map((step, i) => (
-                  <li key={i} className="flex items-start gap-2 text-slate-400 text-xs">
+                  <li key={i} className="flex items-start gap-2 text-slate-500 dark:text-slate-400 text-xs">
                     <span className="text-emerald-400 font-mono flex-shrink-0">{i+1}.</span>
                     {step}
                   </li>
@@ -98,7 +98,7 @@ export default function ArchitectureTab() {
             </div>
             <div>
               <div className="text-xs text-slate-500 uppercase tracking-widest mb-2">Code</div>
-              <pre className="bg-black/40 rounded-lg p-3 text-xs text-emerald-300 font-mono whitespace-pre-wrap overflow-x-auto">{selected.code}</pre>
+              <pre className="bg-slate-100 dark:bg-black/40 rounded-lg p-3 text-xs text-emerald-700 dark:text-emerald-300 font-mono whitespace-pre-wrap overflow-x-auto">{selected.code}</pre>
             </div>
           </div>
         </div>

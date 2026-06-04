@@ -158,3 +158,10 @@ npm run test:e2e      # Playwright e2e (requires running dev server)
 3. Set LLM_PROVIDER and LLM_API_KEY environment variables
 4. Deploy: `vercel --prod`
 5. Visit /api/init on first load to seed data
+
+## Dev Rules
+
+- Never save screenshots, snapshots, or test artifacts to the project root. Use `tests/test-results/` for Playwright output.
+- Dev server runs on port 3010 (not 3000, which is reserved for other apps).
+- Never commit `.env`, `.env.local`, API keys, passwords, or credentials to git.
+- GitHub org: `hive-mind-workforce` — all remotes and PRs use this account.

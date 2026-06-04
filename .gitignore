@@ -47,5 +47,9 @@ next-env.d.ts
 *.gif
 .playwright-mcp/
 
+# test artifacts
+/test-results/
+/tests/test-results/
+
 # superpowers brainstorm sessions
 .superpowers/

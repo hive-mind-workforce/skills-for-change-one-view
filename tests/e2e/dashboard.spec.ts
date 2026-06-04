@@ -18,8 +18,8 @@ test.describe("Dashboard", () => {
 
   test("navigation links present", async ({ page }) => {
     await page.goto("/")
-    const intakeLinks = page.locator("[data-tour=intake]")
-    await expect(intakeLinks.first()).toBeVisible()
+    // Check for nav text which appears in both TopNav (desktop) and BottomNav (mobile)
+    await expect(page.getByText("Intake").first()).toBeVisible()
   })
 
   test("demo button is clickable", async ({ page }) => {
@@ -33,6 +33,9 @@ test.describe("Dashboard mobile", () => {
   test.use({ viewport: { width: 375, height: 812 } })
   test("bottom nav visible on mobile", async ({ page }) => {
     await page.goto("/")
-    await expect(page.locator("[data-tour=intake]").first()).toBeVisible()
+    // TopNav is hidden on mobile; check the fixed BottomNav instead
+    const bottomNav = page.locator("nav").last()
+    await expect(bottomNav).toBeVisible()
+    await expect(bottomNav.getByText("Dashboard")).toBeVisible()
   })
 })

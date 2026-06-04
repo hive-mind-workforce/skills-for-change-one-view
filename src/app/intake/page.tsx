@@ -41,8 +41,8 @@ function IntakeContent() {
           <img src={PROGRAM_PHOTOS.settlement} alt="Community intake" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#060610] via-transparent to-transparent" />
           <div className="absolute bottom-3 left-4">
-            <p className="text-white text-sm font-medium">Skills for Change</p>
-            <p className="text-slate-300 text-xs">Serving 20,000+ clients annually</p>
+            <p className="text-white text-sm font-medium drop-shadow">Skills for Change</p>
+            <p className="text-slate-200 text-xs drop-shadow">Serving 20,000+ clients annually</p>
           </div>
         </div>
         {SIDEBAR_ITEMS.map((item) => (
@@ -50,7 +50,7 @@ function IntakeContent() {
             <item.icon size={18} className={`${item.color} flex-shrink-0 mt-0.5`} />
             <div>
               <p className={`text-sm font-medium ${item.color}`}>{item.title}</p>
-              <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{item.desc}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 leading-relaxed">{item.desc}</p>
             </div>
           </div>
         ))}
@@ -61,7 +61,7 @@ function IntakeContent() {
 
 export default function IntakePage() {
   return (
-    <div className="min-h-screen bg-[#060610] relative">
+    <div className="min-h-screen bg-[var(--ov-bg)] relative flex flex-col">
       <div className="fixed inset-0 mesh-bg pointer-events-none" aria-hidden />
       <div className="fixed inset-0 grid-overlay opacity-[0.4] pointer-events-none" aria-hidden />
       <Suspense fallback={null}><Header /></Suspense>
@@ -69,8 +69,8 @@ export default function IntakePage() {
       <Suspense fallback={null}><RoleBanner /></Suspense>
       <main className="relative z-10 pb-24 md:pb-8 max-w-6xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="font-sora text-3xl text-white">Register a Client</h1>
-          <p className="text-slate-400 mt-1">One intake, any program. Data captured once, available everywhere.</p>
+          <h1 className="font-sora text-3xl text-slate-900 dark:text-white">Register a Client</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">One intake, any program. Data captured once, available everywhere.</p>
         </div>
         <Suspense fallback={null}><IntakeContent /></Suspense>
       </main>

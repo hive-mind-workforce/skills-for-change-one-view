@@ -5,7 +5,7 @@ const PROVIDER = process.env.LLM_PROVIDER ?? "gemini"
 const KEY = process.env.LLM_API_KEY ?? ""
 
 const CONFIGS: Record<string, { baseURL?: string; model: string }> = {
-  gemini: { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/", model: "gemini-2.0-flash-exp" },
+  gemini: { baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/", model: "gemini-2.0-flash" },
   groq: { baseURL: "https://api.groq.com/openai/v1", model: "llama-3.3-70b-versatile" },
   claude: { model: "claude-sonnet-4-6" },
 }

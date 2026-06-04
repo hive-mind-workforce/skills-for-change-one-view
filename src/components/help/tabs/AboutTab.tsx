@@ -35,26 +35,26 @@ export default function AboutTab() {
 
       <div className="glass rounded-xl p-8 text-center">
         <p className="text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
-        <h2 className="font-sora text-5xl text-white mb-3">OneView</h2>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. A single system of record across multiple programs and funders: built to eliminate the data fragmentation that costs Skills for Change weeks of staff time every quarter.</p>
+        <h2 className="font-sora text-5xl text-slate-900 dark:text-white mb-3">OneView</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. A single system of record across multiple programs and funders: built to eliminate the data fragmentation that costs Skills for Change weeks of staff time every quarter.</p>
         <div className="flex flex-wrap justify-center items-center gap-6 mt-8">
           <div className="text-center">
-            <div className="font-sora text-4xl text-emerald-400">Multiple</div>
+            <div className="font-sora text-4xl text-emerald-500 dark:text-emerald-400">Multiple</div>
             <div className="text-slate-500 text-sm">programs in one platform</div>
           </div>
-          <div className="w-px h-12 bg-white/[0.08]" />
+          <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
           <div className="text-center">
-            <div className="font-sora text-4xl text-rose-400">All funders</div>
+            <div className="font-sora text-4xl text-rose-500 dark:text-rose-400">All funders</div>
             <div className="text-slate-500 text-sm">one data entry</div>
           </div>
-          <div className="w-px h-12 bg-white/[0.08]" />
+          <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
           <div className="text-center">
-            <div className="font-sora text-4xl text-amber-400">3+ systems</div>
+            <div className="font-sora text-4xl text-amber-500 dark:text-amber-400">Multiple systems</div>
             <div className="text-slate-500 text-sm">replaced by one</div>
           </div>
-          <div className="w-px h-12 bg-white/[0.08]" />
+          <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
           <div className="text-center">
-            <div className="font-sora text-4xl text-indigo-400">1×</div>
+            <div className="font-sora text-4xl text-indigo-500 dark:text-indigo-400">1×</div>
             <div className="text-slate-500 text-sm">data entry with OneView</div>
           </div>
         </div>
@@ -88,7 +88,7 @@ export default function AboutTab() {
           {SHORT_TERM.map((item, i) => (
             <div key={i} className="flex items-start gap-2 p-3 bg-emerald-500/[0.04] border border-emerald-500/[0.08] rounded-lg">
               <CheckCircle size={13} className="text-emerald-400 mt-0.5 flex-shrink-0" />
-              <span className="text-slate-300 text-sm">{item}</span>
+              <span className="text-slate-600 dark:text-slate-300 text-sm">{item}</span>
             </div>
           ))}
         </div>
@@ -102,7 +102,7 @@ export default function AboutTab() {
         <p className="text-slate-500 text-sm mb-5 ml-6">Microsoft Forms and Salesforce are fully retired. OneView's Postgres database is the system of record. The Next.js backend handles all intake, outcomes, and reporting. With AI-assisted data migration, what would have taken years of manual work can happen in months.</p>
         <div className="grid sm:grid-cols-2 gap-4">
           {LONG_TERM.map((item, i) => (
-            <div key={i} className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+            <div key={i} className="p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.06] rounded-xl">
               <div className="flex items-center gap-2 mb-2">
                 <item.icon size={15} className={item.color} />
                 <p className={`text-sm font-medium ${item.color}`}>{item.title}</p>
@@ -114,10 +114,10 @@ export default function AboutTab() {
       </div>
 
       <div className="glass rounded-xl p-6">
-        <h3 className="font-sora text-lg text-slate-200 mb-5">Migration Path</h3>
+        <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-5">Migration Path</h3>
         <div className="grid sm:grid-cols-3 gap-3">
           {FEASIBILITY.map((f, i) => (
-            <div key={i} className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+            <div key={i} className="p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.06] rounded-xl">
               <div className={`font-sora text-sm mb-2 ${f.color}`}>{f.label}</div>
               <p className="text-slate-500 text-xs leading-relaxed">{f.desc}</p>
             </div>
@@ -126,10 +126,10 @@ export default function AboutTab() {
       </div>
 
       <div className="glass rounded-xl p-6">
-        <h3 className="font-sora text-lg text-slate-200 mb-3">Technology Stack</h3>
+        <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-3">Technology Stack</h3>
         <div className="flex flex-wrap gap-2 mb-4">
           {["Next.js 15","TypeScript","Tailwind CSS 4","shadcn/ui","Postgres","Recharts","driver.js"].map(t => (
-            <span key={t} className="px-3 py-1 bg-white/[0.04] border border-white/[0.08] rounded-full text-slate-300 text-sm">{t}</span>
+            <span key={t} className="px-3 py-1 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-full text-slate-600 dark:text-slate-300 text-sm">{t}</span>
           ))}
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function AboutTab() {
           href="https://github.com/hive-mind-workforce/skills-for-change-one-view"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 px-5 py-3 glass border border-white/[0.15] hover:border-white/[0.3] text-slate-200 rounded-xl transition-colors"
+          className="flex items-center justify-center gap-2 px-5 py-3 glass border border-slate-200 dark:border-white/[0.15] hover:border-slate-300 dark:hover:border-white/[0.3] text-slate-700 dark:text-slate-200 rounded-xl transition-colors"
         >
           <GitBranch size={18} />
           <span className="font-medium">View Source on GitHub</span>
@@ -154,7 +154,7 @@ export default function AboutTab() {
           <ExternalLink size={14} />
           <span className="font-medium">skillsforchange.org</span>
         </a>
-        <div className="flex items-center gap-2 px-5 py-3 glass rounded-xl border border-white/[0.06] text-slate-500 text-sm">
+        <div className="flex items-center gap-2 px-5 py-3 glass rounded-xl border border-slate-100 dark:border-white/[0.06] text-slate-500 text-sm">
           Change-a-thon by Mastercard Changeworks 2026™
         </div>
       </div>

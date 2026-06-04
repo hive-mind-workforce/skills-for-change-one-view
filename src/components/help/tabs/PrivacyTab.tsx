@@ -25,18 +25,18 @@ export default function PrivacyTab() {
           <Lock size={18} className="text-rose-400" />
           <h3 className="font-sora text-lg text-rose-400">PHI Wall</h3>
         </div>
-        <p className="text-slate-400 text-sm mb-3">Mental Health records are ALWAYS siloed under PHIPA (Personal Health Information Protection Act). No role, consent flag, or configuration can override this — it is enforced at the database layer on every cross-program query.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">Mental Health records are ALWAYS siloed under PHIPA (Personal Health Information Protection Act). No role, consent flag, or configuration can override this — it is enforced at the database layer on every cross-program query.</p>
       </div>
 
       <div className="glass rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-white/[0.08]">
-          <h3 className="font-sora text-lg text-slate-200">Privacy Law Map</h3>
+        <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.08]">
+          <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200">Privacy Law Map</h3>
         </div>
         <table className="w-full text-sm">
-          <thead><tr className="border-b border-white/[0.06]">
-            <th className="text-left px-5 py-3 text-slate-400 font-medium">Program</th>
-            <th className="text-left px-5 py-3 text-slate-400 font-medium">Governing Law</th>
-            <th className="text-left px-5 py-3 text-slate-400 font-medium hidden md:table-cell">Key Rule</th>
+          <thead><tr className="border-b border-slate-100 dark:border-white/[0.06]">
+            <th className="text-left px-5 py-3 text-slate-500 dark:text-slate-400 font-medium">Program</th>
+            <th className="text-left px-5 py-3 text-slate-500 dark:text-slate-400 font-medium">Governing Law</th>
+            <th className="text-left px-5 py-3 text-slate-500 dark:text-slate-400 font-medium hidden md:table-cell">Key Rule</th>
           </tr></thead>
           <tbody>
             {[
@@ -45,9 +45,9 @@ export default function PrivacyTab() {
               ["Mental Health","PHIPA","PHI Wall always applies, no exceptions"],
               ["Youth","CYFSA Part X","Enhanced protections for minors"],
             ].map(([prog,law,rule],i) => (
-              <tr key={i} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                <td className="px-5 py-3 text-slate-300">{prog}</td>
-                <td className="px-5 py-3 text-emerald-400">{law}</td>
+              <tr key={i} className="border-b border-slate-50 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                <td className="px-5 py-3 text-slate-700 dark:text-slate-300">{prog}</td>
+                <td className="px-5 py-3 text-emerald-600 dark:text-emerald-400">{law}</td>
                 <td className="px-5 py-3 text-slate-500 hidden md:table-cell">{rule}</td>
               </tr>
             ))}
@@ -56,9 +56,9 @@ export default function PrivacyTab() {
       </div>
 
       <div className="glass rounded-xl p-5">
-        <h3 className="font-sora text-lg text-slate-200 mb-1">Audit Log</h3>
+        <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-1">Audit Log</h3>
         <p className="text-slate-500 text-sm mb-3">Every write and export operation is logged with the action, affected entity, role, detail payload, and source IP. The log is append-only and cannot be modified through the application.</p>
-        <pre className="bg-black/40 rounded-lg p-3 text-xs text-slate-400 font-mono overflow-x-auto">{`action           | entity  | user_role  | detail                                              | source_ip   | at
+        <pre className="bg-slate-100 dark:bg-black/40 rounded-lg p-3 text-xs text-slate-500 dark:text-slate-400 font-mono overflow-x-auto">{`action           | entity  | user_role  | detail                                              | source_ip   | at
 -----------------+---------+------------+-----------------------------------------------------+-------------+---------------------------
 create_client    | client  | caseworker | {"full_name":"A. Hassan","program":"settlement"}     | 142.250.x.x | 2026-06-04 09:15:23
 view_clients     | clients | caseworker | {"program":"settlement","count":47}                 | 142.250.x.x | 2026-06-04 09:18:44
