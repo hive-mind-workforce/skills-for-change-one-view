@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sora.variable} ${inter.variable}`}>
+    <html lang="en" className={`dark ${sora.variable} ${inter.variable}`}>
       <body className="bg-[#060610] text-slate-100 antialiased" style={{ fontFamily: "var(--font-inter, Inter, sans-serif)" }}>
         {children}
         <DemoTour />
