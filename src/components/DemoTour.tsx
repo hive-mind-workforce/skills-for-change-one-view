@@ -155,7 +155,7 @@ export default function DemoTour() {
           element: "[data-tour=help]",
           popover: {
             title: "Full documentation — always available",
-            description: "The Help Center includes architecture diagrams, privacy compliance maps, and the full migration plan. Accessible to all roles including Viewer.",
+            description: "The About section includes architecture diagrams, privacy compliance maps, and the full migration plan. Accessible to all roles including Viewer.",
             side: "right",
           },
         },

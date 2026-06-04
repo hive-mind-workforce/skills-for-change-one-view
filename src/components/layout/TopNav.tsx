@@ -1,14 +1,14 @@
 "use client"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { Home, Plus, Download, Sparkles, HelpCircle, Lock } from "lucide-react"
+import { Home, Plus, Download, Sparkles, Info, Lock } from "lucide-react"
 
 const TABS = [
   { href: "/", label: "Dashboard", icon: Home, minRole: "viewer" },
   { href: "/intake", label: "Intake", icon: Plus, minRole: "caseworker" },
   { href: "/export", label: "Export", icon: Download, minRole: "admin" },
   { href: "/ai", label: "AI Reports", icon: Sparkles, minRole: "caseworker" },
-  { href: "/help", label: "Help", icon: HelpCircle, minRole: "viewer" },
+  { href: "/help", label: "About", icon: Info, minRole: "viewer" },
 ]
 
 const ROLE_RANK: Record<string, number> = { viewer: 0, caseworker: 1, admin: 2 }
