@@ -156,7 +156,7 @@ export default function AboutTab() {
           <span className="font-medium">skillsforchange.org</span>
         </a>
         <div className="flex items-center gap-2 px-5 py-3 glass rounded-xl border border-white/[0.06] text-slate-500 text-sm">
-          SfC Hackathon 2026
+          Change-a-thon by Mastercard Changeworks 2026™
         </div>
       </div>
     </div>
