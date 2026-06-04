@@ -38,7 +38,7 @@ export default function Header() {
 
   return (
     <div className="sticky top-0 z-50">
-      <header className="glass border-b border-white/[0.08] h-16 flex items-center px-4 md:px-6 gap-4">
+      <header className="bg-[#07071a] border-b border-white/[0.12] h-16 flex items-center px-4 md:px-6 gap-4">
         <Link href="/" className="flex items-center gap-2 mr-auto">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
           <span className="font-sora text-lg text-white">OneView</span>
@@ -66,7 +66,7 @@ export default function Header() {
         </button>
       </header>
 
-      <div className="flex sm:hidden items-center justify-between bg-slate-950 border-b border-white/[0.1] px-4 py-2">
+      <div className="flex sm:hidden items-center justify-between bg-[#07071a] border-b border-white/[0.1] px-4 py-2">
         {rolePicker}
         <a
           href="https://github.com/hive-mind-workforce/skills-for-change-one-view"

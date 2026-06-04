@@ -1,7 +1,9 @@
 "use client"
 import { useState } from "react"
-import { Sparkles, CheckCircle, Send } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { Sparkles, CheckCircle, Send, Lock } from "lucide-react"
 import NarrativePanel from "@/components/export/NarrativePanel"
+import AccessRestricted from "@/components/AccessRestricted"
 
 const FUNDERS = [{value:"ircc",label:"IRCC"},{value:"eo",label:"Employment Ontario"},{value:"uw",label:"United Way"},{value:"city",label:"City of Toronto"}]
 const PERIODS = ["Q1 2026","Q2 2026","Q3 2025","Q4 2025","Full Year 2025"]
@@ -12,6 +14,8 @@ const EXAMPLE_QUESTIONS = [
 ]
 
 export default function AIPanel() {
+  const searchParams = useSearchParams()
+  const role = searchParams.get("role") ?? "admin"
   const [funder, setFunder] = useState("ircc")
   const [period, setPeriod] = useState("Q1 2026")
   const [reportLoading, setReportLoading] = useState(false)
@@ -19,6 +23,8 @@ export default function AIPanel() {
   const [question, setQuestion] = useState("")
   const [answer, setAnswer] = useState<string|null>(null)
   const [qLoading, setQLoading] = useState(false)
+
+  if (role === "viewer") return <AccessRestricted requiredRole="caseworker" currentRole={role} />
 
   async function generateReport() {
     setReportLoading(true); setReport(null)
@@ -37,6 +43,8 @@ export default function AIPanel() {
     setQLoading(false)
   }
 
+  const isAdmin = role === "admin"
+
   return (
     <div className="space-y-10">
       <section className="space-y-5">
@@ -51,18 +59,27 @@ export default function AIPanel() {
             <span className="text-emerald-400 text-xs">All figures verified against live database</span>
           </div>
         </div>
-        <div className="flex gap-3 flex-wrap">
-          <select value={funder} onChange={e=>setFunder(e.target.value)} className="bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
-            {FUNDERS.map(f=><option key={f.value} value={f.value}>{f.label}</option>)}
-          </select>
-          <select value={period} onChange={e=>setPeriod(e.target.value)} className="bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
-            {PERIODS.map(p=><option key={p} value={p}>{p}</option>)}
-          </select>
-          <button onClick={generateReport} disabled={reportLoading} className="flex-1 sm:flex-none px-6 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-semibold rounded-lg transition-colors text-sm">
-            {reportLoading ? "Generating..." : "Generate Report"}
-          </button>
-        </div>
-        {(reportLoading || report) && <NarrativePanel narrative={report?.text??""} funder={funder} period={period} cached={report?.cached??false} loading={reportLoading} />}
+        {isAdmin ? (
+          <>
+            <div className="flex gap-3 flex-wrap">
+              <select value={funder} onChange={e=>setFunder(e.target.value)} className="bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
+                {FUNDERS.map(f=><option key={f.value} value={f.value}>{f.label}</option>)}
+              </select>
+              <select value={period} onChange={e=>setPeriod(e.target.value)} className="bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
+                {PERIODS.map(p=><option key={p} value={p}>{p}</option>)}
+              </select>
+              <button onClick={generateReport} disabled={reportLoading} className="flex-1 sm:flex-none px-6 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-semibold rounded-lg transition-colors text-sm">
+                {reportLoading ? "Generating..." : "Generate Report"}
+              </button>
+            </div>
+            {(reportLoading || report) && <NarrativePanel narrative={report?.text??""} funder={funder} period={period} cached={report?.cached??false} loading={reportLoading} />}
+          </>
+        ) : (
+          <div className="flex items-center gap-3 p-4 bg-amber-500/[0.06] border border-amber-500/20 rounded-xl">
+            <Lock size={16} className="text-amber-400 flex-shrink-0" />
+            <p className="text-amber-300 text-sm">Funder report generation requires Admin access. You can use the Q&A below.</p>
+          </div>
+        )}
       </section>
 
       <div className="border-t border-white/[0.06]" />

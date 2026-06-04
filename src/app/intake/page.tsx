@@ -1,10 +1,12 @@
 "use client"
 import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import Header from "@/components/layout/Header"
 import TopNav from "@/components/layout/TopNav"
 import BottomNav from "@/components/layout/BottomNav"
 import RoleBanner from "@/components/RoleBanner"
 import IntakeForm from "@/components/intake/IntakeForm"
+import AccessRestricted from "@/components/AccessRestricted"
 import { Users, Shield, Zap, RefreshCw } from "lucide-react"
 
 const PROGRAM_PHOTOS: Record<string, string> = {
@@ -25,6 +27,38 @@ const SIDEBAR_ITEMS = [
   { icon: RefreshCw, title: "Real-time outcomes", desc: "Outcomes are seeded at intake and tracked through immediate, intermediate, and ultimate tiers.", color: "text-amber-400" },
 ]
 
+function IntakeContent() {
+  const searchParams = useSearchParams()
+  const role = searchParams.get("role") ?? "admin"
+  if (role === "viewer") return <AccessRestricted requiredRole="caseworker" currentRole={role} />
+  return (
+    <div className="grid md:grid-cols-5 gap-6">
+      <div className="md:col-span-3">
+        <Suspense fallback={null}><IntakeForm /></Suspense>
+      </div>
+      <div className="md:col-span-2 space-y-4">
+        <div className="relative h-40 rounded-xl overflow-hidden">
+          <img src={PROGRAM_PHOTOS.settlement} alt="Community intake" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#060610] via-transparent to-transparent" />
+          <div className="absolute bottom-3 left-4">
+            <p className="text-white text-sm font-medium">Skills for Change</p>
+            <p className="text-slate-300 text-xs">Serving 20,000+ clients annually</p>
+          </div>
+        </div>
+        {SIDEBAR_ITEMS.map((item) => (
+          <div key={item.title} className="glass rounded-xl p-4 flex gap-3">
+            <item.icon size={18} className={`${item.color} flex-shrink-0 mt-0.5`} />
+            <div>
+              <p className={`text-sm font-medium ${item.color}`}>{item.title}</p>
+              <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function IntakePage() {
   return (
     <div className="min-h-screen bg-[#060610] relative">
@@ -38,34 +72,7 @@ export default function IntakePage() {
           <h1 className="font-sora text-3xl text-white">Register a Client</h1>
           <p className="text-slate-400 mt-1">One intake, any program. Data captured once, available everywhere.</p>
         </div>
-        <div className="grid md:grid-cols-5 gap-6">
-          <div className="md:col-span-3">
-            <Suspense fallback={null}><IntakeForm /></Suspense>
-          </div>
-          <div className="md:col-span-2 space-y-4">
-            <div className="relative h-40 rounded-xl overflow-hidden">
-              <img
-                src={PROGRAM_PHOTOS.settlement}
-                alt="Community intake"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#060610] via-transparent to-transparent" />
-              <div className="absolute bottom-3 left-4">
-                <p className="text-white text-sm font-medium">Skills for Change</p>
-                <p className="text-slate-300 text-xs">Serving 20,000+ clients annually</p>
-              </div>
-            </div>
-            {SIDEBAR_ITEMS.map((item) => (
-              <div key={item.title} className="glass rounded-xl p-4 flex gap-3">
-                <item.icon size={18} className={`${item.color} flex-shrink-0 mt-0.5`} />
-                <div>
-                  <p className={`text-sm font-medium ${item.color}`}>{item.title}</p>
-                  <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <Suspense fallback={null}><IntakeContent /></Suspense>
       </main>
       <Suspense fallback={null}><BottomNav /></Suspense>
     </div>
