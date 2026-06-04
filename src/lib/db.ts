@@ -1,4 +1,5 @@
-import { sql } from "@vercel/postgres"
+import { sql, db } from "@vercel/postgres"
+import { randomUUID } from "crypto"
 
 export async function initDB() {
   await sql`
@@ -77,39 +78,59 @@ export async function seedDatabase() {
   const count = await sql`SELECT COUNT(*) as c FROM clients`
   if (parseInt(count.rows[0].c) > 0) return
 
-  let clientIndex = 0
-  for (const program of PROGRAMS) {
-    const volume = SEED_VOLUMES[program]
-    const funder = PROGRAM_FUNDERS[program]
-    const labels = OUTCOME_LABELS[program]
-    for (let i = 0; i < volume; i++) {
-      const firstName = FIRST_NAMES[clientIndex % FIRST_NAMES.length]
-      const lastName = LAST_NAMES[(clientIndex * 3) % LAST_NAMES.length]
-      const language = LANGUAGES[(clientIndex * 7) % LANGUAGES.length]
-      const stream = STREAMS[(clientIndex * 5) % STREAMS.length]
-      const crossProgram = (clientIndex % 5 === 0)
-      clientIndex++
+  const CHUNK = 1000
+  const conn = await db.connect()
+  try {
+    let clientIndex = 0
+    for (const program of PROGRAMS) {
+      const volume = SEED_VOLUMES[program]
+      const funder = PROGRAM_FUNDERS[program]
+      const labels = OUTCOME_LABELS[program]
 
-      const clientResult = await sql`
-        INSERT INTO clients (full_name, primary_language, immigration_stream)
-        VALUES (${firstName + " " + lastName}, ${language}, ${stream})
-        RETURNING id`
-      const clientId = clientResult.rows[0].id
+      type Row = { clientId: string; enrolId: string; idx: number }
+      const rows: Row[] = Array.from({ length: volume }, (_, i) => ({
+        clientId: randomUUID(),
+        enrolId: randomUUID(),
+        idx: clientIndex + i,
+      }))
+      clientIndex += volume
 
-      const enrolResult = await sql`
-        INSERT INTO enrolments (client_id, program, funder, consent_cross_program)
-        VALUES (${clientId}, ${program}, ${funder}, ${crossProgram})
-        RETURNING id`
-      const enrolId = enrolResult.rows[0].id
+      for (let start = 0; start < rows.length; start += CHUNK) {
+        const chunk = rows.slice(start, start + CHUNK)
 
-      const tier1 = "immediate", tier2 = "intermediate", tier3 = "ultimate"
-      const achieved1 = (i % 3 === 0)
-      const achieved2 = (i % 5 === 0)
-      const achieved3 = (i % 10 === 0)
-      await sql`INSERT INTO outcomes (enrolment_id,tier,label,achieved) VALUES (${enrolId},${tier1},${labels[0]},${achieved1})`
-      await sql`INSERT INTO outcomes (enrolment_id,tier,label,achieved) VALUES (${enrolId},${tier2},${labels[1]},${achieved2})`
-      await sql`INSERT INTO outcomes (enrolment_id,tier,label,achieved) VALUES (${enrolId},${tier3},${labels[2]},${achieved3})`
+        const cVals = chunk.map((_, j) => `($${j * 4 + 1},$${j * 4 + 2},$${j * 4 + 3},$${j * 4 + 4})`).join(",")
+        const cParams = chunk.flatMap(r => [
+          r.clientId,
+          FIRST_NAMES[r.idx % FIRST_NAMES.length] + " " + LAST_NAMES[(r.idx * 3) % LAST_NAMES.length],
+          LANGUAGES[(r.idx * 7) % LANGUAGES.length],
+          STREAMS[(r.idx * 5) % STREAMS.length],
+        ])
+        await conn.query(`INSERT INTO clients (id,full_name,primary_language,immigration_stream) VALUES ${cVals}`, cParams)
+
+        const eVals = chunk.map((_, j) => `($${j * 5 + 1},$${j * 5 + 2},$${j * 5 + 3},$${j * 5 + 4},$${j * 5 + 5})`).join(",")
+        const eParams = chunk.flatMap(r => [r.enrolId, r.clientId, program, funder, r.idx % 5 === 0])
+        await conn.query(`INSERT INTO enrolments (id,client_id,program,funder,consent_cross_program) VALUES ${eVals}`, eParams)
+
+        const oRows: string[] = []
+        const oParams: (string | boolean)[] = []
+        let p = 1
+        for (let k = 0; k < chunk.length; k++) {
+          const r = chunk[k], i = start + k
+          for (const [tier, label, achieved] of [
+            ["immediate", labels[0], i % 3 === 0],
+            ["intermediate", labels[1], i % 5 === 0],
+            ["ultimate", labels[2], i % 10 === 0],
+          ] as [string, string, boolean][]) {
+            oRows.push(`($${p},$${p + 1},$${p + 2},$${p + 3})`)
+            oParams.push(r.enrolId, tier, label, achieved)
+            p += 4
+          }
+        }
+        await conn.query(`INSERT INTO outcomes (enrolment_id,tier,label,achieved) VALUES ${oRows.join(",")}`, oParams)
+      }
     }
+  } finally {
+    conn.release()
   }
 }
 

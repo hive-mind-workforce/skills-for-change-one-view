@@ -1,4 +1,5 @@
 export const runtime = "nodejs"
+export const maxDuration = 60
 import { NextRequest } from "next/server"
 import { sql } from "@vercel/postgres"
 import { initDB, seedDatabase } from "@/lib/db"
