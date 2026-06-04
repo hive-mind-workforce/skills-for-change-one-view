@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
-import { Search, CheckCircle, Circle, Lock, Users, ChevronRight } from "lucide-react"
+import { Search, CheckCircle, Circle, Lock, Users, ChevronRight, FileText, Phone, Calendar, Eye, Star, Plus, X } from "lucide-react"
 import ProgramBadge from "@/components/ProgramBadge"
 import FunderBadge from "@/components/FunderBadge"
 import { formatDate, programLabel, programColor } from "@/lib/helpers"
@@ -9,8 +9,46 @@ import { formatDate, programLabel, programColor } from "@/lib/helpers"
 const TIER_ORDER = ["immediate", "intermediate", "ultimate"]
 const TIER_LABELS: Record<string, string> = { immediate: "Immediate", intermediate: "Intermediate", ultimate: "Ultimate" }
 
+const NOTE_TYPE_COLORS: Record<string, string> = {
+  interview: "#8b5cf6",
+  call: "#3b82f6",
+  meeting: "#10b981",
+  observation: "#f59e0b",
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const NOTE_ICONS: Record<string, React.ComponentType<any>> = {
+  interview: Users,
+  call: Phone,
+  meeting: Calendar,
+  observation: Eye,
+}
+
+interface CaseNote {
+  id: string
+  client_id: string
+  author_role: string
+  note_type: string
+  content: string
+  created_at: string
+}
+
+interface Survey {
+  id: string
+  client_id: string
+  enrolment_id: string
+  satisfaction: number | null
+  would_recommend: boolean
+  outcome_confirmed: boolean
+  drop_reason: string | null
+  comments: string | null
+  completed_at: string
+}
+
 export default function JourneyViewer() {
   const searchParams = useSearchParams()
+  const role = searchParams.get("role") ?? "admin"
+
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<any[]>([])
   const [searching, setSearching] = useState(false)
@@ -19,6 +57,15 @@ export default function JourneyViewer() {
   const [loadingJourney, setLoadingJourney] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const skipSearchRef = useRef(false)
+
+  const [notes, setNotes] = useState<CaseNote[]>([])
+  const [addingNote, setAddingNote] = useState(false)
+  const [noteText, setNoteText] = useState("")
+  const [noteType, setNoteType] = useState("interview")
+  const [submittingNote, setSubmittingNote] = useState(false)
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set())
+
+  const [survey, setSurvey] = useState<Survey | null>(null)
 
   useEffect(() => {
     const clientId = searchParams.get("clientId")
@@ -37,6 +84,25 @@ export default function JourneyViewer() {
       .finally(() => setLoadingJourney(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Fetch notes and survey whenever the loaded journey changes — covers both URL load and search-select
+  useEffect(() => {
+    const clientId = journey?.client?.id
+    if (!clientId) {
+      setNotes([])
+      setSurvey(null)
+      return
+    }
+    fetch(`/api/notes?clientId=${clientId}`)
+      .then(r => r.json())
+      .then(data => setNotes(Array.isArray(data) ? data : []))
+      .catch(() => setNotes([]))
+
+    fetch(`/api/survey/${clientId}`)
+      .then(r => r.json())
+      .then(data => setSurvey(data ?? null))
+      .catch(() => setSurvey(null))
+  }, [journey?.client?.id])
 
   useEffect(() => {
     if (skipSearchRef.current) { skipSearchRef.current = false; return }
@@ -57,6 +123,7 @@ export default function JourneyViewer() {
     skipSearchRef.current = true
     setSelected(client); setResults([]); setQuery(client.full_name)
     setLoadingJourney(true); setJourney(null)
+    setNotes([]); setSurvey(null); setAddingNote(false); setNoteText("")
     try {
       const res = await fetch(`/api/journey?clientId=${client.id}`)
       setJourney(await res.json())
@@ -65,7 +132,45 @@ export default function JourneyViewer() {
     }
   }
 
-  function clear() { setQuery(""); setResults([]); setSelected(null); setJourney(null) }
+  function clear() {
+    setQuery(""); setResults([]); setSelected(null); setJourney(null)
+    setNotes([]); setSurvey(null); setAddingNote(false); setNoteText("")
+  }
+
+  async function submitNote() {
+    if (!noteText.trim() || !journey?.client?.id) return
+    setSubmittingNote(true)
+    try {
+      await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: journey.client.id,
+          authorRole: role,
+          noteType,
+          content: noteText.trim(),
+        }),
+      })
+      // Refresh notes list
+      const res = await fetch(`/api/notes?clientId=${journey.client.id}`)
+      const updated = await res.json()
+      setNotes(Array.isArray(updated) ? updated : [])
+      setNoteText("")
+      setAddingNote(false)
+    } finally {
+      setSubmittingNote(false)
+    }
+  }
+
+  function toggleExpand(id: string) {
+    setExpandedNotes(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  const canAddNote = role === "admin" || role === "caseworker"
 
   return (
     <div className="space-y-6">
@@ -218,6 +323,164 @@ export default function JourneyViewer() {
               )
             })}
           </div>
+
+          {/* CASE NOTES SECTION */}
+          <div className="glass rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <FileText size={18} className="text-slate-500 dark:text-slate-400" />
+                <h3 className="font-sora text-lg text-slate-900 dark:text-white">Caseworker Notes</h3>
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-white/[0.08] text-slate-600 dark:text-slate-400">
+                  {notes.length}
+                </span>
+              </div>
+              {canAddNote && !addingNote && (
+                <button
+                  onClick={() => setAddingNote(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors"
+                >
+                  <Plus size={13} /> Add Note
+                </button>
+              )}
+            </div>
+
+            {/* Add note form */}
+            {addingNote && canAddNote && (
+              <div className="glass rounded-xl p-4 space-y-3 border border-white/[0.12]">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">New Note</span>
+                  <button
+                    onClick={() => { setAddingNote(false); setNoteText("") }}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+                <select
+                  value={noteType}
+                  onChange={e => setNoteType(e.target.value)}
+                  className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60 transition-colors"
+                >
+                  <option value="interview">Interview</option>
+                  <option value="call">Call</option>
+                  <option value="meeting">Meeting</option>
+                  <option value="observation">Observation</option>
+                </select>
+                <textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  placeholder="Enter note content…"
+                  rows={4}
+                  className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60 transition-colors resize-none"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => { setAddingNote(false); setNoteText("") }}
+                    className="px-3 py-1.5 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitNote}
+                    disabled={!noteText.trim() || submittingNote}
+                    className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium transition-colors"
+                  >
+                    {submittingNote ? "Saving…" : "Save Note"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Notes list */}
+            {notes.length === 0 ? (
+              <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">No case notes yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {notes.map(note => {
+                  const color = NOTE_TYPE_COLORS[note.note_type] ?? "#6b7280"
+                  const Icon = NOTE_ICONS[note.note_type] ?? FileText
+                  const isExpanded = expandedNotes.has(note.id)
+                  const lines = note.content.split("\n")
+                  const isLong = note.content.length > 240 || lines.length > 3
+                  return (
+                    <div key={note.id} className="flex gap-3">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ background: `${color}22`, border: `1.5px solid ${color}50` }}
+                      >
+                        <Icon size={14} style={{ color }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span
+                            className="px-2 py-0.5 rounded-full text-xs font-medium capitalize"
+                            style={{ background: `${color}22`, color }}
+                          >
+                            {note.note_type}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{note.author_role}</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500 ml-auto">{formatDate(note.created_at)}</span>
+                        </div>
+                        <p className={`text-slate-600 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap ${!isExpanded && isLong ? "line-clamp-3" : ""}`}>
+                          {note.content}
+                        </p>
+                        {isLong && (
+                          <button
+                            onClick={() => toggleExpand(note.id)}
+                            className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline mt-1"
+                          >
+                            {isExpanded ? "Show less" : "Show more"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* SURVEY RESULT CARD */}
+          {survey && survey.satisfaction != null && (
+            <div className="glass rounded-xl p-5 space-y-3" style={{ borderColor: "rgba(245,158,11,0.25)" }}>
+              <div className="flex items-center gap-2">
+                <Star size={18} className="text-amber-500 dark:text-amber-400" />
+                <h3 className="font-sora text-lg text-slate-900 dark:text-white">Client Survey</h3>
+                {survey.outcome_confirmed && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs rounded-full border border-emerald-500/30">
+                    <CheckCircle size={10} /> Outcome confirmed
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <Star
+                    key={n}
+                    size={20}
+                    style={{
+                      color: n <= survey.satisfaction! ? "#f59e0b" : undefined,
+                      fill: n <= survey.satisfaction! ? "#f59e0b" : "none",
+                    }}
+                    className={n <= survey.satisfaction! ? "" : "text-slate-300 dark:text-slate-600"}
+                  />
+                ))}
+                <span className="text-sm text-slate-600 dark:text-slate-400 ml-2">{survey.satisfaction}/5</span>
+              </div>
+              {survey.would_recommend && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">Would recommend SfC to others</p>
+              )}
+              {survey.comments && (
+                <blockquote className="border-l-2 border-amber-400 pl-3 text-slate-600 dark:text-slate-300 text-sm italic leading-relaxed">
+                  {survey.comments}
+                </blockquote>
+              )}
+              {survey.drop_reason && (
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06]">Drop reason: {survey.drop_reason}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

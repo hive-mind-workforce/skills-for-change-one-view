@@ -1,12 +1,14 @@
 "use client"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { Home, Plus, Download, Sparkles, Info, Lock, Route, ScrollText } from "lucide-react"
+import { Home, Plus, Download, Sparkles, Info, Lock, Route, ScrollText, BarChart2, Layers } from "lucide-react"
 
 const TABS = [
   { href: "/", label: "Dashboard", icon: Home, minRole: "viewer", tour: "dashboard" },
   { href: "/intake", label: "Intake", icon: Plus, minRole: "caseworker", tour: "intake" },
   { href: "/journeys", label: "Journeys", icon: Route, minRole: "caseworker", tour: "journeys" },
+  { href: "/analytics", label: "Analytics", icon: BarChart2, minRole: "viewer", tour: "analytics" },
+  { href: "/pipeline", label: "Pipeline", icon: Layers, minRole: "caseworker", tour: "pipeline" },
   { href: "/export", label: "Export", icon: Download, minRole: "admin", tour: "export" },
   { href: "/ai", label: "AI Reports", icon: Sparkles, minRole: "caseworker", tour: "ai" },
   { href: "/audit", label: "Audit", icon: ScrollText, minRole: "admin", tour: "audit" },

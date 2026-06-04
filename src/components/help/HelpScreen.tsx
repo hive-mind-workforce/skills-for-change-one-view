@@ -1,6 +1,6 @@
 "use client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Info, Network, User, Plug, Shield, Bot, ArrowRightLeft } from "lucide-react"
+import { Info, Network, User, Plug, Shield, Bot, ArrowRightLeft, Users } from "lucide-react"
 import AboutTab from "./tabs/AboutTab"
 import ArchitectureTab from "./tabs/ArchitectureTab"
 import JourneyTab from "./tabs/JourneyTab"
@@ -8,6 +8,7 @@ import IntegrationsTab from "./tabs/IntegrationsTab"
 import PrivacyTab from "./tabs/PrivacyTab"
 import AIAgentsTab from "./tabs/AIAgentsTab"
 import MigrationTab from "./tabs/MigrationTab"
+import ChangeManagementTab from "./tabs/ChangeManagementTab"
 
 export default function HelpScreen() {
   return (
@@ -25,6 +26,7 @@ export default function HelpScreen() {
           <TabsTrigger value="privacy" className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 data-active:bg-emerald-500/20 data-active:!text-emerald-600 dark:data-active:!text-emerald-400"><Shield size={14} />Privacy</TabsTrigger>
           <TabsTrigger value="ai-agents" className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 data-active:bg-emerald-500/20 data-active:!text-emerald-600 dark:data-active:!text-emerald-400"><Bot size={14} />AI Agents</TabsTrigger>
           <TabsTrigger value="migration" className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 data-active:bg-emerald-500/20 data-active:!text-emerald-600 dark:data-active:!text-emerald-400"><ArrowRightLeft size={14} />Migration Plan</TabsTrigger>
+          <TabsTrigger value="change" className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 data-active:bg-emerald-500/20 data-active:!text-emerald-600 dark:data-active:!text-emerald-400"><Users size={14} />Change Mgmt</TabsTrigger>
         </TabsList>
         <TabsContent value="about" className="mt-6"><AboutTab /></TabsContent>
         <TabsContent value="architecture" className="mt-6"><ArchitectureTab /></TabsContent>
@@ -33,6 +35,7 @@ export default function HelpScreen() {
         <TabsContent value="privacy" className="mt-6"><PrivacyTab /></TabsContent>
         <TabsContent value="ai-agents" className="mt-6"><AIAgentsTab /></TabsContent>
         <TabsContent value="migration" className="mt-6"><MigrationTab /></TabsContent>
+        <TabsContent value="change" className="mt-6"><ChangeManagementTab /></TabsContent>
       </Tabs>
     </div>
   )

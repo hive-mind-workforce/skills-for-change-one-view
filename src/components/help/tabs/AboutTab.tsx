@@ -1,4 +1,58 @@
-import { GitBranch, ExternalLink, CheckCircle, AlertTriangle, ArrowRight, Zap, Shield, TrendingUp, Database } from "lucide-react"
+import { GitBranch, ExternalLink, CheckCircle, AlertTriangle, ArrowRight, Zap, Shield, TrendingUp, Database, XCircle } from "lucide-react"
+
+const JOURNEY_STAGE_SUMMARY = [
+  {
+    stage: "Outreach",
+    problem: "No source tracking; referral channel unknown",
+    solution: "Source tracked, referral partner recorded",
+  },
+  {
+    stage: "Vetting",
+    problem: "Notes lost in email, no structure, no search",
+    solution: "Structured notes, AI summary, searchable timeline",
+  },
+  {
+    stage: "Eligibility",
+    problem: "Manual checklist per caseworker, never recorded",
+    solution: "Rule-based engine, auto-check, audit trail",
+  },
+  {
+    stage: "Intake",
+    problem: "10+ different form versions, data inconsistent",
+    solution: "Standardized form, consent captured, program auto-assigned",
+  },
+  {
+    stage: "Training",
+    problem: "Excel spreadsheets, no real-time visibility",
+    solution: "Real-time module tracking, milestone alerts",
+  },
+  {
+    stage: "Placement",
+    problem: "Not tracked; funder can't see employment outcomes",
+    solution: "Employer DB, sector, wage data, retention follow-up",
+  },
+  {
+    stage: "Survey",
+    problem: "Optional, ~20% completion rate, results in a drawer",
+    solution: "Auto-sent on close, mandatory, feeds analytics instantly",
+  },
+  {
+    stage: "Reporting",
+    problem: "Manual quarterly reports, 2-3 weeks to produce",
+    solution: "Ad-hoc and monthly, AI-drafted in seconds, funder-shaped CSV",
+  },
+]
+
+const JOURNEY_STAGES = [
+  { stage: "Outreach", before: "Word of mouth, paper flyers, cold calls. No tracking of who was contacted or responded.", after: "Source tracked at intake: walk-in, referral, MS Forms, partner agency. Every touchpoint logged in one place." },
+  { stage: "Vetting", before: "Caseworker interviews never formally recorded. Notes on paper or personal spreadsheets. No institutional memory when staff turn over.", after: "Structured case notes with author, type, and timestamp. Full searchable history per client, accessible to the whole team." },
+  { stage: "Eligibility", before: "Eligibility criteria vary by caseworker. No standard checklist. Inconsistent decisions across the same program.", after: "Program-specific eligibility outcomes seeded at intake. Tier-based tracking: immediate, intermediate, and ultimate." },
+  { stage: "Intake", before: "Each caseworker has their own MS Forms or Word doc version. 10+ variants in circulation at any time.", after: "One standardized intake per program. Configurable fields. Single submission populates all programs and all funders." },
+  { stage: "Training", before: "Training attendance tracked in separate spreadsheets. No link to outcomes data or funder reporting.", after: "Stage updated to training in real time. Outcomes progress visible on the client journey card immediately." },
+  { stage: "Placement", before: "Placement data in a separate Excel file. Employment Ontario gets one export, IRCC gets another — both created manually.", after: "One data entry generates CSV exports for every funder in their exact required column format, on demand." },
+  { stage: "Survey", before: "Exit survey optional and caseworker-dependent. Response rates under 20 percent. No aggregate analysis possible.", after: "Standardized exit survey required to close a journey. Satisfaction score, recommend rate, and barriers captured and charted." },
+  { stage: "Reporting", before: "Narrative reports written from scratch each quarter. Takes two to three weeks. Data is often stale by submission date.", after: "AI drafts narrative from live SQL data in seconds. Monthly or ad-hoc. Funder-specific format applied automatically." },
+]
 
 const PROBLEMS = [
   { title: "Data entered multiple times per client on different systems", desc: "Each funder (IRCC, Employment Ontario, Community Foundations, City of Toronto) has its own portal with its own column spec. Staff copy-paste the same client record into each one, every reporting cycle." },
@@ -56,6 +110,46 @@ export default function AboutTab() {
           <div className="text-center">
             <div className="font-sora text-4xl text-indigo-500 dark:text-indigo-400">1×</div>
             <div className="text-slate-500 text-sm">data entry with OneView</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="glass rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <ArrowRight size={16} className="text-slate-500 dark:text-slate-400" />
+          <h3 className="font-sora text-lg text-slate-800 dark:text-slate-200">The Client Journey Today: How It Should Work</h3>
+        </div>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-5 ml-6">Every client passes through 8 stages. Today each stage is a data silo. OneView connects them into one auditable record.</p>
+        <div className="grid lg:grid-cols-2 gap-4">
+          <div className="p-4 border border-rose-500/20 bg-rose-500/[0.03] rounded-xl space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <XCircle size={14} className="text-rose-600 dark:text-rose-400" />
+              <span className="font-sora text-sm text-rose-600 dark:text-rose-400">Current State: Manual and Fragmented</span>
+            </div>
+            {JOURNEY_STAGE_SUMMARY.map((s) => (
+              <div key={s.stage} className="flex items-start gap-3 p-2 rounded-lg bg-rose-500/[0.04]">
+                <span className="text-rose-600 dark:text-rose-400 font-bold text-xs mt-0.5 flex-shrink-0">✕</span>
+                <div className="min-w-0">
+                  <span className="inline-block px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-300 text-xs font-medium mr-2">{s.stage}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">{s.problem}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="p-4 border border-emerald-500/20 bg-emerald-500/[0.03] rounded-xl space-y-2">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle size={14} className="text-emerald-600 dark:text-emerald-400" />
+              <span className="font-sora text-sm text-emerald-600 dark:text-emerald-400">With OneView</span>
+            </div>
+            {JOURNEY_STAGE_SUMMARY.map((s) => (
+              <div key={s.stage} className="flex items-start gap-3 p-2 rounded-lg bg-emerald-500/[0.04]">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold text-xs mt-0.5 flex-shrink-0">✓</span>
+                <div className="min-w-0">
+                  <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-medium mr-2">{s.stage}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">{s.solution}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -120,6 +214,34 @@ export default function AboutTab() {
             <div key={i} className="p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.06] rounded-xl">
               <div className={`font-sora text-sm mb-2 ${f.color}`}>{f.label}</div>
               <p className="text-slate-500 text-xs leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="glass rounded-xl p-6">
+        <h3 className="font-sora text-xl text-slate-900 dark:text-white mb-1">Client Journey: Before and After OneView</h3>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Eight stages of the SfC client lifecycle — and what changes with OneView at every step.</p>
+        <div className="space-y-3">
+          {JOURNEY_STAGES.map(({ stage, before, after }) => (
+            <div key={stage} className="grid md:grid-cols-[120px_1fr_1fr] gap-3 items-start">
+              <div className="flex items-center gap-2 md:justify-end">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{stage}</span>
+              </div>
+              <div className="rounded-lg p-3 bg-rose-500/8 border border-rose-500/20">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />
+                  <span className="text-xs font-medium text-rose-600 dark:text-rose-400">Before</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{before}</p>
+              </div>
+              <div className="rounded-lg p-3 bg-emerald-500/8 border border-emerald-500/20">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">After</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{after}</p>
+              </div>
             </div>
           ))}
         </div>
