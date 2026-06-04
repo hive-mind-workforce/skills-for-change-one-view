@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://skills-for-change-one-view.vercel.app/sitemap.xml

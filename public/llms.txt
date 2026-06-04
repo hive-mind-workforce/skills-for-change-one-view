@@ -1,0 +1,110 @@
+# OneView by Skills for Change
+> Outcomes tracking and funder reporting platform for immigrants and refugees in Toronto.
+
+## Purpose
+
+OneView allows Skills for Change staff to capture client data once and automatically generate reports for 4 funders (IRCC, Employment Ontario, United Way, City of Toronto) across 8 programs. It includes AI narrative generation, funder CSV export, privacy compliance, and RBAC.
+
+## Base URL
+
+https://skills-for-change-one-view.vercel.app
+
+## API Endpoints
+
+### GET /api/health
+Returns: {status:"ok", db:true, version:"1.0.0"}
+Auth: Public
+
+### GET /api/init
+Initializes database tables and seeds demo data if empty.
+Returns: {initialized:true, seeded:boolean}
+Auth: Public
+
+### GET /api/clients
+Returns all clients with enrolments and outcome counts.
+Returns: {clients:[{id,full_name,primary_language,immigration_stream,program,funder,consent_cross_program,enrolled_at,outcomes_achieved,outcomes_total}], metrics:{total,active,crossProgram,outcomesAchievedPct,byProgram}}
+Auth: Caseworker or higher
+
+### POST /api/clients
+Create a new client.
+Body: {full_name:string, primary_language:string, immigration_stream:string, program:string, funder?:string, consent_cross_program?:boolean}
+Returns: {clientId:string, enrolId:string} (201)
+Auth: Caseworker or higher
+
+### POST /api/export
+Generate a funder-specific CSV.
+Body: {funder:"ircc"|"eo"|"uw"|"city"}
+Returns: {headers:string[], rows:string[][], funder:string, label:string, count:number}
+Auth: Admin
+
+### POST /api/draft-report
+Generate AI narrative for a funder report.
+Body: {funder:string, period:string, forceLive?:boolean}
+Returns: {narrative:string, cached:boolean, metrics:object}
+Auth: Admin
+
+### POST /api/query
+Ask a question about program metrics.
+Body: {question:string}
+Returns: {answer:string, metrics:object}
+Auth: Caseworker or higher
+
+### POST /api/reset
+Truncate all tables and re-seed 16,247 demo clients.
+Body: {}
+Returns: {success:true, message:string}
+Auth: Admin only
+
+### GET /api/provider
+Returns current LLM provider.
+Returns: {provider:"gemini"|"claude"|"groq"}
+Auth: Public
+
+## Authentication
+
+Demo mode: add ?role=admin|caseworker|viewer to any URL.
+AI Agent mode: Authorization: Bearer <ONEVIEW_API_KEY> header.
+Default role when no param: admin.
+
+## Programs and Funders
+
+settlement -> ircc
+language -> ircc
+employment -> eo
+trades -> eo
+mental_health -> uw
+youth -> uw
+mentoring -> city
+women -> city
+
+## Privacy Rules
+
+PHI Wall: mental_health program data is ALWAYS excluded from cross-program queries. This is a PHIPA requirement enforced at SQL level.
+
+Consent: Set consent_cross_program=true in enrolments for cross-program data sharing. Requires verbal client consent.
+
+## Data Model
+
+clients: id(uuid), full_name, primary_language, immigration_stream, created_at
+enrolments: id, client_id, program, funder, consent_cross_program(bool), enrolled_at
+outcomes: id, enrolment_id, tier(immediate|intermediate|ultimate), label, achieved(bool), recorded_at
+audit_log: id, action, entity, detail(jsonb), user_role, source_ip, at
+report_cache: id, funder, period, narrative, created_at
+
+## Environment Variables
+
+LLM_PROVIDER: gemini (default), claude, or groq
+LLM_API_KEY: API key for the selected LLM provider
+POSTGRES_URL: Vercel Postgres connection string
+ONEVIEW_API_KEY: Bearer token for AI Agent role
+
+## Reset Demo Data
+
+POST /api/reset truncates all tables and re-seeds 16,247 demo clients across 8 programs.
+
+## Integration Notes
+
+Microsoft Forms: Configure Power Automate HTTP action to POST to /api/clients with mapped fields.
+Salesforce: Configure Outbound Message or REST webhook to /api/clients.
+iCARE: Generate CSV via POST /api/export with funder="ircc", upload manually.
+EOIS-CaMS: Generate CSV via POST /api/export with funder="eo", upload manually.
