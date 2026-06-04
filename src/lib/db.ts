@@ -70,6 +70,13 @@ export async function initDB() {
     success_story text,
     completed_at timestamptz DEFAULT NOW()
   )`
+  await sql`ALTER TABLE surveys ADD COLUMN IF NOT EXISTS outcome_confirmed boolean DEFAULT false`
+  // Unique constraint so we can upsert surveys per client
+  await sql`DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'surveys_client_id_unique') THEN
+      ALTER TABLE surveys ADD CONSTRAINT surveys_client_id_unique UNIQUE (client_id);
+    END IF;
+  END $$`
   await sql`CREATE TABLE IF NOT EXISTS placements (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id uuid REFERENCES clients(id) ON DELETE CASCADE,
@@ -488,6 +495,98 @@ export async function getClientSurvey(clientId: string) {
     WHERE s.client_id = ${clientId}
     ORDER BY s.completed_at DESC LIMIT 1`
   return result.rows[0] ?? null
+}
+
+export async function updateClient(clientId: string, data: {
+  full_name?: string
+  primary_language?: string
+  immigration_stream?: string
+  stage?: string
+  country_of_origin?: string
+  age_group?: string
+  gender?: string
+}) {
+  const fields: string[] = []
+  const values: any[] = []
+  let i = 1
+  for (const [key, val] of Object.entries(data)) {
+    if (val !== undefined) {
+      fields.push(`${key} = $${i++}`)
+      values.push(val)
+    }
+  }
+  if (fields.length === 0) return
+  values.push(clientId)
+  await sql.query(
+    `UPDATE clients SET ${fields.join(", ")} WHERE id = $${i}`,
+    values
+  )
+}
+
+export async function updateEnrolment(enrolmentId: string, data: {
+  program?: string
+  funder?: string
+  consent_cross_program?: boolean
+}) {
+  const fields: string[] = []
+  const values: any[] = []
+  let i = 1
+  for (const [key, val] of Object.entries(data)) {
+    if (val !== undefined) {
+      fields.push(`${key} = $${i++}`)
+      values.push(val)
+    }
+  }
+  if (fields.length === 0) return
+  values.push(enrolmentId)
+  await sql.query(
+    `UPDATE enrolments SET ${fields.join(", ")} WHERE id = $${i}`,
+    values
+  )
+}
+
+export async function updateOutcome(outcomeId: string, achieved: boolean) {
+  await sql`UPDATE outcomes SET achieved = ${achieved}, recorded_at = NOW() WHERE id = ${outcomeId}`
+}
+
+export async function deleteClient(clientId: string) {
+  // Cascades to enrolments → outcomes via ON DELETE CASCADE
+  await sql`DELETE FROM clients WHERE id = ${clientId}`
+}
+
+export async function createSurvey(data: {
+  clientId: string
+  enrolmentId: string
+  satisfaction: number | null
+  wouldRecommend: boolean
+  barriers?: string | null
+  successStory?: string | null
+}) {
+  await sql.query(
+    `INSERT INTO surveys (client_id, enrolment_id, satisfaction, would_recommend, barriers, success_story)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT ON CONSTRAINT surveys_client_id_unique DO UPDATE SET
+       satisfaction = EXCLUDED.satisfaction,
+       would_recommend = EXCLUDED.would_recommend,
+       barriers = EXCLUDED.barriers,
+       success_story = EXCLUDED.success_story,
+       completed_at = NOW()`,
+    [data.clientId, data.enrolmentId, data.satisfaction, data.wouldRecommend, data.barriers ?? null, data.successStory ?? null]
+  )
+}
+
+export async function applyRLS() {
+  // Postgres RLS: mental_health rows are only visible to connections with app.bypass_phi=true
+  await sql`ALTER TABLE enrolments ENABLE ROW LEVEL SECURITY`
+  await sql`
+    CREATE POLICY IF NOT EXISTS phi_wall ON enrolments
+    AS RESTRICTIVE
+    FOR ALL
+    TO PUBLIC
+    USING (
+      program != 'mental_health'
+      OR current_setting('app.bypass_phi', true) = 'true'
+    )`
 }
 
 export async function getClientsForExport(programs: string[]) {
