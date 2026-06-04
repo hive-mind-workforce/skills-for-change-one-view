@@ -4,10 +4,10 @@ import { Download, Zap, FileText } from "lucide-react"
 import NarrativePanel from "./NarrativePanel"
 
 const FUNDERS = [
-  { key:"ircc", label:"IRCC", sub:"Immigration, Refugees and Citizenship Canada", programs:["Settlement","Language"], color:"#10b981" },
-  { key:"eo", label:"Employment Ontario", sub:"Ministry of Labour, Training and Skills Development", programs:["Employment","Trades"], color:"#6366f1" },
-  { key:"uw", label:"United Way", sub:"United Way Greater Toronto", programs:["Mental Health","Youth"], color:"#f59e0b" },
-  { key:"city", label:"City of Toronto", sub:"Social Development Finance and Administration", programs:["Mentoring","Women's"], color:"#8b5cf6" },
+  { key:"ircc", label:"IRCC", sub:"Immigration, Refugees and Citizenship Canada", programs:["Settlement Services","LINC Language Training"], color:"#10b981", stat:"7,130 clients", photo:"https://images.unsplash.com/photo-1569025690938-a00729c9e1f9?w=400&q=60" },
+  { key:"eo", label:"Employment Ontario", sub:"Ministry of Labour, Training and Skills Development", programs:["Employment Services","Skilled Trades"], color:"#6366f1", stat:"6,360 clients", photo:"https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=60" },
+  { key:"uw", label:"Community Foundations", sub:"Toronto Foundation · Laidlaw Foundation · United Way", programs:["Mental Health and Wellness","Youth Programs"], color:"#f59e0b", stat:"2,860 clients", photo:"https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=400&q=60" },
+  { key:"city", label:"City of Toronto", sub:"Social Development, Finance and Administration", programs:["Mentoring for Change","Women's Programs"], color:"#8b5cf6", stat:"2,790 clients", photo:"https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=60" },
 ]
 
 export default function ExportPanel() {
@@ -51,13 +51,23 @@ export default function ExportPanel() {
           <button
             key={f.key}
             onClick={() => setSelected(f.key)}
-            className={`glass-hover text-left p-5 rounded-xl border transition-all ${selected===f.key ? "border-emerald-400/50 bg-emerald-500/5" : "border-white/[0.08]"}`}
-            style={{ borderLeftWidth: 3, borderLeftColor: f.color }}
+            className={`glass-hover text-left rounded-xl border overflow-hidden transition-all ${selected===f.key ? "border-emerald-400/50 ring-1 ring-emerald-400/30" : "border-white/[0.08]"}`}
           >
-            <div className="font-sora text-lg text-white">{f.label}</div>
-            <div className="text-slate-500 text-xs mt-0.5 mb-3">{f.sub}</div>
-            <div className="flex flex-wrap gap-1.5">
-              {f.programs.map(p => <span key={p} className="px-2 py-0.5 bg-white/[0.06] rounded-full text-xs text-slate-300">{p}</span>)}
+            <div className="relative h-24">
+              <img src={f.photo} alt={f.label} className="w-full h-full object-cover" />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to right, ${f.color}66, #06061099)` }} />
+              <div className="absolute inset-0 p-4 flex items-end">
+                <div>
+                  <div className="font-sora text-lg text-white">{f.label}</div>
+                  <div className="text-white/70 text-xs">{f.stat}</div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4" style={{ borderTop: `2px solid ${f.color}40` }}>
+              <div className="text-slate-400 text-xs mb-2">{f.sub}</div>
+              <div className="flex flex-wrap gap-1.5">
+                {f.programs.map(p => <span key={p} className="px-2 py-0.5 rounded-full text-xs text-slate-300" style={{ background:`${f.color}22` }}>{p}</span>)}
+              </div>
             </div>
           </button>
         ))}

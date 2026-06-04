@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneView — Navigation Pattern</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #0f0f13; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+
+  .page-title { text-align: center; margin-bottom: 8px; }
+  .page-title h1 { font-size: 22px; font-weight: 700; color: #fff; }
+  .page-title p { font-size: 14px; color: #94a3b8; margin-top: 4px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 24px; max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+  .card {
+    border-radius: 16px; overflow: hidden; cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.06);
+    transition: all 0.2s ease;
+    background: #1a1a24;
+  }
+  .card:hover { transform: translateY(-3px); border-color: rgba(16,185,129,0.4); }
+  .card.selected { border-color: #10b981 !important; }
+  .card.selected::after {
+    content: '✓ Selected';
+    position: absolute;
+    top: 12px; right: 12px;
+    background: #10b981; color: white;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px;
+    z-index: 100; letter-spacing: 0.5px;
+  }
+  .card { position: relative; }
+
+  /* Phone frame */
+  .phone-frame {
+    width: 180px; height: 320px;
+    border-radius: 28px;
+    border: 6px solid #222230;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+    position: relative;
+    background: #f8fffe;
+  }
+  .phone-notch {
+    height: 16px; background: #222230;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .phone-notch-pill { width: 40px; height: 6px; background: #111; border-radius: 3px; }
+
+  /* Desktop frame */
+  .desktop-frame {
+    width: 100%; height: 220px;
+    background: #f8fffe;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .preview-area { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; background: #13131e; }
+  .preview-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #475569; font-weight: 700; }
+  .frames-row { display: flex; gap: 16px; align-items: flex-start; justify-content: center; }
+
+  .card-label { padding: 14px 18px 16px; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-bottom: 8px; background: rgba(16,185,129,0.12); color: #34d399; }
+  .card-label h3 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 5px; }
+  .card-label p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .pros-cons { display: flex; gap: 8px; margin-top: 8px; }
+  .pro, .con { font-size: 10px; }
+  .pro { color: #4ade80; }
+  .con { color: #f87171; }
+
+  /* ========== NAV A: Top Nav Bar ========== */
+  .nav-a-bar {
+    height: 36px;
+    background: linear-gradient(135deg, #065f46, #059669);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px;
+  }
+  .nav-a-logo { font-size: 10px; font-weight: 900; color: #fff; letter-spacing: 0.5px; }
+  .nav-a-hamburger { display: flex; flex-direction: column; gap: 3px; }
+  .nav-a-hamburger span { display: block; width: 16px; height: 2px; background: rgba(255,255,255,0.8); border-radius: 1px; }
+  .nav-a-content { padding: 10px; }
+  .nav-a-heading { font-size: 12px; font-weight: 900; color: #065f46; margin-bottom: 8px; }
+  .nav-a-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+  .nav-a-stat { background: #fff; border-radius: 6px; padding: 6px 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .nav-a-stat-num { font-size: 13px; font-weight: 900; color: #065f46; }
+  .nav-a-stat-label { font-size: 7px; color: #6b7280; }
+  .nav-a-chart { background: #fff; border-radius: 6px; padding: 7px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .nav-a-bars { display: flex; align-items: flex-end; gap: 3px; height: 40px; }
+  .nav-a-bar { flex: 1; border-radius: 2px 2px 0 0; }
+  /* Desktop version of nav A */
+  .nav-a-desktop-bar {
+    height: 44px;
+    background: linear-gradient(135deg, #065f46, #059669);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+  }
+  .nav-a-desktop-links { display: flex; gap: 20px; }
+  .nav-a-desktop-link { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; cursor: pointer; }
+  .nav-a-desktop-link.active { color: #fff; border-bottom: 2px solid rgba(255,255,255,0.8); padding-bottom: 1px; }
+  .nav-a-desktop-body { padding: 16px; }
+  .nav-a-desktop-title { font-size: 16px; font-weight: 900; color: #065f46; margin-bottom: 10px; }
+  .nav-a-desktop-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .nav-a-desktop-stat { background: #fff; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .nav-a-desktop-num { font-size: 18px; font-weight: 900; color: #065f46; }
+  .nav-a-desktop-lbl { font-size: 9px; color: #6b7280; }
+
+  /* ========== NAV B: Bottom Tab Bar ========== */
+  .nav-b-topbar {
+    height: 36px;
+    background: linear-gradient(135deg, #065f46, #059669);
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 10px;
+  }
+  .nav-b-topbar-title { font-size: 11px; font-weight: 800; color: #fff; letter-spacing: 0.3px; }
+  .nav-b-content { padding: 10px; flex: 1; }
+  .nav-b-heading { font-size: 11px; font-weight: 900; color: #065f46; margin-bottom: 6px; }
+  .nav-b-cards { display: flex; gap: 5px; margin-bottom: 6px; }
+  .nav-b-card { flex: 1; background: #fff; border-radius: 6px; padding: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-align: center; }
+  .nav-b-card-num { font-size: 12px; font-weight: 900; color: #065f46; }
+  .nav-b-card-lbl { font-size: 6px; color: #6b7280; margin-top: 1px; }
+  .nav-b-section { background: #fff; border-radius: 6px; padding: 7px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .nav-b-section-title { font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; color: #9ca3af; margin-bottom: 5px; font-weight: 700; }
+  .nav-b-prog-row { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+  .nav-b-prog-label { font-size: 7px; color: #374151; width: 45px; flex-shrink: 0; }
+  .nav-b-prog-track { flex: 1; height: 5px; background: #e5e7eb; border-radius: 3px; }
+  .nav-b-prog-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #059669, #34d399); }
+  .nav-b-prog-pct { font-size: 7px; color: #059669; font-weight: 700; width: 20px; text-align: right; }
+  .nav-b-bottom-bar {
+    height: 44px;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0 4px;
+  }
+  .nav-b-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 4px 8px; border-radius: 8px; }
+  .nav-b-tab.active { background: rgba(5,150,105,0.08); }
+  .nav-b-tab-icon { font-size: 14px; }
+  .nav-b-tab-label { font-size: 7px; font-weight: 600; color: #9ca3af; }
+  .nav-b-tab.active .nav-b-tab-label { color: #059669; }
+  /* Desktop nav B: becomes top nav */
+  .nav-b-desktop-top {
+    height: 44px;
+    background: linear-gradient(135deg, #065f46, #059669);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+  }
+  .nav-b-desktop-logo { font-size: 12px; font-weight: 900; color: #fff; }
+  .nav-b-desktop-tabs { display: flex; gap: 4px; }
+  .nav-b-desktop-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 14px; border-radius: 8px; cursor: pointer; }
+  .nav-b-desktop-tab.active { background: rgba(255,255,255,0.15); }
+  .nav-b-desktop-tab-icon { font-size: 14px; }
+  .nav-b-desktop-tab-label { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.7); }
+  .nav-b-desktop-tab.active .nav-b-desktop-tab-label { color: #fff; }
+  .nav-b-desktop-body { padding: 16px; }
+  .nav-b-desktop-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .nav-b-desktop-kpi { background: #fff; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+  /* ========== NAV C: Sidebar + Drawer ========== */
+  .nav-c-wrapper { display: flex; height: 100%; }
+  .nav-c-drawer {
+    width: 160px; flex-shrink: 0;
+    background: #065f46;
+    padding: 12px 0;
+    display: flex; flex-direction: column;
+  }
+  .nav-c-brand { padding: 0 12px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; }
+  .nav-c-brand-name { font-size: 11px; font-weight: 900; color: #fff; letter-spacing: 0.5px; }
+  .nav-c-brand-sub { font-size: 8px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+  .nav-c-item { display: flex; align-items: center; gap: 8px; padding: 6px 12px; cursor: pointer; border-radius: 0; }
+  .nav-c-item.active { background: rgba(255,255,255,0.12); }
+  .nav-c-item-icon { font-size: 13px; }
+  .nav-c-item-label { font-size: 10px; color: rgba(255,255,255,0.7); font-weight: 600; }
+  .nav-c-item.active .nav-c-item-label { color: #fff; }
+  .nav-c-main { flex: 1; padding: 10px; background: #f8fffe; overflow: auto; }
+  .nav-c-title { font-size: 11px; font-weight: 900; color: #065f46; margin-bottom: 8px; }
+  .nav-c-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .nav-c-stat { background: #fff; border-radius: 6px; padding: 7px 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .nav-c-stat-num { font-size: 12px; font-weight: 900; color: #065f46; }
+  .nav-c-stat-lbl { font-size: 7px; color: #6b7280; }
+  /* Mobile: sidebar collapses to hamburger overlay */
+  .nav-c-phone-wrapper { display: flex; flex-direction: column; height: 100%; }
+  .nav-c-phone-topbar {
+    height: 36px; background: linear-gradient(135deg, #065f46, #059669);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 10px;
+  }
+  .nav-c-phone-logo { font-size: 10px; font-weight: 900; color: #fff; }
+  .nav-c-phone-menu { display: flex; flex-direction: column; gap: 3px; }
+  .nav-c-phone-menu span { display: block; width: 16px; height: 2px; background: rgba(255,255,255,0.8); border-radius: 1px; }
+  .nav-c-phone-content { padding: 10px; flex: 1; background: #f8fffe; }
+  /* Desktop sidebar */
+  .nav-c-desktop { display: flex; height: 100%; }
+  .nav-c-desktop-sidebar {
+    width: 140px; background: #065f46;
+    display: flex; flex-direction: column; padding: 12px 0;
+  }
+  .nav-c-desktop-brand { padding: 0 12px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; }
+  .nav-c-desktop-brand-name { font-size: 11px; font-weight: 900; color: #fff; }
+  .nav-c-desktop-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px; cursor: pointer; }
+  .nav-c-desktop-item.active { background: rgba(255,255,255,0.12); }
+  .nav-c-desktop-item-icon { font-size: 12px; }
+  .nav-c-desktop-item-label { font-size: 10px; color: rgba(255,255,255,0.7); font-weight: 600; }
+  .nav-c-desktop-item.active .nav-c-desktop-item-label { color: #fff; }
+  .nav-c-desktop-main { flex: 1; padding: 14px; background: #f8fffe; }
+  .nav-c-desktop-title { font-size: 15px; font-weight: 900; color: #065f46; margin-bottom: 10px; }
+  .nav-c-desktop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .nav-c-desktop-stat { background: #fff; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .nav-c-desktop-num { font-size: 18px; font-weight: 900; color: #065f46; }
+  .nav-c-desktop-lbl { font-size: 9px; color: #6b7280; }
+
+  .footer-note { text-align: center; margin-top: 20px; font-size: 12px; color: #475569; }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>Navigation Pattern</h1>
+  <p>How users move between the 4 tabs — on both mobile and desktop</p>
+</div>
+
+<div class="grid">
+
+  <!-- NAV A: Top Nav / Hamburger -->
+  <div class="card" onclick="select(this, 'top-nav')">
+    <div class="preview-area">
+      <div class="frames-row">
+        <!-- Mobile -->
+        <div>
+          <div class="preview-label" style="text-align:center;margin-bottom:6px">Mobile</div>
+          <div class="phone-frame">
+            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+            <div class="nav-a-bar">
+              <div class="nav-a-logo">OneView</div>
+              <div class="nav-a-hamburger"><span></span><span></span><span></span></div>
+            </div>
+            <div class="nav-a-content">
+              <div class="nav-a-heading">Org Dashboard</div>
+              <div class="nav-a-stats">
+                <div class="nav-a-stat">
+                  <div class="nav-a-stat-num">16,247</div>
+                  <div class="nav-a-stat-label">Total Clients</div>
+                </div>
+                <div class="nav-a-stat">
+                  <div class="nav-a-stat-num">2,340</div>
+                  <div class="nav-a-stat-label">Hrs Saved</div>
+                </div>
+                <div class="nav-a-stat">
+                  <div class="nav-a-stat-num">25+</div>
+                  <div class="nav-a-stat-label">Programs</div>
+                </div>
+                <div class="nav-a-stat">
+                  <div class="nav-a-stat-num">4</div>
+                  <div class="nav-a-stat-label">Funders</div>
+                </div>
+              </div>
+              <div class="nav-a-chart">
+                <div style="font-size:7px;color:#9ca3af;margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Program Volume</div>
+                <div class="nav-a-bars">
+                  <div class="nav-a-bar" style="height:40px;background:linear-gradient(180deg,#059669,#34d399)"></div>
+                  <div class="nav-a-bar" style="height:32px;background:#d1fae5"></div>
+                  <div class="nav-a-bar" style="height:24px;background:#d1fae5"></div>
+                  <div class="nav-a-bar" style="height:16px;background:#d1fae5"></div>
+                  <div class="nav-a-bar" style="height:18px;background:#d1fae5"></div>
+                  <div class="nav-a-bar" style="height:10px;background:#d1fae5"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Desktop -->
+        <div style="flex:1">
+          <div class="preview-label" style="text-align:center;margin-bottom:6px">Desktop</div>
+          <div class="desktop-frame">
+            <div class="nav-a-desktop-bar">
+              <div class="nav-a-logo">OneView</div>
+              <div class="nav-a-desktop-links">
+                <div class="nav-a-desktop-link active">Dashboard</div>
+                <div class="nav-a-desktop-link">Intake</div>
+                <div class="nav-a-desktop-link">AI M&E</div>
+                <div class="nav-a-desktop-link">Export</div>
+              </div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.6)">⚠ Synthetic</div>
+            </div>
+            <div class="nav-a-desktop-body">
+              <div class="nav-a-desktop-title">Org Dashboard</div>
+              <div class="nav-a-desktop-grid">
+                <div class="nav-a-desktop-stat"><div class="nav-a-desktop-num">16,247</div><div class="nav-a-desktop-lbl">Total Clients</div></div>
+                <div class="nav-a-desktop-stat"><div class="nav-a-desktop-num">2,340</div><div class="nav-a-desktop-lbl">Hours Saved</div></div>
+                <div class="nav-a-desktop-stat"><div class="nav-a-desktop-num">25+</div><div class="nav-a-desktop-lbl">Programs</div></div>
+                <div class="nav-a-desktop-stat"><div class="nav-a-desktop-num">4</div><div class="nav-a-desktop-lbl">Funder Systems</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-label">
+      <div class="badge">Option A</div>
+      <h3>Top Bar + Hamburger Menu</h3>
+      <p>Classic web-app nav. Green header bar with logo, links visible on desktop. On mobile: hamburger expands a dropdown. Simple and familiar.</p>
+      <div class="pros-cons">
+        <span class="pro">✓ Familiar UX · Max content space on mobile</span>
+      </div>
+      <div class="pros-cons">
+        <span class="con">✗ Hamburger hides navigation — one extra tap per screen</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV B: Bottom Tab Bar -->
+  <div class="card" onclick="select(this, 'bottom-tabs')">
+    <div class="preview-area">
+      <div class="frames-row">
+        <div>
+          <div class="preview-label" style="text-align:center;margin-bottom:6px">Mobile</div>
+          <div class="phone-frame" style="display:flex;flex-direction:column;">
+            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+            <div class="nav-b-topbar"><div class="nav-b-topbar-title">Org Dashboard</div></div>
+            <div class="nav-b-content">
+              <div class="nav-b-heading">16,247 Clients Served</div>
+              <div class="nav-b-cards">
+                <div class="nav-b-card"><div class="nav-b-card-num">2,340</div><div class="nav-b-card-lbl">Hrs Saved</div></div>
+                <div class="nav-b-card"><div class="nav-b-card-num">25+</div><div class="nav-b-card-lbl">Programs</div></div>
+                <div class="nav-b-card"><div class="nav-b-card-num">4</div><div class="nav-b-card-lbl">Funders</div></div>
+              </div>
+              <div class="nav-b-section">
+                <div class="nav-b-section-title">Outcome Funnel</div>
+                <div class="nav-b-prog-row">
+                  <div class="nav-b-prog-label">Needs Assessed</div>
+                  <div class="nav-b-prog-track"><div class="nav-b-prog-fill" style="width:92%"></div></div>
+                  <div class="nav-b-prog-pct">92%</div>
+                </div>
+                <div class="nav-b-prog-row">
+                  <div class="nav-b-prog-label">Skill Gained</div>
+                  <div class="nav-b-prog-track"><div class="nav-b-prog-fill" style="width:61%"></div></div>
+                  <div class="nav-b-prog-pct">61%</div>
+                </div>
+                <div class="nav-b-prog-row">
+                  <div class="nav-b-prog-label">Employed</div>
+                  <div class="nav-b-prog-track"><div class="nav-b-prog-fill" style="width:37%"></div></div>
+                  <div class="nav-b-prog-pct">37%</div>
+                </div>
+              </div>
+            </div>
+            <div class="nav-b-bottom-bar">
+              <div class="nav-b-tab active"><div class="nav-b-tab-icon">📊</div><div class="nav-b-tab-label">Dashboard</div></div>
+              <div class="nav-b-tab"><div class="nav-b-tab-icon">📝</div><div class="nav-b-tab-label">Intake</div></div>
+              <div class="nav-b-tab"><div class="nav-b-tab-icon">🤖</div><div class="nav-b-tab-label">AI M&E</div></div>
+              <div class="nav-b-tab"><div class="nav-b-tab-icon">📤</div><div class="nav-b-tab-label">Export</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div class="preview-label" style="text-align:center;margin-bottom:6px">Desktop</div>
+          <div class="desktop-frame">
+            <div class="nav-b-desktop-top">
+              <div class="nav-b-desktop-logo">OneView</div>
+              <div class="nav-b-desktop-tabs">
+                <div class="nav-b-desktop-tab active"><div class="nav-b-desktop-tab-icon">📊</div><div class="nav-b-desktop-tab-label">Dashboard</div></div>
+                <div class="nav-b-desktop-tab"><div class="nav-b-desktop-tab-icon">📝</div><div class="nav-b-desktop-tab-label">Intake</div></div>
+                <div class="nav-b-desktop-tab"><div class="nav-b-desktop-tab-icon">🤖</div><div class="nav-b-desktop-tab-label">AI M&E</div></div>
+                <div class="nav-b-desktop-tab"><div class="nav-b-desktop-tab-icon">📤</div><div class="nav-b-desktop-tab-label">Export</div></div>
+              </div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.5)">⚠ Synthetic</div>
+            </div>
+            <div class="nav-b-desktop-body">
+              <div style="font-size:14px;font-weight:900;color:#065f46;margin-bottom:8px">Org Dashboard</div>
+              <div class="nav-b-desktop-grid">
+                <div class="nav-b-desktop-kpi"><div style="font-size:18px;font-weight:900;color:#065f46">16,247</div><div style="font-size:9px;color:#6b7280">Total Clients</div></div>
+                <div class="nav-b-desktop-kpi"><div style="font-size:18px;font-weight:900;color:#065f46">2,340</div><div style="font-size:9px;color:#6b7280">Hrs Saved</div></div>
+                <div class="nav-b-desktop-kpi"><div style="font-size:18px;font-weight:900;color:#065f46">25+</div><div style="font-size:9px;color:#6b7280">Programs</div></div>
+                <div class="nav-b-desktop-kpi"><div style="font-size:18px;font-weight:900;color:#065f46">4</div><div style="font-size:9px;color:#6b7280">Funder Systems</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-label">
+      <div class="badge">Option B</div>
+      <h3>Bottom Tab Bar (Mobile-First)</h3>
+      <p>Tabs visible at all times — zero taps to navigate. On desktop, tabs lift to the top header. All 4 screens are always one tap away. Native app feel.</p>
+      <div class="pros-cons">
+        <span class="pro">✓ Best mobile UX · Navigation always visible · Feels like an app</span>
+      </div>
+      <div class="pros-cons">
+        <span class="con">✗ Slightly less vertical space on mobile</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV C: Sidebar Drawer -->
+  <div class="card" onclick="select(this, 'sidebar')">
+    <div class="preview-area">
+      <div class="frames-row">
+        <div>
+          <div class="preview-label" style="text-align:center;margin-bottom:6px">Mobile</div>
+          <div class="phone-frame">
+            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+            <div class="nav-c-phone-wrapper">
+              <div class="nav-c-phone-topbar">
+                <div class="nav-c-phone-logo">☰ OneView</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.6)">Dashboard</div>
+              </div>
+              <div class="nav-c-phone-content">
+                <div style="font-size:10px;font-weight:900;color:#065f46;margin-bottom:6px">Org Dashboard</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+                  <div class="nav-c-stat"><div class="nav-c-stat-num">16,247</div><div class="nav-c-stat-lbl">Clients</div></div>
+                  <div class="nav-c-stat"><div class="nav-c-stat-num">2,340</div><div class="nav-c-stat-lbl">Hrs Saved</div></div>
+                  <div class="nav-c-stat"><div class="nav-c-stat-num">25+</div><div class="nav-c-stat-lbl">Programs</div></div>
+                  <div class="nav-c-stat"><div class="nav-c-stat-num">4</div><div class="nav-c-stat-lbl">Funders</div></div>
+                </div>
+                <div style="background:#fff;border-radius:6px;padding:7px;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
+                  <div style="font-size:7px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:4px">Outcomes</div>
+                  <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+                    <div style="font-size:7px;color:#374151;width:40px;flex-shrink:0">Enrolled</div>
+                    <div style="flex:1;height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:92%;height:100%;background:linear-gradient(90deg,#059669,#34d399);border-radius:3px"></div></div>
+                    <div style="font-size:7px;color:#059669;font-weight:700;width:20px;text-align:right">92%</div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+                    <div style="font-size:7px;color:#374151;width:40px;flex-shrink:0">Skilled</div>
+                    <div style="flex:1;height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="width:61%;height:100%;background:linear-gradient(90deg,#059669,#34d399);border-radius:3px"></div></div>
+                    <div style="font-size:7px;color:#059669;font-weight:700;width:20px;text-align:right">61%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div class="preview-label" style="text-align:center;margin-bottom:6px">Desktop</div>
+          <div class="desktop-frame">
+            <div class="nav-c-desktop">
+              <div class="nav-c-desktop-sidebar">
+                <div class="nav-c-desktop-brand"><div class="nav-c-desktop-brand-name">OneView</div></div>
+                <div class="nav-c-desktop-item active"><div class="nav-c-desktop-item-icon">📊</div><div class="nav-c-desktop-item-label">Dashboard</div></div>
+                <div class="nav-c-desktop-item"><div class="nav-c-desktop-item-icon">📝</div><div class="nav-c-desktop-item-label">Intake</div></div>
+                <div class="nav-c-desktop-item"><div class="nav-c-desktop-item-icon">🤖</div><div class="nav-c-desktop-item-label">AI M&E</div></div>
+                <div class="nav-c-desktop-item"><div class="nav-c-desktop-item-icon">📤</div><div class="nav-c-desktop-item-label">Export</div></div>
+              </div>
+              <div class="nav-c-desktop-main">
+                <div class="nav-c-desktop-title">Org Dashboard</div>
+                <div class="nav-c-desktop-grid">
+                  <div class="nav-c-desktop-stat"><div class="nav-c-desktop-num">16,247</div><div class="nav-c-desktop-lbl">Total Clients</div></div>
+                  <div class="nav-c-desktop-stat"><div class="nav-c-desktop-num">2,340</div><div class="nav-c-desktop-lbl">Hrs Saved</div></div>
+                  <div class="nav-c-desktop-stat"><div class="nav-c-desktop-num">25+</div><div class="nav-c-desktop-lbl">Programs</div></div>
+                  <div class="nav-c-desktop-stat"><div class="nav-c-desktop-num">4</div><div class="nav-c-desktop-lbl">Funder Systems</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-label">
+      <div class="badge">Option C</div>
+      <h3>Sidebar + Mobile Drawer</h3>
+      <p>Persistent sidebar on desktop. On mobile: collapses behind a hamburger, slides out as a drawer. Classic data-app pattern — great for bigger screens, requires extra tap on mobile.</p>
+      <div class="pros-cons">
+        <span class="pro">✓ Lots of desktop real estate · Feels enterprise/credible</span>
+      </div>
+      <div class="pros-cons">
+        <span class="con">✗ Worst mobile UX of the three · Wastes space on phones</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="footer-note" style="margin-top:20px">Click to select · Or tell me in terminal · My recommendation: <strong style="color:#34d399">Option B</strong> — bottom tabs = native app feel on mobile, clean top nav on desktop</p>
+
+<script>
+function select(card, choice) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  if (window.__recordChoice) window.__recordChoice(choice, card.querySelector('h3').textContent.trim());
+}
+</script>
+</body>
+</html>

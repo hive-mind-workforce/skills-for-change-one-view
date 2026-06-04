@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneView — Architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060610;
+  --surface:rgba(255,255,255,0.03);
+  --border:rgba(255,255,255,0.08);
+  --border-hover:rgba(255,255,255,0.2);
+  --text1:#f1f5f9;--text2:#94a3b8;--text3:#475569;
+  --green:#10b981;--indigo:#6366f1;--amber:#f59e0b;
+  --violet:#8b5cf6;--cyan:#06b6d4;--rose:#f43f5e;--blue:#3b82f6;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text1);display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 5% 15%,rgba(16,185,129,0.09) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 95% 85%,rgba(99,102,241,0.09) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 50%,rgba(6,182,212,0.05) 0%,transparent 60%);
+  pointer-events:none}
+body::after{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none}
+
+/* ── SHELL ── */
+.shell{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;overflow:hidden}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 24px 0;flex-shrink:0
+}
+.topbar-left{display:flex;flex-direction:column;gap:3px}
+.topbar-title{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--text1);letter-spacing:-0.4px}
+.topbar-sub{font-size:13px;color:var(--text2)}
+.topbar-hint{font-size:12px;color:var(--text3);padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:20px;letter-spacing:0.2px}
+
+.body{display:flex;gap:16px;flex:1;overflow:hidden;padding:14px 20px 18px}
+
+/* ── DIAGRAM ── */
+.diagram-col{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:6px;padding-right:6px}
+.diagram-col::-webkit-scrollbar{width:4px}
+.diagram-col::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+
+/* ── LAYER ── */
+.layer{border-radius:14px;border:1px solid var(--border);padding:13px 15px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);position:relative;overflow:hidden}
+.layer::before{content:'';position:absolute;inset:0;border-radius:14px;background:var(--surface);z-index:-1}
+
+.layer-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.layer-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.layer-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3)}
+.layer-div{flex:1;height:1px;background:var(--border)}
+
+.nodes{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── NODE ── */
+.node{
+  position:relative;padding:11px 14px;border-radius:10px;
+  border:1px solid var(--border);background:var(--surface);
+  cursor:pointer;transition:all 0.18s cubic-bezier(0.4,0,0.2,1);
+  display:flex;gap:10px;align-items:flex-start;min-width:130px;overflow:hidden
+}
+.node::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.18s;border-radius:10px}
+.node:hover{border-color:var(--border-hover);transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.35)}
+.node:hover::before{opacity:1}
+.node.active{transform:translateY(-2px);box-shadow:0 6px 28px rgba(0,0,0,0.45)}
+
+.node-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.node-name{font-size:13px;font-weight:700;color:var(--text1);line-height:1.2}
+.node-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.3}
+.node-tag{position:absolute;top:6px;right:6px;font-size:8px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px}
+
+/* ── LAYER THEMES ── */
+.layer-sources{border-color:rgba(99,102,241,0.25)}
+.layer-sources .layer-dot{background:var(--indigo);box-shadow:0 0 8px var(--indigo)}
+.layer-sources .node:hover::before{background:rgba(99,102,241,0.08)}
+.layer-sources .node.active{border-color:rgba(99,102,241,0.6);background:rgba(99,102,241,0.08);box-shadow:0 6px 28px rgba(99,102,241,0.2)}
+
+.layer-rbac{border-color:rgba(245,158,11,0.25)}
+.layer-rbac .layer-dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.layer-rbac .node:hover::before{background:rgba(245,158,11,0.07)}
+.layer-rbac .node.active{border-color:rgba(245,158,11,0.55);background:rgba(245,158,11,0.07);box-shadow:0 6px 28px rgba(245,158,11,0.15)}
+
+.layer-data{border-color:rgba(16,185,129,0.25)}
+.layer-data .layer-dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.layer-data .node:hover::before{background:rgba(16,185,129,0.07)}
+.layer-data .node.active{border-color:rgba(16,185,129,0.55);background:rgba(16,185,129,0.07);box-shadow:0 6px 28px rgba(16,185,129,0.15)}
+
+.layer-privacy{border-color:rgba(244,63,94,0.25)}
+.layer-privacy .layer-dot{background:var(--rose);box-shadow:0 0 8px var(--rose)}
+.layer-privacy .node:hover::before{background:rgba(244,63,94,0.07)}
+.layer-privacy .node.active{border-color:rgba(244,63,94,0.55);background:rgba(244,63,94,0.07);box-shadow:0 6px 28px rgba(244,63,94,0.15)}
+
+.layer-ai{border-color:rgba(139,92,246,0.25)}
+.layer-ai .layer-dot{background:var(--violet);box-shadow:0 0 8px var(--violet)}
+.layer-ai .node:hover::before{background:rgba(139,92,246,0.07)}
+.layer-ai .node.active{border-color:rgba(139,92,246,0.55);background:rgba(139,92,246,0.07);box-shadow:0 6px 28px rgba(139,92,246,0.15)}
+
+.layer-mapping{border-color:rgba(6,182,212,0.25)}
+.layer-mapping .layer-dot{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+.layer-mapping .node:hover::before{background:rgba(6,182,212,0.07)}
+.layer-mapping .node.active{border-color:rgba(6,182,212,0.55);background:rgba(6,182,212,0.07);box-shadow:0 6px 28px rgba(6,182,212,0.15)}
+
+.layer-funders{border-color:rgba(59,130,246,0.25)}
+.layer-funders .layer-dot{background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.layer-funders .node:hover::before{background:rgba(59,130,246,0.07)}
+.layer-funders .node.active{border-color:rgba(59,130,246,0.55);background:rgba(59,130,246,0.07);box-shadow:0 6px 28px rgba(59,130,246,0.15)}
+
+/* ── DUAL ROW ── */
+.dual-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.dual-row .layer{margin:0}
+.dual-row .nodes{flex-direction:column;gap:6px}
+.dual-row .node{min-width:0}
+
+/* ── CONNECTOR ── */
+.connector{display:flex;align-items:center;gap:10px;padding:0 10px;height:22px}
+.conn-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.09),transparent)}
+.conn-ctr{display:flex;align-items:center;gap:5px}
+.conn-arr{color:var(--text3);font-size:14px}
+.conn-lbl{font-size:11px;color:var(--text3);white-space:nowrap;font-style:italic}
+
+/* ── FILE BOUNDARY ── */
+.file-boundary{
+  border:1px dashed rgba(244,63,94,0.4);border-radius:10px;
+  padding:10px 16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:all 0.18s;background:rgba(244,63,94,0.03);
+  position:relative;overflow:hidden
+}
+.file-boundary::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,transparent,var(--rose),transparent);
+  animation:pl 2.5s ease-in-out infinite
+}
+@keyframes pl{0%,100%{opacity:0.25}50%{opacity:1}}
+.file-boundary:hover{border-color:rgba(244,63,94,0.65);background:rgba(244,63,94,0.06)}
+.fb-ico{font-size:18px}
+.fb-title{font-size:12px;font-weight:800;color:#f87171;letter-spacing:0.4px;text-transform:uppercase}
+.fb-sub{font-size:11px;color:rgba(244,63,94,0.5);margin-top:2px}
+.fb-spacer{flex:1}
+.fb-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;background:rgba(244,63,94,0.12);color:#f87171;border:1px solid rgba(244,63,94,0.25)}
+
+/* ── DETAIL PANEL ── */
+.detail-panel{
+  width:320px;flex-shrink:0;
+  background:rgba(255,255,255,0.025);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--border);border-radius:16px;
+  overflow:hidden;display:flex;flex-direction:column
+}
+
+.detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:32px;text-align:center}
+.empty-ring{width:64px;height:64px;border-radius:50%;border:2px dashed rgba(255,255,255,0.09);display:flex;align-items:center;justify-content:center;font-size:24px;animation:spin 14s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-title{font-size:15px;font-weight:600;color:var(--text2)}
+.empty-sub{font-size:12px;color:var(--text3);line-height:1.6}
+
+.detail-scroll{flex:1;overflow-y:auto;padding:18px}
+.detail-scroll::-webkit-scrollbar{width:4px}
+.detail-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.07);border-radius:2px}
+
+/* detail head */
+.dh{border-radius:12px;padding:16px;margin-bottom:18px;position:relative;overflow:hidden}
+.dh-glow{position:absolute;top:-24px;right:-24px;width:100px;height:100px;border-radius:50%;filter:blur(28px);opacity:0.5}
+.dh-ico{font-size:28px;margin-bottom:8px;position:relative;z-index:1}
+.dh-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.3px;position:relative;z-index:1}
+.dh-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-top:3px;position:relative;z-index:1}
+.dh-tag{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;margin-top:10px;position:relative;z-index:1;text-transform:uppercase;letter-spacing:0.8px}
+
+/* detail sections */
+.ds{margin-bottom:18px}
+.ds-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.ds-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.ds-text{font-size:13px;color:var(--text2);line-height:1.7}
+.ds-text strong{color:var(--text1);font-weight:600}
+
+.step{display:flex;gap:10px;margin-bottom:9px}
+.step-n{width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-t{font-size:12px;color:var(--text2);line-height:1.55}
+.step-t strong{color:var(--text1);font-weight:600}
+
+code{font-family:'Menlo','Monaco',monospace;font-size:11px;background:rgba(255,255,255,0.07);padding:2px 5px;border-radius:4px;color:#34d399}
+
+.cb{background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:13px 15px;font-family:'Menlo','Monaco',monospace;font-size:11px;color:var(--text2);line-height:1.8}
+.k{color:#818cf8}.v{color:#34d399}.c{color:#334155}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:11px;padding:4px 10px;border-radius:7px;font-weight:600;background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid var(--border)}
+.chip.g{background:rgba(16,185,129,0.1);color:#34d399;border-color:rgba(16,185,129,0.2)}
+.chip.r{background:rgba(244,63,94,0.1);color:#fb7185;border-color:rgba(244,63,94,0.2)}
+.chip.i{background:rgba(99,102,241,0.1);color:#818cf8;border-color:rgba(99,102,241,0.2)}
+.chip.a{background:rgba(245,158,11,0.1);color:#fbbf24;border-color:rgba(245,158,11,0.2)}
+.chip.v{background:rgba(139,92,246,0.1);color:#a78bfa;border-color:rgba(139,92,246,0.2)}
+.chip.c2{background:rgba(6,182,212,0.1);color:#22d3ee;border-color:rgba(6,182,212,0.2)}
+.chip.b{background:rgba(59,130,246,0.1);color:#60a5fa;border-color:rgba(59,130,246,0.2)}
+
+.alert{border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.65;margin-top:8px}
+.alert-r{background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.22);color:#fca5a5}
+.alert-r strong{color:#f87171}
+.alert-a{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);color:#fde68a}
+.alert-a strong{color:#fbbf24}
+
+.dc{display:none}.dc.on{display:block}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-title">System Architecture</div>
+    <div class="topbar-sub">OneView · All 20 components interactive — click any node to inspect</div>
+  </div>
+  <div class="topbar-hint">↓ Scroll diagram &nbsp;·&nbsp; Click any node →</div>
+</div>
+
+<div class="body">
+  <!-- ── DIAGRAM ── -->
+  <div class="diagram-col">
+
+    <!-- SOURCES -->
+    <div class="layer layer-sources">
+      <div class="layer-header"><div class="layer-dot"></div><div class="layer-title">Source Systems — Where data enters</div><div class="layer-div"></div></div>
+      <div class="nodes">
+        <div class="node" onclick="pick('ms-forms')">
+          <div class="node-ico" style="background:rgba(99,102,241,0.14)">📋</div>
+          <div><div class="node-name">Microsoft Forms</div><div class="node-sub">Power Automate webhook</div></div>
+          <span class="node-tag" style="background:rgba(99,102,241,0.2);color:#818cf8">Live</span>
+        </div>
+        <div class="node" onclick="pick('salesforce')">
+          <div class="node-ico" style="background:rgba(99,102,241,0.14)">☁️</div>
+          <div><div class="node-name">Salesforce</div><div class="node-sub">Outbound message / REST</div></div>
+        </div>
+        <div class="node" onclick="pick('csv')">
+          <div class="node-ico" style="background:rgba(99,102,241,0.14)">📊</div>
+          <div><div class="node-name">CSV Import</div><div class="node-sub">Bulk migration</div></div>
+        </div>
+        <div class="node" onclick="pick('direct')">
+          <div class="node-ico" style="background:rgba(99,102,241,0.14)">✏️</div>
+          <div><div class="node-name">Direct Entry</div><div class="node-sub">Unified Intake screen</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="conn-line"></div><div class="conn-ctr"><span class="conn-arr">↓</span><div class="conn-lbl">POST /api/clients · authenticated</div></div><div class="conn-line"></div></div>
+
+    <!-- RBAC -->
+    <div class="layer layer-rbac">
+      <div class="layer-header"><div class="layer-dot"></div><div class="layer-title">Access Control · RBAC Gateway</div><div class="layer-div"></div></div>
+      <div class="nodes">
+        <div class="node" onclick="pick('admin')">
+          <div class="node-ico" style="background:rgba(245,158,11,0.14)">👑</div>
+          <div><div class="node-name">Admin</div><div class="node-sub">Priya · Full access</div></div>
+        </div>
+        <div class="node" onclick="pick('caseworker')">
+          <div class="node-ico" style="background:rgba(245,158,11,0.14)">👩‍💼</div>
+          <div><div class="node-name">Caseworker</div><div class="node-sub">Fatima / David · Program-scoped</div></div>
+        </div>
+        <div class="node" onclick="pick('viewer')">
+          <div class="node-ico" style="background:rgba(245,158,11,0.14)">👁️</div>
+          <div><div class="node-name">Viewer</div><div class="node-sub">Read-only dashboard</div></div>
+        </div>
+        <div class="node" onclick="pick('agent')">
+          <div class="node-ico" style="background:rgba(245,158,11,0.14)">🤖</div>
+          <div><div class="node-name">AI Agent</div><div class="node-sub">API key · Scoped claims</div></div>
+          <span class="node-tag" style="background:rgba(139,92,246,0.2);color:#a78bfa">New</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="conn-line"></div><div class="conn-ctr"><span class="conn-arr">↓</span><div class="conn-lbl">consent-scoped queries only</div></div><div class="conn-line"></div></div>
+
+    <!-- DATA + PRIVACY -->
+    <div class="dual-row">
+      <div class="layer layer-data">
+        <div class="layer-header"><div class="layer-dot"></div><div class="layer-title">Data Layer</div><div class="layer-div"></div></div>
+        <div class="nodes">
+          <div class="node" onclick="pick('clients')"><div class="node-ico" style="background:rgba(16,185,129,0.12)">👤</div><div><div class="node-name">clients</div><div class="node-sub">Golden record</div></div></div>
+          <div class="node" onclick="pick('enrolments')"><div class="node-ico" style="background:rgba(16,185,129,0.12)">📎</div><div><div class="node-name">enrolments</div><div class="node-sub">client ↔ program ↔ funder</div></div></div>
+          <div class="node" onclick="pick('outcomes')"><div class="node-ico" style="background:rgba(16,185,129,0.12)">🎯</div><div><div class="node-name">outcomes</div><div class="node-sub">immediate → ultimate</div></div></div>
+          <div class="node" onclick="pick('audit')"><div class="node-ico" style="background:rgba(16,185,129,0.12)">📝</div><div><div class="node-name">audit_log</div><div class="node-sub">Immutable trail</div></div></div>
+        </div>
+      </div>
+      <div class="layer layer-privacy">
+        <div class="layer-header"><div class="layer-dot"></div><div class="layer-title">Privacy & Consent</div><div class="layer-div"></div></div>
+        <div class="nodes">
+          <div class="node" onclick="pick('consent')"><div class="node-ico" style="background:rgba(244,63,94,0.12)">✅</div><div><div class="node-name">Consent Engine</div><div class="node-sub">Per-program + cross-program</div></div></div>
+          <div class="node" onclick="pick('crossprogram')"><div class="node-ico" style="background:rgba(244,63,94,0.12)">🔗</div><div><div class="node-name">Cross-Program Link</div><div class="node-sub">Amara's journey</div></div></div>
+          <div class="node" onclick="pick('phiwall')"><div class="node-ico" style="background:rgba(244,63,94,0.12)">🏥</div><div><div class="node-name">PHI Wall</div><div class="node-sub">Mental Health · PHIPA</div></div><span class="node-tag" style="background:rgba(244,63,94,0.2);color:#f87171">Hard</span></div>
+          <div class="node" onclick="pick('lawmap')"><div class="node-ico" style="background:rgba(244,63,94,0.12)">⚖️</div><div><div class="node-name">Law Map</div><div class="node-sub">Privacy Act · FIPPA · PHIPA</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="conn-line"></div><div class="conn-ctr"><span class="conn-arr">↓</span><div class="conn-lbl">deterministic SQL metrics only — no raw PII to LLM</div></div><div class="conn-line"></div></div>
+
+    <!-- AI M&E -->
+    <div class="layer layer-ai">
+      <div class="layer-header"><div class="layer-dot"></div><div class="layer-title">AI M&amp;E Layer · No Hallucination Guarantee</div><div class="layer-div"></div></div>
+      <div class="nodes">
+        <div class="node" onclick="pick('metrics')"><div class="node-ico" style="background:rgba(139,92,246,0.14)">📐</div><div><div class="node-name">Metrics Engine</div><div class="node-sub">Deterministic SQL</div></div></div>
+        <div class="node" onclick="pick('llmrouter')"><div class="node-ico" style="background:rgba(139,92,246,0.14)">🔀</div><div><div class="node-name">LLM Router</div><div class="node-sub">Gemini · Claude · Groq</div></div></div>
+        <div class="node" onclick="pick('cache')"><div class="node-ico" style="background:rgba(139,92,246,0.14)">💾</div><div><div class="node-name">Report Cache</div><div class="node-sub">Demo-safe pre-generation</div></div></div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="conn-line"></div><div class="conn-ctr"><span class="conn-arr">↓</span><div class="conn-lbl">funder-shaped rows via config-driven mapping</div></div><div class="conn-line"></div></div>
+
+    <!-- MAPPING ENGINE -->
+    <div class="layer layer-mapping">
+      <div class="layer-header"><div class="layer-dot"></div><div class="layer-title">Mapping Engine · Config-Driven Core IP</div><div class="layer-div"></div></div>
+      <div class="nodes">
+        <div class="node" onclick="pick('ircc')"><div class="node-ico" style="background:rgba(6,182,212,0.12)">🍁</div><div><div class="node-name">IRCC Profile</div><div class="node-sub">iCARE bulk schema</div></div></div>
+        <div class="node" onclick="pick('eo')"><div class="node-ico" style="background:rgba(6,182,212,0.12)">💼</div><div><div class="node-name">EO Profile</div><div class="node-sub">CaMS worksheet</div></div></div>
+        <div class="node" onclick="pick('uw')"><div class="node-ico" style="background:rgba(6,182,212,0.12)">❤️</div><div><div class="node-name">UW Profile</div><div class="node-sub">Custom report</div></div></div>
+        <div class="node" onclick="pick('city')"><div class="node-ico" style="background:rgba(6,182,212,0.12)">🏙️</div><div><div class="node-name">City Profile</div><div class="node-sub">Custom report</div></div></div>
+      </div>
+    </div>
+
+    <!-- FILE BOUNDARY -->
+    <div class="file-boundary" onclick="pick('boundary')">
+      <div class="fb-ico">⛔</div>
+      <div>
+        <div class="fb-title">File Boundary — No Live API Integration</div>
+        <div class="fb-sub">iCARE &amp; EOIS-CaMS do not accept external connections · click to learn why this is the product moat</div>
+      </div>
+      <div class="fb-spacer"></div>
+      <div class="fb-badge">Hard Constraint</div>
+    </div>
+
+    <!-- FUNDERS -->
+    <div class="layer layer-funders">
+      <div class="layer-header"><div class="layer-dot"></div><div class="layer-title">Funder Systems · External · File-Only</div><div class="layer-div"></div></div>
+      <div class="nodes">
+        <div class="node" onclick="pick('icare')"><div class="node-ico" style="background:rgba(59,130,246,0.12)">🍁</div><div><div class="node-name">IRCC · iCARE</div><div class="node-sub">Bulk file upload</div></div><span class="node-tag" style="background:rgba(59,130,246,0.2);color:#60a5fa">Upload</span></div>
+        <div class="node" onclick="pick('cams')"><div class="node-ico" style="background:rgba(59,130,246,0.12)">📋</div><div><div class="node-name">EOIS-CaMS</div><div class="node-sub">Manual + worksheet</div></div><span class="node-tag" style="background:rgba(245,158,11,0.2);color:#fbbf24">Manual</span></div>
+        <div class="node" onclick="pick('uw-sys')"><div class="node-ico" style="background:rgba(59,130,246,0.12)">❤️</div><div><div class="node-name">United Way</div><div class="node-sub">Custom report</div></div></div>
+        <div class="node" onclick="pick('city-sys')"><div class="node-ico" style="background:rgba(59,130,246,0.12)">🏙️</div><div><div class="node-name">City of Toronto</div><div class="node-sub">Custom report</div></div></div>
+      </div>
+    </div>
+
+  </div><!-- /diagram-col -->
+
+  <!-- ── DETAIL PANEL ── -->
+  <div class="detail-panel" id="panel">
+    <div class="detail-empty" id="panel-empty">
+      <div class="empty-ring">↗</div>
+      <div class="empty-title">Select a component</div>
+      <div class="empty-sub">Click any node in the diagram to inspect its role, data shape, connections, and business rules</div>
+    </div>
+    <div class="detail-scroll" id="panel-scroll" style="display:none">
+
+      <!-- MS FORMS -->
+      <div class="dc" id="d-ms-forms">
+        <div class="dh" style="background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(99,102,241,0.06))">
+          <div class="dh-glow" style="background:#6366f1"></div>
+          <div class="dh-ico">📋</div>
+          <div class="dh-title">Microsoft Forms</div>
+          <div class="dh-sub">Power Automate → OneView webhook</div>
+          <span class="dh-tag" style="background:rgba(99,102,241,0.18);color:#818cf8;border:1px solid rgba(99,102,241,0.25)">Source Layer</span>
+        </div>
+        <div class="ds"><div class="ds-label">Zero behaviour change for staff</div>
+          <div class="step"><div class="step-n" style="background:#6366f1">1</div><div class="step-t">Staff submit their <strong>existing Microsoft Form</strong> — nothing changes for them</div></div>
+          <div class="step"><div class="step-n" style="background:#6366f1">2</div><div class="step-t"><strong>Power Automate flow</strong> fires on every submission — ~20 min to configure, M365 included</div></div>
+          <div class="step"><div class="step-n" style="background:#6366f1">3</div><div class="step-t">Flow POSTs structured JSON to <code>/api/clients</code> with API key header</div></div>
+          <div class="step"><div class="step-n" style="background:#6366f1">4</div><div class="step-t">OneView routes to the correct funder — <strong>staff never touch another system</strong></div></div>
+        </div>
+        <div class="ds"><div class="ds-label">Payload shape</div>
+          <div class="cb"><span class="c">// Power Automate HTTP action body</span>
+{ <span class="k">"full_name"</span>: <span class="v">"Amara Diallo"</span>,
+  <span class="k">"primary_language"</span>: <span class="v">"French"</span>,
+  <span class="k">"immigration_stream"</span>: <span class="v">"Refugee"</span>,
+  <span class="k">"program"</span>: <span class="v">"Settlement Services"</span>,
+  <span class="k">"source"</span>: <span class="v">"ms-forms"</span> }</div>
+        </div>
+        <div class="chips"><span class="chip i">M365 included</span><span class="chip i">~20 min setup</span><span class="chip g">Zero staff change</span></div>
+      </div>
+
+      <!-- SALESFORCE -->
+      <div class="dc" id="d-salesforce">
+        <div class="dh" style="background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(99,102,241,0.06))">
+          <div class="dh-glow" style="background:#6366f1"></div>
+          <div class="dh-ico">☁️</div><div class="dh-title">Salesforce</div>
+          <div class="dh-sub">Additive layer — not a replacement</div>
+          <span class="dh-tag" style="background:rgba(99,102,241,0.18);color:#818cf8;border:1px solid rgba(99,102,241,0.25)">Source Layer</span>
+        </div>
+        <div class="ds"><div class="ds-label">The positioning</div>
+          <div class="ds-text">OneView <strong>completes</strong> Salesforce — it doesn't compete. Salesforce = your CRM. OneView = the last mile it can't reach: generating iCARE files and CaMS worksheets. Together they eliminate re-keying that Salesforce alone leaves unsolved.</div>
+        </div>
+        <div class="ds"><div class="ds-label">Integration path</div>
+          <div class="step"><div class="step-n" style="background:#6366f1">1</div><div class="step-t">Configure <strong>Salesforce Outbound Message</strong> on Client object creation</div></div>
+          <div class="step"><div class="step-n" style="background:#6366f1">2</div><div class="step-t">Target <code>/api/clients</code> with API key — no code changes in OneView</div></div>
+          <div class="step"><div class="step-n" style="background:#6366f1">3</div><div class="step-t">OneView field-maps via funder config — schema changes = edit JSON</div></div>
+        </div>
+        <div class="chips"><span class="chip i">10 free nonprofit seats</span><span class="chip g">~1hr admin setup</span></div>
+      </div>
+
+      <!-- AI AGENT -->
+      <div class="dc" id="d-agent">
+        <div class="dh" style="background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(139,92,246,0.06))">
+          <div class="dh-glow" style="background:#8b5cf6"></div>
+          <div class="dh-ico">🤖</div><div class="dh-title">AI Agent Role</div>
+          <div class="dh-sub">API key · Scoped programmatic access</div>
+          <span class="dh-tag" style="background:rgba(139,92,246,0.18);color:#a78bfa;border:1px solid rgba(139,92,246,0.25)">RBAC Layer</span>
+        </div>
+        <div class="ds"><div class="ds-label">Built for autonomous operation</div>
+          <div class="ds-text">Any AI agent can drive OneView end-to-end. Three artifacts make it seamless: <code>CLAUDE.md</code> (architecture + why), <code>/llms.txt</code> (natural language guide), <code>/openapi.json</code> (machine-readable spec).</div>
+        </div>
+        <div class="ds"><div class="ds-label">Sample agent workflows</div>
+          <div class="step"><div class="step-n" style="background:#8b5cf6">1</div><div class="step-t"><strong>Intake:</strong> POST /api/clients → verify enrolment → log outcome</div></div>
+          <div class="step"><div class="step-n" style="background:#8b5cf6">2</div><div class="step-t"><strong>Report:</strong> POST /api/draft-report → review narrative → POST /api/export</div></div>
+          <div class="step"><div class="step-n" style="background:#8b5cf6">3</div><div class="step-t"><strong>Q&amp;A:</strong> GET /api/clients → POST /api/query with computed metrics</div></div>
+        </div>
+        <div class="chips"><span class="chip v">CLAUDE.md</span><span class="chip v">llms.txt</span><span class="chip v">openapi.json</span><span class="chip v">API key auth</span></div>
+      </div>
+
+      <!-- PHI WALL -->
+      <div class="dc" id="d-phiwall">
+        <div class="dh" style="background:linear-gradient(135deg,rgba(244,63,94,0.18),rgba(244,63,94,0.06))">
+          <div class="dh-glow" style="background:#f43f5e"></div>
+          <div class="dh-ico">🏥</div><div class="dh-title">PHI Wall</div>
+          <div class="dh-sub">Mental Health · PHIPA hard constraint</div>
+          <span class="dh-tag" style="background:rgba(244,63,94,0.18);color:#f87171;border:1px solid rgba(244,63,94,0.25)">Privacy Layer</span>
+        </div>
+        <div class="alert alert-r"><strong>Hard rule:</strong> Mental Health records are always siloed. No consent level permits cross-program linking. Never aggregated in dashboard. Never exported to non-UW funder schemas.</div>
+        <div class="ds" style="margin-top:14px"><div class="ds-label">Why (PHIPA)</div>
+          <div class="ds-text">Ontario's Personal Health Information Protection Act classifies mental health records as PHI. Consolidation without a proper PHI vault and Privacy Impact Assessment violates PHIPA. The production roadmap includes a partitioned PHI vault — the 🔒 badge and hard exclusion in the prototype demonstrate architectural maturity.</div>
+        </div>
+      </div>
+
+      <!-- CROSS PROGRAM -->
+      <div class="dc" id="d-crossprogram">
+        <div class="dh" style="background:linear-gradient(135deg,rgba(244,63,94,0.18),rgba(244,63,94,0.06))">
+          <div class="dh-glow" style="background:#f43f5e"></div>
+          <div class="dh-ico">🔗</div><div class="dh-title">Cross-Program Link</div>
+          <div class="dh-sub">Consent-gated · "Capture once" in action</div>
+          <span class="dh-tag" style="background:rgba(244,63,94,0.18);color:#f87171;border:1px solid rgba(244,63,94,0.25)">Privacy Layer</span>
+        </div>
+        <div class="ds"><div class="ds-label">Amara's journey</div>
+          <div class="step"><div class="step-n" style="background:#f43f5e">1</div><div class="step-t">Fatima intakes Amara into Settlement — consent: <strong>IRCC only</strong></div></div>
+          <div class="step"><div class="step-n" style="background:#f43f5e">2</div><div class="step-t">David searches for Amara in Employment — sees <strong>"already in system (Settlement)"</strong></div></div>
+          <div class="step"><div class="step-n" style="background:#f43f5e">3</div><div class="step-t"><strong>Explicit cross-program consent</strong> captured in plain language before any linking</div></div>
+          <div class="step"><div class="step-n" style="background:#f43f5e">4</div><div class="step-t">One client · two enrolments · unified dashboard view</div></div>
+        </div>
+        <div class="alert alert-r"><strong>Exception:</strong> Mental Health enrollment never links, regardless of consent level.</div>
+      </div>
+
+      <!-- FILE BOUNDARY -->
+      <div class="dc" id="d-boundary">
+        <div class="dh" style="background:linear-gradient(135deg,rgba(244,63,94,0.18),rgba(244,63,94,0.06))">
+          <div class="dh-glow" style="background:#f43f5e"></div>
+          <div class="dh-ico">⛔</div><div class="dh-title">File Boundary</div>
+          <div class="dh-sub">Why files, not live API pushes</div>
+          <span class="dh-tag" style="background:rgba(244,63,94,0.18);color:#f87171;border:1px solid rgba(244,63,94,0.25)">Hard Constraint</span>
+        </div>
+        <div class="ds"><div class="ds-label">The facts</div>
+          <div class="ds-text"><strong>iCARE (IRCC):</strong> bulk file upload is the IRCC-endorsed path — ~75% of records already arrive this way.<br><br><strong>EOIS-CaMS (EO):</strong> IBM Cúram platform explicitly blocks external integration — compatibility + privacy constraints. Manual entry only.</div>
+        </div>
+        <div class="ds"><div class="ds-label">Why this is the moat</div>
+          <div class="ds-text">Every CRM — Salesforce, Apricot, OCMS — hits this same wall. They all leave caseworkers re-keying into funder portals by hand. <strong>OneView generates the file.</strong> That's the entire value proposition in one sentence.</div>
+        </div>
+      </div>
+
+      <!-- LLM ROUTER -->
+      <div class="dc" id="d-llmrouter">
+        <div class="dh" style="background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(139,92,246,0.06))">
+          <div class="dh-glow" style="background:#8b5cf6"></div>
+          <div class="dh-ico">🔀</div><div class="dh-title">LLM Router</div>
+          <div class="dh-sub">Provider-agnostic · one env var to switch</div>
+          <span class="dh-tag" style="background:rgba(139,92,246,0.18);color:#a78bfa;border:1px solid rgba(139,92,246,0.25)">AI M&amp;E Layer</span>
+        </div>
+        <div class="alert alert-a" style="margin-bottom:14px"><strong>Anti-hallucination guarantee:</strong> The LLM only receives pre-computed metric numbers. It writes prose around them. It cannot invent, estimate, or extrapolate any figure.</div>
+        <div class="ds"><div class="ds-label">Provider config</div>
+          <div class="cb"><span class="c"># Switch with one env var — no app code changes</span>
+<span class="k">LLM_PROVIDER</span>=<span class="v">gemini</span>  <span class="c"># free · aligns with Google relationship</span>
+<span class="k">LLM_PROVIDER</span>=<span class="v">claude</span>  <span class="c"># highest quality</span>
+<span class="k">LLM_PROVIDER</span>=<span class="v">groq</span>    <span class="c"># fastest inference</span></div>
+        </div>
+      </div>
+
+      <!-- IRCC PROFILE -->
+      <div class="dc" id="d-ircc">
+        <div class="dh" style="background:linear-gradient(135deg,rgba(6,182,212,0.18),rgba(6,182,212,0.06))">
+          <div class="dh-glow" style="background:#06b6d4"></div>
+          <div class="dh-ico">🍁</div><div class="dh-title">IRCC Funder Profile</div>
+          <div class="dh-sub">iCARE bulk file schema · config-driven</div>
+          <span class="dh-tag" style="background:rgba(6,182,212,0.18);color:#22d3ee;border:1px solid rgba(6,182,212,0.25)">Mapping Engine</span>
+        </div>
+        <div class="ds"><div class="ds-label">Config shape</div>
+          <div class="cb">{ <span class="k">"funder"</span>: <span class="v">"IRCC"</span>,
+  <span class="k">"system"</span>: <span class="v">"iCARE"</span>,
+  <span class="k">"mechanism"</span>: <span class="v">"bulk_upload"</span>,
+  <span class="k">"programs"</span>: [<span class="v">"Settlement"</span>, <span class="v">"Language"</span>],
+  <span class="k">"fieldMap"</span>: {
+    <span class="k">"client_id"</span>: <span class="v">"ClientID"</span>,
+    <span class="k">"full_name"</span>: <span class="v">"ClientName"</span>,
+    <span class="k">"immigration_stream"</span>: <span class="v">"ImmigCategory"</span>
+  }
+}</div>
+        </div>
+        <div class="ds-text" style="margin-top:10px">Schema change = edit config JSON. New funder = add a new config object. <strong>Zero code changes</strong> for funder schema updates.</div>
+      </div>
+
+      <!-- GENERIC PANELS -->
+      <div class="dc" id="d-csv"><div class="dh" style="background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(99,102,241,0.06))"><div class="dh-glow" style="background:#6366f1"></div><div class="dh-ico">📊</div><div class="dh-title">CSV Import</div><div class="dh-sub">Bulk migration from spreadsheets</div><span class="dh-tag" style="background:rgba(99,102,241,0.18);color:#818cf8;border:1px solid rgba(99,102,241,0.25)">Source Layer</span></div><div class="ds"><div class="ds-label">Use case</div><div class="ds-text">One-time migration of existing client records from spreadsheets or OCMS exports. Column-mapping UI walks staff through the field alignment. Runs through the same RBAC and consent checks as direct entry.</div></div></div>
+
+      <div class="dc" id="d-direct"><div class="dh" style="background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(99,102,241,0.06))"><div class="dh-glow" style="background:#6366f1"></div><div class="dh-ico">✏️</div><div class="dh-title">Direct Entry</div><div class="dh-sub">Unified Intake screen</div><span class="dh-tag" style="background:rgba(99,102,241,0.18);color:#818cf8;border:1px solid rgba(99,102,241,0.25)">Source Layer</span></div><div class="ds"><div class="ds-label">The native flow</div><div class="ds-text">Caseworker selects program, fills required fields, sets consent toggle. On submit: one record created, queued for the correct funder. Est. <strong>14 minutes saved</strong> vs. manual funder portal entry.</div></div></div>
+
+      <div class="dc" id="d-admin"><div class="dh" style="background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(245,158,11,0.06))"><div class="dh-glow" style="background:#f59e0b"></div><div class="dh-ico">👑</div><div class="dh-title">Admin Role</div><div class="dh-sub">Full access · Priya (Program Manager)</div><span class="dh-tag" style="background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.25)">RBAC Layer</span></div><div class="ds"><div class="ds-label">Permissions</div><div class="chips"><span class="chip g">✓ All screens</span><span class="chip g">✓ All programs</span><span class="chip g">✓ Export</span><span class="chip g">✓ AI M&E</span><span class="chip g">✓ Reset</span></div></div><div class="ds"><div class="ds-label">Production auth</div><div class="ds-text">NextAuth.js with Microsoft OIDC — single sign-on via SfC's existing M365 environment. No new passwords for staff.</div></div></div>
+
+      <div class="dc" id="d-caseworker"><div class="dh" style="background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(245,158,11,0.06))"><div class="dh-glow" style="background:#f59e0b"></div><div class="dh-ico">👩‍💼</div><div class="dh-title">Caseworker Role</div><div class="dh-sub">Program-scoped · Fatima / David</div><span class="dh-tag" style="background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.25)">RBAC Layer</span></div><div class="ds"><div class="ds-label">Permissions</div><div class="chips"><span class="chip g">✓ Own program</span><span class="chip g">✓ Intake</span><span class="chip g">✓ AI Q&A</span><span class="chip r">✗ Other programs</span><span class="chip r">✗ Export</span><span class="chip r">✗ Reset</span></div></div></div>
+
+      <div class="dc" id="d-viewer"><div class="dh" style="background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(245,158,11,0.06))"><div class="dh-glow" style="background:#f59e0b"></div><div class="dh-ico">👁️</div><div class="dh-title">Viewer Role</div><div class="dh-sub">Read-only dashboard</div><span class="dh-tag" style="background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.25)">RBAC Layer</span></div><div class="ds"><div class="ds-label">Permissions</div><div class="chips"><span class="chip g">✓ Dashboard</span><span class="chip g">✓ Help</span><span class="chip r">✗ Intake</span><span class="chip r">✗ Export</span><span class="chip r">✗ Reset</span></div></div></div>
+
+      <div class="dc" id="d-clients"><div class="dh" style="background:linear-gradient(135deg,rgba(16,185,129,0.18),rgba(16,185,129,0.06))"><div class="dh-glow" style="background:#10b981"></div><div class="dh-ico">👤</div><div class="dh-title">clients table</div><div class="dh-sub">The golden record</div><span class="dh-tag" style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.25)">Data Layer</span></div><div class="cb" style="margin-top:4px"><span class="k">id</span> · <span class="k">full_name</span> · <span class="k">primary_language</span><br><span class="k">immigration_stream</span> · <span class="k">created_at</span></div><div class="ds-text" style="margin-top:10px">One record per person regardless of programs enrolled. The "capture once" promise lives here.</div></div>
+
+      <div class="dc" id="d-enrolments"><div class="dh" style="background:linear-gradient(135deg,rgba(16,185,129,0.18),rgba(16,185,129,0.06))"><div class="dh-glow" style="background:#10b981"></div><div class="dh-ico">📎</div><div class="dh-title">enrolments table</div><div class="dh-sub">client ↔ program ↔ funder</div><span class="dh-tag" style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.25)">Data Layer</span></div><div class="cb" style="margin-top:4px"><span class="k">id</span> · <span class="k">client_id</span> · <span class="k">program</span> · <span class="k">funder</span><br><span class="k">consent_cross_program</span> · <span class="k">enrolled_at</span></div><div class="ds-text" style="margin-top:10px">The <code>consent_cross_program</code> flag gates cross-program linking. Without it, records remain siloed per funder.</div></div>
+
+      <div class="dc" id="d-outcomes"><div class="dh" style="background:linear-gradient(135deg,rgba(16,185,129,0.18),rgba(16,185,129,0.06))"><div class="dh-glow" style="background:#10b981"></div><div class="dh-ico">🎯</div><div class="dh-title">outcomes table</div><div class="dh-sub">IRCC logic model tiers</div><span class="dh-tag" style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.25)">Data Layer</span></div><div class="cb" style="margin-top:4px"><span class="k">id</span> · <span class="k">enrolment_id</span> · <span class="k">tier</span> · <span class="k">label</span><br><span class="k">achieved</span> · <span class="k">recorded_at</span><br><span class="c"># tier: immediate | intermediate | ultimate</span></div></div>
+
+      <div class="dc" id="d-audit"><div class="dh" style="background:linear-gradient(135deg,rgba(16,185,129,0.18),rgba(16,185,129,0.06))"><div class="dh-glow" style="background:#10b981"></div><div class="dh-ico">📝</div><div class="dh-title">audit_log</div><div class="dh-sub">Immutable trail · compliance signal</div><span class="dh-tag" style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.25)">Data Layer</span></div><div class="cb" style="margin-top:4px"><span class="k">id</span> · <span class="k">action</span> · <span class="k">entity</span> · <span class="k">detail</span><br><span class="k">user_role</span> · <span class="k">source_ip</span> · <span class="k">at</span></div><div class="ds-text" style="margin-top:10px">Every write operation logged. Mirrors IRCC's own iCARE audit requirements — signals compliance maturity.</div></div>
+
+      <div class="dc" id="d-consent"><div class="dh" style="background:linear-gradient(135deg,rgba(244,63,94,0.18),rgba(244,63,94,0.06))"><div class="dh-glow" style="background:#f43f5e"></div><div class="dh-ico">✅</div><div class="dh-title">Consent Engine</div><div class="dh-sub">Three levels of consent</div><span class="dh-tag" style="background:rgba(244,63,94,0.18);color:#f87171;border:1px solid rgba(244,63,94,0.25)">Privacy Layer</span></div><div class="ds"><div class="ds-label">Consent hierarchy</div><div class="step"><div class="step-n" style="background:#f43f5e">1</div><div class="step-t"><strong>Program consent</strong> — auto at enrollment. Data used for this program's funder only.</div></div><div class="step"><div class="step-n" style="background:#f43f5e">2</div><div class="step-t"><strong>Cross-program consent</strong> — explicit toggle. Required to link records across programs.</div></div><div class="step"><div class="step-n" style="background:#f43f5e">3</div><div class="step-t"><strong>Dashboard aggregation</strong> — implied by cross-program consent. Client appears in org-wide metrics.</div></div></div><div class="alert alert-r"><strong>Exception:</strong> Mental Health never participates regardless of consent level.</div></div>
+
+      <div class="dc" id="d-lawmap"><div class="dh" style="background:linear-gradient(135deg,rgba(244,63,94,0.18),rgba(244,63,94,0.06))"><div class="dh-glow" style="background:#f43f5e"></div><div class="dh-ico">⚖️</div><div class="dh-title">Privacy Law Map</div><div class="dh-sub">Program → governing law</div><span class="dh-tag" style="background:rgba(244,63,94,0.18);color:#f87171;border:1px solid rgba(244,63,94,0.25)">Privacy Layer</span></div><div class="chips" style="margin-top:6px"><span class="chip b">Settlement → Privacy Act (IRCC)</span><span class="chip a">Employment → FIPPA (EO)</span><span class="chip r">Mental Health → PHIPA</span><span class="chip v">Youth → CYFSA Part X</span></div></div>
+
+      <div class="dc" id="d-metrics"><div class="dh" style="background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(139,92,246,0.06))"><div class="dh-glow" style="background:#8b5cf6"></div><div class="dh-ico">📐</div><div class="dh-title">Metrics Engine</div><div class="dh-sub">Deterministic SQL · LLM-free</div><span class="dh-tag" style="background:rgba(139,92,246,0.18);color:#a78bfa;border:1px solid rgba(139,92,246,0.25)">AI M&amp;E Layer</span></div><div class="ds-text">All numbers computed in SQL before the LLM sees anything. The model receives a JSON object of pre-computed facts and writes prose around them. It <strong>cannot invent, estimate, or extrapolate</strong> any figure.</div></div>
+
+      <div class="dc" id="d-cache"><div class="dh" style="background:linear-gradient(135deg,rgba(139,92,246,0.18),rgba(139,92,246,0.06))"><div class="dh-glow" style="background:#8b5cf6"></div><div class="dh-ico">💾</div><div class="dh-title">Report Cache</div><div class="dh-sub">Demo-safe pre-generation</div><span class="dh-tag" style="background:rgba(139,92,246,0.18);color:#a78bfa;border:1px solid rgba(139,92,246,0.25)">AI M&amp;E Layer</span></div><div class="ds-text">The showcase report is pre-generated before demo day. Free-tier LLMs rate-limit under concurrent load. The cache returns in &lt;50ms. A <strong>"Regenerate (live)"</strong> toggle lets judges see real inference when conditions allow.</div></div>
+
+      <div class="dc" id="d-eo"><div class="dh" style="background:linear-gradient(135deg,rgba(6,182,212,0.18),rgba(6,182,212,0.06))"><div class="dh-glow" style="background:#06b6d4"></div><div class="dh-ico">💼</div><div class="dh-title">EO Funder Profile</div><div class="dh-sub">EOIS-CaMS pre-filled worksheet</div><span class="dh-tag" style="background:rgba(6,182,212,0.18);color:#22d3ee;border:1px solid rgba(6,182,212,0.25)">Mapping Engine</span></div><div class="ds-text">CaMS blocks external APIs. OneView generates a pre-filled worksheet with all required fields populated. Staff key in values — still manual, but <strong>10× faster</strong> than starting from scratch.</div></div>
+
+      <div class="dc" id="d-uw"><div class="dh" style="background:linear-gradient(135deg,rgba(6,182,212,0.18),rgba(6,182,212,0.06))"><div class="dh-glow" style="background:#06b6d4"></div><div class="dh-ico">❤️</div><div class="dh-title">United Way Profile</div><div class="dh-sub">Custom stat + narrative report</div><span class="dh-tag" style="background:rgba(6,182,212,0.18);color:#22d3ee;border:1px solid rgba(6,182,212,0.25)">Mapping Engine</span></div><div class="ds-text">UW requires stats + narrative. OneView generates both — deterministic SQL stats + AI-drafted narrative grounded in those exact numbers. Human reviews and signs off before submission.</div></div>
+
+      <div class="dc" id="d-city"><div class="dh" style="background:linear-gradient(135deg,rgba(6,182,212,0.18),rgba(6,182,212,0.06))"><div class="dh-glow" style="background:#06b6d4"></div><div class="dh-ico">🏙️</div><div class="dh-title">City of Toronto Profile</div><div class="dh-sub">Mentoring + Women/DWC programs</div><span class="dh-tag" style="background:rgba(6,182,212,0.18);color:#22d3ee;border:1px solid rgba(6,182,212,0.25)">Mapping Engine</span></div><div class="ds-text">Config-driven custom report. Schema changes = edit the config object, not code. Adding a new City program takes ~5 minutes.</div></div>
+
+      <div class="dc" id="d-icare"><div class="dh" style="background:linear-gradient(135deg,rgba(59,130,246,0.18),rgba(59,130,246,0.06))"><div class="dh-glow" style="background:#3b82f6"></div><div class="dh-ico">🍁</div><div class="dh-title">IRCC · iCARE</div><div class="dh-sub">Bulk file upload · IRCC-endorsed path</div><span class="dh-tag" style="background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.25)">Funder System</span></div><div class="ds-text">~75% of settlement records already arrive at IRCC via bulk upload. OneView generates this exact file. Staff upload via the OCMS portal. No new workflow for anyone.</div></div>
+
+      <div class="dc" id="d-cams"><div class="dh" style="background:linear-gradient(135deg,rgba(59,130,246,0.18),rgba(59,130,246,0.06))"><div class="dh-glow" style="background:#3b82f6"></div><div class="dh-ico">📋</div><div class="dh-title">EOIS-CaMS</div><div class="dh-sub">Employment Ontario · IBM Cúram</div><span class="dh-tag" style="background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.25)">Funder System</span></div><div class="alert alert-r"><strong>Hard constraint:</strong> CaMS explicitly blocks external integrations. Manual entry is the only path.</div><div class="ds-text" style="margin-top:10px">OneView generates a pre-filled worksheet — still manual entry, but the lookup work is entirely eliminated.</div></div>
+
+      <div class="dc" id="d-uw-sys"><div class="dh" style="background:linear-gradient(135deg,rgba(59,130,246,0.18),rgba(59,130,246,0.06))"><div class="dh-glow" style="background:#3b82f6"></div><div class="dh-ico">❤️</div><div class="dh-title">United Way</div><div class="dh-sub">Custom report delivery</div><span class="dh-tag" style="background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.25)">Funder System</span></div><div class="ds-text">Accepts custom stat + narrative reports. OneView generates both. Human reviews and submits.</div></div>
+
+      <div class="dc" id="d-city-sys"><div class="dh" style="background:linear-gradient(135deg,rgba(59,130,246,0.18),rgba(59,130,246,0.06))"><div class="dh-glow" style="background:#3b82f6"></div><div class="dh-ico">🏙️</div><div class="dh-title">City of Toronto</div><div class="dh-sub">Mentoring + Women programs</div><span class="dh-tag" style="background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.25)">Funder System</span></div><div class="ds-text">Custom report format for Mentoring and Women/DWC programs. Generated by OneView, reviewed and submitted by staff.</div></div>
+
+    </div><!-- /detail-scroll -->
+  </div><!-- /detail-panel -->
+
+</div><!-- /body -->
+</div><!-- /shell -->
+
+<script>
+function pick(id){
+  document.querySelectorAll('.node,.file-boundary').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('[onclick]').forEach(el=>{
+    if(el.getAttribute('onclick')===`pick('${id}')`) el.classList.add('active');
+  });
+  document.getElementById('panel-empty').style.display='none';
+  document.getElementById('panel-scroll').style.display='block';
+  document.querySelectorAll('.dc').forEach(d=>d.classList.remove('on'));
+  const t=document.getElementById('d-'+id);
+  if(t) t.classList.add('on');
+  if(window.__recordChoice) window.__recordChoice(id,id);
+}
+</script>
+</body>
+</html>

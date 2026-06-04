@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneView — Design Direction</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #0f0f13; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+
+  .page-title { text-align: center; margin-bottom: 8px; }
+  .page-title h1 { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+  .page-title p { font-size: 14px; color: #94a3b8; margin-top: 4px; }
+
+  .direction-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 24px; max-width: 1300px; margin-left: auto; margin-right: auto; }
+
+  .direction-card {
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  .direction-card:hover { transform: translateY(-3px); }
+  .direction-card.selected { border-color: #6366f1 !important; }
+  .direction-card.selected::after {
+    content: '✓ Selected';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #6366f1;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    z-index: 100;
+    letter-spacing: 0.5px;
+  }
+
+  .direction-label {
+    padding: 14px 18px 12px;
+    background: #1e1e2e;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .direction-label h3 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .direction-label p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+  .direction-label .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-bottom: 8px; }
+
+  /* ========== DIRECTION A: Bold Civic ========== */
+  .dir-a { border-color: rgba(249,115,22,0.2); background: #0f1117; }
+  .dir-a:hover { border-color: rgba(249,115,22,0.5); }
+  .dir-a .badge { background: rgba(249,115,22,0.15); color: #fb923c; }
+  .dir-a-preview {
+    background: #0a0a0f;
+    padding: 0;
+    height: 340px;
+    overflow: hidden;
+    position: relative;
+  }
+  .dir-a-sidebar {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 52px;
+    background: #111116;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex; flex-direction: column; align-items: center; padding-top: 14px; gap: 16px;
+  }
+  .dir-a-icon { width: 28px; height: 28px; border-radius: 6px; background: rgba(249,115,22,0.15); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .dir-a-icon.active { background: rgba(249,115,22,0.3); }
+  .dir-a-main { margin-left: 52px; padding: 14px 14px 0; }
+  .dir-a-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .dir-a-logo { font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #fb923c; }
+  .dir-a-pill { font-size: 9px; background: rgba(249,115,22,0.15); color: #fb923c; padding: 3px 8px; border-radius: 20px; font-weight: 700; letter-spacing: 0.5px; }
+  .dir-a-headline { font-size: 18px; font-weight: 900; color: #fff; letter-spacing: -0.8px; line-height: 1.1; margin-bottom: 4px; }
+  .dir-a-sub { font-size: 10px; color: #64748b; margin-bottom: 12px; }
+  .dir-a-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  .dir-a-stat { background: #111116; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; }
+  .dir-a-stat-num { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+  .dir-a-stat-label { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
+  .dir-a-stat-delta { font-size: 8px; color: #4ade80; margin-top: 2px; font-weight: 700; }
+  .dir-a-chart-area { background: #111116; border-radius: 8px; padding: 10px; height: 110px; border: 1px solid rgba(255,255,255,0.06); }
+  .dir-a-chart-title { font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 8px; font-weight: 700; }
+  .dir-a-bars { display: flex; align-items: flex-end; gap: 4px; height: 70px; }
+  .dir-a-bar { flex: 1; border-radius: 3px 3px 0 0; position: relative; }
+  .dir-a-bar-label { font-size: 7px; color: #64748b; text-align: center; margin-top: 3px; }
+  .dir-a-accent { background: linear-gradient(180deg, #fb923c, #ea580c); }
+  .dir-a-muted { background: rgba(249,115,22,0.2); }
+  .dir-a-orange-line { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #fb923c, transparent); }
+
+  /* ========== DIRECTION B: Human-Centered Impact ========== */
+  .dir-b { border-color: rgba(16,185,129,0.2); background: #0c1410; }
+  .dir-b:hover { border-color: rgba(16,185,129,0.5); }
+  .dir-b .badge { background: rgba(16,185,129,0.12); color: #34d399; }
+  .dir-b-preview {
+    background: #f8fffe;
+    padding: 0;
+    height: 340px;
+    overflow: hidden;
+    position: relative;
+  }
+  .dir-b-hero {
+    background: linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%);
+    padding: 14px 16px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dir-b-hero::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .dir-b-hero-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .dir-b-logo { font-size: 11px; font-weight: 900; letter-spacing: 1px; color: rgba(255,255,255,0.9); }
+  .dir-b-nav-pills { display: flex; gap: 4px; }
+  .dir-b-nav-pill { font-size: 8px; padding: 3px 8px; border-radius: 20px; color: rgba(255,255,255,0.6); font-weight: 600; cursor: pointer; }
+  .dir-b-nav-pill.active { background: rgba(255,255,255,0.15); color: #fff; }
+  .dir-b-headline { font-size: 16px; font-weight: 900; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
+  .dir-b-sub { font-size: 9px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+  .dir-b-body { padding: 12px 16px; background: #f8fffe; }
+  .dir-b-impact { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .dir-b-impact-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+    text-align: center;
+  }
+  .dir-b-impact-icon { font-size: 16px; margin-bottom: 4px; }
+  .dir-b-impact-num { font-size: 14px; font-weight: 900; color: #065f46; }
+  .dir-b-impact-label { font-size: 8px; color: #6b7280; margin-top: 1px; line-height: 1.3; }
+  .dir-b-section-title { font-size: 9px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .dir-b-funder-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+  .dir-b-funder-chip { font-size: 8px; padding: 3px 8px; border-radius: 20px; font-weight: 700; }
+  .dir-b-chip-ircc { background: #dbeafe; color: #1d4ed8; }
+  .dir-b-chip-eo { background: #fef3c7; color: #d97706; }
+  .dir-b-chip-uw { background: #fce7f3; color: #db2777; }
+  .dir-b-chip-city { background: #ede9fe; color: #7c3aed; }
+  .dir-b-progress-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+  .dir-b-progress-label { font-size: 8px; color: #374151; width: 60px; flex-shrink: 0; font-weight: 600; }
+  .dir-b-progress-track { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+  .dir-b-progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #059669, #34d399); }
+  .dir-b-progress-pct { font-size: 8px; color: #059669; font-weight: 700; width: 24px; text-align: right; }
+
+  /* ========== DIRECTION C: Premium SaaS ========== */
+  .dir-c { border-color: rgba(99,102,241,0.2); background: #0d0d1a; }
+  .dir-c:hover { border-color: rgba(99,102,241,0.5); }
+  .dir-c .badge { background: rgba(99,102,241,0.15); color: #818cf8; }
+  .dir-c-preview {
+    background: #080810;
+    padding: 0;
+    height: 340px;
+    overflow: hidden;
+    position: relative;
+  }
+  .dir-c-topbar {
+    padding: 0 16px;
+    height: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+  }
+  .dir-c-logo-area { display: flex; align-items: center; gap: 8px; }
+  .dir-c-logo-mark { width: 20px; height: 20px; border-radius: 6px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; }
+  .dir-c-logo-text { font-size: 12px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+  .dir-c-topnav { display: flex; gap: 16px; }
+  .dir-c-topnav-item { font-size: 11px; color: #64748b; font-weight: 500; cursor: pointer; }
+  .dir-c-topnav-item.active { color: #c7d2fe; }
+  .dir-c-actions { display: flex; gap: 8px; align-items: center; }
+  .dir-c-btn { font-size: 10px; padding: 5px 12px; border-radius: 6px; font-weight: 600; }
+  .dir-c-btn-ghost { color: #64748b; border: 1px solid rgba(255,255,255,0.08); background: transparent; }
+  .dir-c-btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; }
+  .dir-c-body { padding: 16px; }
+  .dir-c-title-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .dir-c-title { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+  .dir-c-subtitle { font-size: 10px; color: #64748b; }
+  .dir-c-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  .dir-c-kpi {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 10px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .dir-c-kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+  }
+  .dir-c-kpi.k1::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+  .dir-c-kpi.k2::before { background: linear-gradient(90deg, #06b6d4, #0891b2); }
+  .dir-c-kpi.k3::before { background: linear-gradient(90deg, #10b981, #059669); }
+  .dir-c-kpi.k4::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+  .dir-c-kpi-val { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.8px; }
+  .dir-c-kpi-label { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; font-weight: 600; }
+  .dir-c-kpi-change { font-size: 9px; color: #4ade80; margin-top: 3px; font-weight: 700; }
+  .dir-c-bottom { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; }
+  .dir-c-panel { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 12px; }
+  .dir-c-panel-title { font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; margin-bottom: 8px; font-weight: 700; }
+  .dir-c-funnel { display: flex; gap: 6px; align-items: flex-end; height: 72px; }
+  .dir-c-funnel-bar { flex: 1; border-radius: 4px; position: relative; }
+  .dir-c-funnel-bar.f1 { background: linear-gradient(180deg, #6366f1 0%, rgba(99,102,241,0.3) 100%); }
+  .dir-c-funnel-bar.f2 { background: linear-gradient(180deg, #8b5cf6 0%, rgba(139,92,246,0.3) 100%); }
+  .dir-c-funnel-bar.f3 { background: linear-gradient(180deg, #a78bfa 0%, rgba(167,139,250,0.3) 100%); }
+  .dir-c-funnel-label { font-size: 7px; color: #64748b; text-align: center; margin-top: 3px; }
+  .dir-c-export-rows { display: flex; flex-direction: column; gap: 4px; }
+  .dir-c-export-row { display: flex; align-items: center; gap: 6px; }
+  .dir-c-export-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dir-c-export-name { font-size: 9px; color: #94a3b8; flex: 1; }
+  .dir-c-export-badge { font-size: 8px; padding: 1px 6px; border-radius: 4px; font-weight: 700; }
+  .dir-c-badge-ready { background: rgba(16,185,129,0.15); color: #34d399; }
+  .dir-c-badge-pending { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .dir-c-glow { position: absolute; width: 200px; height: 200px; border-radius: 50%; filter: blur(60px); pointer-events: none; opacity: 0.12; }
+
+  /* Selection state */
+  .direction-card.selected .direction-label { background: rgba(99,102,241,0.08); border-top-color: rgba(99,102,241,0.2); }
+
+  .footer-note { text-align: center; margin-top: 20px; font-size: 12px; color: #475569; }
+  .footer-note span { color: #818cf8; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>OneView — Design Direction</h1>
+  <p>Three distinct visual personalities. Click to select the direction that resonates.</p>
+</div>
+
+<div class="direction-grid">
+
+  <!-- DIRECTION A: Bold Civic -->
+  <div class="direction-card dir-a" onclick="select(this, 'bold-civic')">
+    <div class="dir-a-preview">
+      <div class="dir-a-sidebar">
+        <div class="dir-a-icon" style="background:rgba(249,115,22,0.2)">📊</div>
+        <div class="dir-a-icon active">🏠</div>
+        <div class="dir-a-icon">📥</div>
+        <div class="dir-a-icon">🤖</div>
+        <div class="dir-a-icon">📤</div>
+      </div>
+      <div class="dir-a-main">
+        <div class="dir-a-topbar">
+          <div class="dir-a-logo">ONEVIEW</div>
+          <div class="dir-a-pill">⚠ SYNTHETIC DATA</div>
+        </div>
+        <div class="dir-a-headline">16,247<br>Lives in Motion</div>
+        <div class="dir-a-sub">FY 2025–26 · All programs · 4 funder systems</div>
+        <div class="dir-a-stats">
+          <div class="dir-a-stat">
+            <div class="dir-a-stat-num">4,120</div>
+            <div class="dir-a-stat-label">Settlement</div>
+            <div class="dir-a-stat-delta">↑ 12%</div>
+          </div>
+          <div class="dir-a-stat">
+            <div class="dir-a-stat-num">5,380</div>
+            <div class="dir-a-stat-label">Employment</div>
+            <div class="dir-a-stat-delta">↑ 8%</div>
+          </div>
+          <div class="dir-a-stat">
+            <div class="dir-a-stat-num">3,010</div>
+            <div class="dir-a-stat-label">Language</div>
+            <div class="dir-a-stat-delta">↑ 5%</div>
+          </div>
+          <div class="dir-a-stat">
+            <div class="dir-a-stat-num">1,240</div>
+            <div class="dir-a-stat-label">Mental Health</div>
+            <div class="dir-a-stat-delta">↑ 22%</div>
+          </div>
+        </div>
+        <div class="dir-a-chart-area">
+          <div class="dir-a-chart-title">Clients by Program</div>
+          <div class="dir-a-bars">
+            <div>
+              <div class="dir-a-bar dir-a-accent" style="height:70px"></div>
+              <div class="dir-a-bar-label">Empl</div>
+            </div>
+            <div>
+              <div class="dir-a-bar dir-a-muted" style="height:54px"></div>
+              <div class="dir-a-bar-label">Settl</div>
+            </div>
+            <div>
+              <div class="dir-a-bar dir-a-muted" style="height:39px"></div>
+              <div class="dir-a-bar-label">Lang</div>
+            </div>
+            <div>
+              <div class="dir-a-bar dir-a-muted" style="height:21px"></div>
+              <div class="dir-a-bar-label">Youth</div>
+            </div>
+            <div>
+              <div class="dir-a-bar dir-a-muted" style="height:19px"></div>
+              <div class="dir-a-bar-label">Ment</div>
+            </div>
+            <div>
+              <div class="dir-a-bar dir-a-muted" style="height:19px"></div>
+              <div class="dir-a-bar-label">Ment</div>
+            </div>
+            <div>
+              <div class="dir-a-bar dir-a-muted" style="height:13px"></div>
+              <div class="dir-a-bar-label">Trade</div>
+            </div>
+            <div>
+              <div class="dir-a-bar dir-a-muted" style="height:17px"></div>
+              <div class="dir-a-bar-label">Women</div>
+            </div>
+          </div>
+        </div>
+        <div class="dir-a-orange-line"></div>
+      </div>
+    </div>
+    <div class="direction-label">
+      <div class="badge">Direction A</div>
+      <h3>Bold Civic / Data-Forward Dark</h3>
+      <p>Dark interface, bold numbers, authoritative orange accent. Looks like a real government analytics tool done right — serious, high-contrast, data as the hero. Scores high on <em>Functionality</em> and <em>Feasibility</em>.</p>
+    </div>
+  </div>
+
+  <!-- DIRECTION B: Human-Centered Impact -->
+  <div class="direction-card dir-b" onclick="select(this, 'human-impact')">
+    <div class="dir-b-preview">
+      <div class="dir-b-hero">
+        <div class="dir-b-hero-top">
+          <div class="dir-b-logo">OneView</div>
+          <div class="dir-b-nav-pills">
+            <div class="dir-b-nav-pill active">Dashboard</div>
+            <div class="dir-b-nav-pill">Intake</div>
+            <div class="dir-b-nav-pill">AI</div>
+            <div class="dir-b-nav-pill">Export</div>
+          </div>
+        </div>
+        <div class="dir-b-headline">One Record.<br>Every Funder.</div>
+        <div class="dir-b-sub">Skills for Change · 2025–26 · Synthetic data only</div>
+      </div>
+      <div class="dir-b-body">
+        <div class="dir-b-impact">
+          <div class="dir-b-impact-card">
+            <div class="dir-b-impact-icon">👥</div>
+            <div class="dir-b-impact-num">16,247</div>
+            <div class="dir-b-impact-label">Clients Served</div>
+          </div>
+          <div class="dir-b-impact-card">
+            <div class="dir-b-impact-icon">⏱️</div>
+            <div class="dir-b-impact-num">2,340</div>
+            <div class="dir-b-impact-label">Staff Hrs Saved</div>
+          </div>
+          <div class="dir-b-impact-card">
+            <div class="dir-b-impact-icon">📋</div>
+            <div class="dir-b-impact-num">4</div>
+            <div class="dir-b-impact-label">Funder Systems</div>
+          </div>
+        </div>
+        <div class="dir-b-section-title">Funder Programs</div>
+        <div class="dir-b-funder-chips">
+          <span class="dir-b-funder-chip dir-b-chip-ircc">IRCC · iCARE</span>
+          <span class="dir-b-funder-chip dir-b-chip-eo">Employment Ontario · CaMS</span>
+          <span class="dir-b-funder-chip dir-b-chip-uw">United Way</span>
+          <span class="dir-b-funder-chip dir-b-chip-city">City of Toronto</span>
+        </div>
+        <div class="dir-b-section-title">Outcome Funnel</div>
+        <div class="dir-b-progress-row">
+          <div class="dir-b-progress-label">Needs Assessed</div>
+          <div class="dir-b-progress-track"><div class="dir-b-progress-fill" style="width:92%"></div></div>
+          <div class="dir-b-progress-pct">92%</div>
+        </div>
+        <div class="dir-b-progress-row">
+          <div class="dir-b-progress-label">Skill Gained</div>
+          <div class="dir-b-progress-track"><div class="dir-b-progress-fill" style="width:61%"></div></div>
+          <div class="dir-b-progress-pct">61%</div>
+        </div>
+        <div class="dir-b-progress-row">
+          <div class="dir-b-progress-label">Employed</div>
+          <div class="dir-b-progress-track"><div class="dir-b-progress-fill" style="width:37%"></div></div>
+          <div class="dir-b-progress-pct">37%</div>
+        </div>
+      </div>
+    </div>
+    <div class="direction-label">
+      <div class="badge">Direction B</div>
+      <h3>Human-Centered Impact / Light</h3>
+      <p>Warm green tones, mission-forward typography, people-first feel. Light background makes data accessible to non-technical caseworkers. Emotionally resonant. Scores high on <em>Desirability</em> with judges and SfC staff.</p>
+    </div>
+  </div>
+
+  <!-- DIRECTION C: Premium SaaS / Indigo -->
+  <div class="direction-card dir-c" onclick="select(this, 'premium-saas')">
+    <div class="dir-c-preview">
+      <div class="dir-c-glow" style="top:-50px;left:50%;background:#6366f1"></div>
+      <div class="dir-c-topbar">
+        <div class="dir-c-logo-area">
+          <div class="dir-c-logo-mark">OV</div>
+          <div class="dir-c-logo-text">OneView</div>
+        </div>
+        <div class="dir-c-topnav">
+          <div class="dir-c-topnav-item active">Dashboard</div>
+          <div class="dir-c-topnav-item">Intake</div>
+          <div class="dir-c-topnav-item">AI M&E</div>
+          <div class="dir-c-topnav-item">Export</div>
+        </div>
+        <div class="dir-c-actions">
+          <div class="dir-c-btn dir-c-btn-ghost">Reset</div>
+          <div class="dir-c-btn dir-c-btn-primary">+ New Intake</div>
+        </div>
+      </div>
+      <div class="dir-c-body">
+        <div class="dir-c-title-row">
+          <div>
+            <div class="dir-c-title">Org Dashboard</div>
+            <div class="dir-c-subtitle">FY 2025–26 · Synthetic data · All programs</div>
+          </div>
+        </div>
+        <div class="dir-c-kpi-grid">
+          <div class="dir-c-kpi k1">
+            <div class="dir-c-kpi-val">16,247</div>
+            <div class="dir-c-kpi-label">Total Clients</div>
+            <div class="dir-c-kpi-change">↑ 11% YoY</div>
+          </div>
+          <div class="dir-c-kpi k2">
+            <div class="dir-c-kpi-val">25+</div>
+            <div class="dir-c-kpi-label">Programs</div>
+            <div class="dir-c-kpi-change">8 funder streams</div>
+          </div>
+          <div class="dir-c-kpi k3">
+            <div class="dir-c-kpi-val">2,340</div>
+            <div class="dir-c-kpi-label">Hrs Saved</div>
+            <div class="dir-c-kpi-change">↑ from dedup</div>
+          </div>
+          <div class="dir-c-kpi k4">
+            <div class="dir-c-kpi-val">4</div>
+            <div class="dir-c-kpi-label">Funder Systems</div>
+            <div class="dir-c-kpi-change">0 manual re-keys</div>
+          </div>
+        </div>
+        <div class="dir-c-bottom">
+          <div class="dir-c-panel">
+            <div class="dir-c-panel-title">Outcome Funnel</div>
+            <div class="dir-c-funnel">
+              <div>
+                <div class="dir-c-funnel-bar f1" style="height:72px"></div>
+                <div class="dir-c-funnel-label">Immediate<br>92%</div>
+              </div>
+              <div>
+                <div class="dir-c-funnel-bar f2" style="height:44px"></div>
+                <div class="dir-c-funnel-label">Intermediate<br>61%</div>
+              </div>
+              <div>
+                <div class="dir-c-funnel-bar f3" style="height:27px"></div>
+                <div class="dir-c-funnel-label">Ultimate<br>37%</div>
+              </div>
+            </div>
+          </div>
+          <div class="dir-c-panel">
+            <div class="dir-c-panel-title">Export Status</div>
+            <div class="dir-c-export-rows">
+              <div class="dir-c-export-row">
+                <div class="dir-c-export-dot" style="background:#6366f1"></div>
+                <div class="dir-c-export-name">IRCC · iCARE</div>
+                <div class="dir-c-export-badge dir-c-badge-ready">Ready</div>
+              </div>
+              <div class="dir-c-export-row">
+                <div class="dir-c-export-dot" style="background:#06b6d4"></div>
+                <div class="dir-c-export-name">Employment Ontario</div>
+                <div class="dir-c-export-badge dir-c-badge-ready">Ready</div>
+              </div>
+              <div class="dir-c-export-row">
+                <div class="dir-c-export-dot" style="background:#f59e0b"></div>
+                <div class="dir-c-export-name">United Way</div>
+                <div class="dir-c-export-badge dir-c-badge-pending">Pending</div>
+              </div>
+              <div class="dir-c-export-row">
+                <div class="dir-c-export-dot" style="background:#a78bfa"></div>
+                <div class="dir-c-export-name">City of Toronto</div>
+                <div class="dir-c-export-badge dir-c-badge-pending">Pending</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="direction-label">
+      <div class="badge">Direction C</div>
+      <h3>Premium SaaS / Indigo Dark</h3>
+      <p>Refined dark UI with gradient accents, tight information density, "this could be a funded startup" credibility. Signals commercial viability strongly. Scores high on <em>Viability</em> — judges see a product, not a prototype.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="footer-note">Click a card to select · You can also just tell us in the terminal · Scroll down on mobile</p>
+
+<script>
+function select(card, choice) {
+  document.querySelectorAll('.direction-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  if (window.__recordChoice) window.__recordChoice(choice, card.querySelector('h3').textContent.trim());
+}
+</script>
+
+</body>
+</html>

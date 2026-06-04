@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneView — Typography & Hero Treatment</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;0,800;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0a0a0f; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+
+  .page-title { text-align: center; margin-bottom: 8px; }
+  .page-title h1 { font-size: 22px; font-weight: 700; color: #fff; }
+  .page-title p { font-size: 14px; color: #94a3b8; margin-top: 4px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 24px; max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+  .card {
+    border-radius: 16px; overflow: hidden; cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.06);
+    transition: all 0.2s ease; background: #13131e;
+  }
+  .card:hover { transform: translateY(-3px); border-color: rgba(16,185,129,0.4); }
+  .card.selected { border-color: #10b981 !important; position: relative; }
+  .card.selected::after {
+    content: '✓ Selected'; position: absolute; top: 12px; right: 12px;
+    background: #10b981; color: white; font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px; z-index: 100; letter-spacing: 0.5px;
+  }
+
+  .preview { height: 320px; overflow: hidden; position: relative; }
+  .card-label { padding: 14px 18px 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-bottom: 8px; background: rgba(16,185,129,0.12); color: #34d399; }
+  .card-label h3 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 5px; }
+  .card-label p { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+
+  /* ========== STYLE A: Editorial Bold ========== */
+  /* Big, confident statements. Data as headlines. */
+  .style-a { background: #f9fafb; }
+  .style-a-header {
+    background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%);
+    padding: 20px 20px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .style-a-header::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .style-a-header::after {
+    content: '';
+    position: absolute; bottom: -20px; left: 30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+  .style-a-eyebrow { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+  .style-a-headline { font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 800; color: #fff; line-height: 1.1; letter-spacing: -1px; margin-bottom: 4px; }
+  .style-a-headline span { color: #6ee7b7; }
+  .style-a-sub { font-size: 11px; color: rgba(255,255,255,0.55); font-weight: 400; }
+  .style-a-stats { display: flex; gap: 16px; margin-top: 14px; }
+  .style-a-stat-item { }
+  .style-a-stat-num { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+  .style-a-stat-label { font-size: 9px; color: rgba(255,255,255,0.5); margin-top: 1px; letter-spacing: 0.5px; }
+  .style-a-body { padding: 14px 16px; }
+  .style-a-section-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; margin-bottom: 8px; }
+  .style-a-prog-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .style-a-prog-name { font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 700; color: #111827; width: 80px; flex-shrink: 0; }
+  .style-a-prog-track { flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+  .style-a-prog-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #065f46, #34d399); }
+  .style-a-prog-pct { font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 700; color: #065f46; width: 30px; text-align: right; }
+  .style-a-nav { display: flex; gap: 0; border-top: 1px solid #e5e7eb; background: #fff; }
+  .style-a-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; }
+  .style-a-nav-item.active { border-top: 2px solid #065f46; margin-top: -1px; }
+  .style-a-nav-icon { font-size: 16px; }
+  .style-a-nav-label { font-size: 8px; font-weight: 700; color: #9ca3af; letter-spacing: 0.3px; }
+  .style-a-nav-item.active .style-a-nav-label { color: #065f46; }
+
+  /* ========== STYLE B: Data Magazine ========== */
+  /* Card-grid layout, numbers as the visual anchor, clean Inter throughout */
+  .style-b { background: #f0fdf4; }
+  .style-b-header {
+    background: #fff;
+    border-bottom: 3px solid #059669;
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .style-b-logo { font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 800; color: #065f46; letter-spacing: -0.5px; }
+  .style-b-logo span { color: #34d399; }
+  .style-b-synthetic { font-size: 9px; background: #fef3c7; color: #d97706; padding: 3px 8px; border-radius: 20px; font-weight: 700; }
+  .style-b-body { padding: 12px 16px; }
+  .style-b-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 2px; }
+  .style-b-subtitle { font-size: 10px; color: #9ca3af; margin-bottom: 10px; }
+  .style-b-big-num { font-family: 'DM Sans', sans-serif; font-size: 42px; font-weight: 800; color: #065f46; letter-spacing: -2px; line-height: 1; margin-bottom: 2px; }
+  .style-b-big-label { font-size: 11px; color: #6b7280; font-weight: 500; margin-bottom: 12px; }
+  .style-b-kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+  .style-b-kpi { background: #fff; border-radius: 8px; padding: 8px 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 3px solid #059669; }
+  .style-b-kpi-num { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 800; color: #065f46; }
+  .style-b-kpi-label { font-size: 8px; color: #9ca3af; margin-top: 1px; }
+  .style-b-funnel { background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .style-b-funnel-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; margin-bottom: 6px; }
+  .style-b-funnel-bars { display: flex; align-items: flex-end; gap: 8px; height: 50px; }
+  .style-b-funnel-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+  .style-b-funnel-bar { width: 100%; border-radius: 4px 4px 0 0; }
+  .style-b-funnel-label { font-size: 7px; color: #9ca3af; text-align: center; line-height: 1.2; }
+  .style-b-nav { display: flex; gap: 0; border-top: 1px solid #e5e7eb; background: #fff; }
+  .style-b-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; }
+  .style-b-nav-item.active { }
+  .style-b-nav-icon { font-size: 16px; }
+  .style-b-nav-label { font-size: 8px; font-weight: 600; color: #9ca3af; }
+  .style-b-nav-item.active .style-b-nav-label { color: #059669; font-weight: 800; }
+  .style-b-nav-pip { width: 4px; height: 4px; border-radius: 50%; background: #059669; margin: 0 auto; }
+
+  /* ========== STYLE C: Warm Human / Editorial Cards ========== */
+  /* Story-forward, human context first, numbers as proof points */
+  .style-c { background: #fffbf5; }
+  .style-c-header {
+    background: linear-gradient(160deg, #065f46 0%, #047857 40%, #0d9488 100%);
+    padding: 16px 16px 20px;
+    position: relative; overflow: hidden;
+  }
+  .style-c-wave {
+    position: absolute; bottom: -2px; left: 0; right: 0; height: 20px;
+    background: #fffbf5;
+    clip-path: ellipse(55% 100% at 50% 100%);
+  }
+  .style-c-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .style-c-logo { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+  .style-c-badge { font-size: 9px; background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+  .style-c-story { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; color: #fff; line-height: 1.3; margin-bottom: 8px; }
+  .style-c-story em { font-style: italic; color: #a7f3d0; font-weight: 400; }
+  .style-c-meta { font-size: 10px; color: rgba(255,255,255,0.5); }
+  .style-c-body { padding: 16px; }
+  .style-c-impact-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .style-c-impact-card { flex: 1; background: #fff; border-radius: 10px; padding: 10px 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .style-c-impact-emoji { font-size: 18px; margin-bottom: 3px; }
+  .style-c-impact-num { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 800; color: #065f46; }
+  .style-c-impact-label { font-size: 8px; color: #9ca3af; margin-top: 1px; line-height: 1.3; }
+  .style-c-journey-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; margin-bottom: 6px; }
+  .style-c-journey { display: flex; align-items: center; gap: 2px; margin-bottom: 12px; }
+  .style-c-step { flex: 1; background: #fff; border-radius: 6px; padding: 6px 4px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .style-c-step-icon { font-size: 12px; }
+  .style-c-step-label { font-size: 7px; color: #374151; font-weight: 600; margin-top: 2px; }
+  .style-c-step-pct { font-size: 9px; color: #059669; font-weight: 800; }
+  .style-c-arrow { color: #d1fae5; font-size: 10px; flex-shrink: 0; }
+  .style-c-nav { display: flex; gap: 0; border-top: 1px solid #e5e7eb; background: #fff; }
+  .style-c-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border-radius: 0; }
+  .style-c-nav-item.active { background: #f0fdf4; }
+  .style-c-nav-icon { font-size: 16px; }
+  .style-c-nav-label { font-size: 8px; font-weight: 600; color: #9ca3af; }
+  .style-c-nav-item.active .style-c-nav-label { color: #059669; font-weight: 800; }
+
+  .footer-note { text-align: center; margin-top: 20px; font-size: 12px; color: #475569; }
+
+  /* Phone shell */
+  .phone-shell { width: 175px; height: 320px; border-radius: 26px; border: 6px solid #1e1e2e; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
+  .phone-notch { height: 14px; background: #1e1e2e; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .phone-notch-pill { width: 36px; height: 5px; background: #111; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>Typography & Hero Treatment</h1>
+  <p>The first impression — same green palette, three very different personalities</p>
+</div>
+
+<div class="grid">
+
+  <!-- STYLE A: Editorial Bold / Sora headlines -->
+  <div class="card" onclick="select(this, 'editorial-bold')">
+    <div class="preview style-a">
+      <div style="display:flex;justify-content:center;padding:16px;background:#0d0d16">
+        <div class="phone-shell">
+          <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+            <div class="style-a-header">
+              <div class="style-a-eyebrow">Skills for Change · FY 2025–26</div>
+              <div class="style-a-headline"><span>16,247</span><br>Lives in Motion</div>
+              <div class="style-a-sub">Capture once. Report to every funder.</div>
+              <div class="style-a-stats">
+                <div class="style-a-stat-item"><div class="style-a-stat-num">25+</div><div class="style-a-stat-label">Programs</div></div>
+                <div class="style-a-stat-item"><div class="style-a-stat-num">4</div><div class="style-a-stat-label">Funder Systems</div></div>
+                <div class="style-a-stat-item"><div class="style-a-stat-num">2,340</div><div class="style-a-stat-label">Hrs Saved</div></div>
+              </div>
+            </div>
+            <div class="style-a-body" style="flex:1;overflow:hidden">
+              <div class="style-a-section-label">Outcome Funnel</div>
+              <div class="style-a-prog-row">
+                <div class="style-a-prog-name">Enrolled</div>
+                <div class="style-a-prog-track"><div class="style-a-prog-fill" style="width:92%"></div></div>
+                <div class="style-a-prog-pct">92%</div>
+              </div>
+              <div class="style-a-prog-row">
+                <div class="style-a-prog-name">Skilled</div>
+                <div class="style-a-prog-track"><div class="style-a-prog-fill" style="width:61%"></div></div>
+                <div class="style-a-prog-pct">61%</div>
+              </div>
+              <div class="style-a-prog-row">
+                <div class="style-a-prog-name">Employed</div>
+                <div class="style-a-prog-track"><div class="style-a-prog-fill" style="width:37%"></div></div>
+                <div class="style-a-prog-pct">37%</div>
+              </div>
+            </div>
+            <div class="style-a-nav">
+              <div class="style-a-nav-item active"><div class="style-a-nav-icon">📊</div><div class="style-a-nav-label">Dashboard</div></div>
+              <div class="style-a-nav-item"><div class="style-a-nav-icon">📝</div><div class="style-a-nav-label">Intake</div></div>
+              <div class="style-a-nav-item"><div class="style-a-nav-icon">🤖</div><div class="style-a-nav-label">AI M&E</div></div>
+              <div class="style-a-nav-item"><div class="style-a-nav-icon">📤</div><div class="style-a-nav-label">Export</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-label">
+      <div class="badge">Style A</div>
+      <h3>Editorial Bold · "Lives in Motion"</h3>
+      <p>Sora display font for headlines. Numbers as story — <em>"16,247 Lives in Motion"</em> is the first thing you read. Full-bleed green hero with subtle circles. The data is the poetry.</p>
+    </div>
+  </div>
+
+  <!-- STYLE B: Data Magazine / DM Sans -->
+  <div class="card" onclick="select(this, 'data-magazine')">
+    <div class="preview style-b">
+      <div style="display:flex;justify-content:center;padding:16px;background:#0d0d16">
+        <div class="phone-shell">
+          <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+            <div class="style-b-header">
+              <div class="style-b-logo">One<span>View</span></div>
+              <div class="style-b-synthetic">⚠ Synthetic</div>
+            </div>
+            <div class="style-b-body" style="flex:1;overflow:hidden">
+              <div class="style-b-title">Org Dashboard</div>
+              <div class="style-b-subtitle">FY 2025–26 · All programs</div>
+              <div class="style-b-big-num">16,247</div>
+              <div class="style-b-big-label">clients served across 25+ programs</div>
+              <div class="style-b-kpi-row">
+                <div class="style-b-kpi"><div class="style-b-kpi-num">2,340</div><div class="style-b-kpi-label">Hrs Saved</div></div>
+                <div class="style-b-kpi"><div class="style-b-kpi-num">25+</div><div class="style-b-kpi-label">Programs</div></div>
+                <div class="style-b-kpi"><div class="style-b-kpi-num">4</div><div class="style-b-kpi-label">Funders</div></div>
+              </div>
+              <div class="style-b-funnel">
+                <div class="style-b-funnel-title">Outcomes Funnel</div>
+                <div class="style-b-funnel-bars">
+                  <div class="style-b-funnel-col">
+                    <div class="style-b-funnel-bar" style="height:50px;background:linear-gradient(180deg,#059669,#a7f3d0)"></div>
+                    <div class="style-b-funnel-label">Needs<br>Assessed<br><strong style="color:#059669">92%</strong></div>
+                  </div>
+                  <div class="style-b-funnel-col">
+                    <div class="style-b-funnel-bar" style="height:33px;background:linear-gradient(180deg,#0d9488,#99f6e4)"></div>
+                    <div class="style-b-funnel-label">Skill<br>Gained<br><strong style="color:#0d9488">61%</strong></div>
+                  </div>
+                  <div class="style-b-funnel-col">
+                    <div class="style-b-funnel-bar" style="height:20px;background:linear-gradient(180deg,#0891b2,#bae6fd)"></div>
+                    <div class="style-b-funnel-label">Employed<br>/<br><strong style="color:#0891b2">37%</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="style-b-nav">
+              <div class="style-b-nav-item active"><div class="style-b-nav-pip"></div><div class="style-b-nav-icon">📊</div><div class="style-b-nav-label">Dashboard</div></div>
+              <div class="style-b-nav-item"><div style="height:4px"></div><div class="style-b-nav-icon">📝</div><div class="style-b-nav-label">Intake</div></div>
+              <div class="style-b-nav-item"><div style="height:4px"></div><div class="style-b-nav-icon">🤖</div><div class="style-b-nav-label">AI M&E</div></div>
+              <div class="style-b-nav-item"><div style="height:4px"></div><div class="style-b-nav-icon">📤</div><div class="style-b-nav-label">Export</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-label">
+      <div class="badge">Style B</div>
+      <h3>Data Magazine · Clean & Structured</h3>
+      <p>DM Sans throughout. White card header with an emerald accent line. The giant number <em>16,247</em> is the anchor. Minimal chrome — content breathes. Data-journalism energy.</p>
+    </div>
+  </div>
+
+  <!-- STYLE C: Warm Human / Story-forward -->
+  <div class="card" onclick="select(this, 'warm-human')">
+    <div class="preview style-c">
+      <div style="display:flex;justify-content:center;padding:16px;background:#0d0d16">
+        <div class="phone-shell">
+          <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+            <div class="style-c-header">
+              <div class="style-c-top">
+                <div class="style-c-logo">OneView</div>
+                <div class="style-c-badge">⚠ Synthetic Data</div>
+              </div>
+              <div class="style-c-story">One record.<br>Every funder.<br><em>Zero re-keying.</em></div>
+              <div class="style-c-meta">Skills for Change · FY 2025–26</div>
+              <div class="style-c-wave"></div>
+            </div>
+            <div class="style-c-body" style="flex:1;overflow:hidden">
+              <div class="style-c-impact-row">
+                <div class="style-c-impact-card">
+                  <div class="style-c-impact-emoji">👥</div>
+                  <div class="style-c-impact-num">16,247</div>
+                  <div class="style-c-impact-label">Clients</div>
+                </div>
+                <div class="style-c-impact-card">
+                  <div class="style-c-impact-emoji">⏱</div>
+                  <div class="style-c-impact-num">2,340</div>
+                  <div class="style-c-impact-label">Hrs Saved</div>
+                </div>
+                <div class="style-c-impact-card">
+                  <div class="style-c-impact-emoji">📋</div>
+                  <div class="style-c-impact-num">4</div>
+                  <div class="style-c-impact-label">Funders</div>
+                </div>
+              </div>
+              <div class="style-c-journey-label">Client Journey</div>
+              <div class="style-c-journey">
+                <div class="style-c-step">
+                  <div class="style-c-step-icon">📋</div>
+                  <div class="style-c-step-label">Enrolled</div>
+                  <div class="style-c-step-pct">92%</div>
+                </div>
+                <div class="style-c-arrow">›</div>
+                <div class="style-c-step">
+                  <div class="style-c-step-icon">🎓</div>
+                  <div class="style-c-step-label">Skilled</div>
+                  <div class="style-c-step-pct">61%</div>
+                </div>
+                <div class="style-c-arrow">›</div>
+                <div class="style-c-step">
+                  <div class="style-c-step-icon">💼</div>
+                  <div class="style-c-step-label">Employed</div>
+                  <div class="style-c-step-pct">37%</div>
+                </div>
+              </div>
+            </div>
+            <div class="style-c-nav">
+              <div class="style-c-nav-item active"><div class="style-c-nav-icon">📊</div><div class="style-c-nav-label">Dashboard</div></div>
+              <div class="style-c-nav-item"><div class="style-c-nav-icon">📝</div><div class="style-c-nav-label">Intake</div></div>
+              <div class="style-c-nav-item"><div class="style-c-nav-icon">🤖</div><div class="style-c-nav-label">AI M&E</div></div>
+              <div class="style-c-nav-item"><div class="style-c-nav-icon">📤</div><div class="style-c-nav-label">Export</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-label">
+      <div class="badge">Style C</div>
+      <h3>Warm Human · Story-Forward</h3>
+      <p>DM Sans italic for the hero tagline — <em>"Zero re-keying."</em> Wave-cut hero section, emoji-anchored impact cards, journey steps with icons. Warm, mission-driven, NGO-report aesthetic.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="footer-note" style="margin-top:20px">Click to select · My recommendation: <strong style="color:#34d399">Style A</strong> — editorial numbers as poetry is the most award-winning direction; judges remember "16,247 Lives in Motion"</p>
+
+<script>
+function select(card, choice) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  if (window.__recordChoice) window.__recordChoice(choice, card.querySelector('h3').textContent.trim());
+}
+</script>
+</body>
+</html>

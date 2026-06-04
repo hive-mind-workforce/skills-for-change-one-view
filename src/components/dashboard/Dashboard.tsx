@@ -37,19 +37,26 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <section id="dashboard-hero" className="text-center py-8">
-        <p className="text-slate-500 text-sm uppercase tracking-widest mb-2">Skills for Change</p>
-        <h1 className="font-sora text-6xl md:text-8xl text-emerald-400 drop-shadow-[0_0_40px_rgba(16,185,129,0.3)]">
-          {formatNumber(metrics.total ?? 16247)}
-        </h1>
-        <p className="text-slate-300 text-2xl mt-2">Lives in Motion</p>
-        <p className="text-slate-500 mt-1">Serving immigrants and refugees across Toronto</p>
-        <div className="flex flex-wrap justify-center gap-2 mt-4">
-          {Object.keys(byProgram).map(p => (
-            <span key={p} className="px-3 py-1 glass rounded-full text-xs text-slate-300">
-              {programLabel(p)}
-            </span>
-          ))}
+      <section id="dashboard-hero" className="relative rounded-2xl overflow-hidden mb-2">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1600&q=60')" }}
+        />
+        <div className="absolute inset-0 bg-[#060610]/80" />
+        <div className="relative z-10 text-center py-16 px-4">
+          <p className="text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
+          <h1 className="font-sora text-6xl md:text-8xl text-white drop-shadow-[0_0_40px_rgba(16,185,129,0.4)]">
+            {formatNumber(metrics.total ?? 19140)}
+          </h1>
+          <p className="text-slate-200 text-2xl mt-2 font-light">Lives in Motion</p>
+          <p className="text-slate-400 mt-1">Building welcoming and equitable communities since 1982</p>
+          <div className="flex flex-wrap justify-center gap-2 mt-5">
+            {Object.keys(byProgram).map(p => (
+              <span key={p} className="px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-xs text-slate-200">
+                {programLabel(p)}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -1,0 +1,93 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - link "OneView Skills for Change" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: OneView
+        - generic [ref=e7]: Skills for Change
+      - generic [ref=e8]:
+        - button "admin" [ref=e9]
+        - button "caseworker" [ref=e10]
+        - button "viewer" [ref=e11]
+      - link "GitHub repository" [ref=e12] [cursor=pointer]:
+        - /url: https://github.com/hive-mind-workforce/skills-for-change-one-view
+        - img [ref=e13]
+      - button "Demo" [ref=e17]:
+        - img [ref=e18]
+        - generic [ref=e20]: Demo
+    - navigation [ref=e21]:
+      - link "Dashboard" [ref=e22] [cursor=pointer]:
+        - /url: /
+        - img [ref=e23]
+        - text: Dashboard
+      - link "Intake" [ref=e26] [cursor=pointer]:
+        - /url: /intake
+        - img [ref=e27]
+        - text: Intake
+      - link "Export" [ref=e28] [cursor=pointer]:
+        - /url: /export
+        - img [ref=e29]
+        - text: Export
+      - link "AI Reports" [ref=e32] [cursor=pointer]:
+        - /url: /ai
+        - img [ref=e33]
+        - text: AI Reports
+      - link "Help" [ref=e36] [cursor=pointer]:
+        - /url: /help
+        - img [ref=e37]
+        - text: Help
+    - main [ref=e39]:
+      - generic [ref=e40]:
+        - heading "Register a Client" [level=1] [ref=e41]
+        - paragraph [ref=e42]: One intake, any program. Data captured once, available everywhere.
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]: Full Name *
+          - textbox "Client full name" [ref=e46]
+        - generic [ref=e47]:
+          - generic [ref=e48]:
+            - generic [ref=e49]: Primary Language
+            - combobox [ref=e50]:
+              - option "English" [selected]
+              - option "French"
+              - option "Arabic"
+              - option "Spanish"
+              - option "Somali"
+              - option "Tagalog"
+              - option "Mandarin"
+              - option "Hindi"
+              - option "Portuguese"
+              - option "Ukrainian"
+              - option "Tigrinya"
+              - option "Amharic"
+              - option "Other"
+          - generic [ref=e51]:
+            - generic [ref=e52]: Immigration Stream
+            - combobox [ref=e53]:
+              - option "Refugee" [selected]
+              - option "Economic Immigrant"
+              - option "Family Reunification"
+              - option "International Student"
+              - option "Temporary Worker"
+              - option "Other"
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - generic [ref=e56]: Program
+            - combobox [ref=e57]:
+              - option "Settlement Services" [selected]
+              - option "Employment Services"
+              - option "Language Programs"
+              - option "Mental Health Support"
+              - option "Skilled Trades"
+              - option "Mentoring Program"
+              - option "Youth Services"
+              - option "Women's Programs"
+          - generic [ref=e58]:
+            - generic [ref=e59]: Funder
+            - generic [ref=e60]: IRCC
+        - generic [ref=e61]:
+          - checkbox "Enable cross-program consent (client has verbally consented to data sharing across programs for integrated support)" [ref=e62]
+          - generic [ref=e63] [cursor=pointer]: Enable cross-program consent (client has verbally consented to data sharing across programs for integrated support)
+        - button "Register Client" [ref=e64]
+  - region "Notifications alt+T"
+  - alert [ref=e65]

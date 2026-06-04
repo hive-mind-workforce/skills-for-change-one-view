@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneView — Interactive Architecture Diagram</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; }
+
+  .page-header { padding: 20px 24px 0; text-align: center; }
+  .page-header h1 { font-size: 18px; font-weight: 700; color: #fff; }
+  .page-header p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+
+  .main { display: flex; gap: 0; flex: 1; padding: 16px; min-height: 0; }
+
+  /* ── DIAGRAM ── */
+  .diagram { flex: 1; position: relative; min-width: 0; }
+
+  .layer {
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+  }
+  .layer-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    color: rgba(255,255,255,0.35); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+  }
+  .layer-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+
+  .nodes { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .node {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex; flex-direction: column; gap: 3px;
+    min-width: 90px;
+    position: relative;
+  }
+  .node:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); transform: translateY(-1px); }
+  .node.active { border-color: #34d399 !important; background: rgba(52,211,153,0.08) !important; box-shadow: 0 0 0 2px rgba(52,211,153,0.2); }
+  .node-icon { font-size: 16px; }
+  .node-name { font-size: 11px; font-weight: 700; color: #e2e8f0; }
+  .node-sub { font-size: 9px; color: #64748b; }
+  .node-badge {
+    position: absolute; top: -5px; right: -5px;
+    font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 10px;
+  }
+
+  /* Layer colours */
+  .layer-sources { background: rgba(99,102,241,0.05); border-color: rgba(99,102,241,0.2); }
+  .layer-sources .node { border-color: rgba(99,102,241,0.25); }
+  .layer-sources .node.active { border-color: #818cf8 !important; background: rgba(129,140,248,0.1) !important; box-shadow: 0 0 0 2px rgba(129,140,248,0.2); }
+
+  .layer-rbac { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.25); }
+  .layer-rbac .node { border-color: rgba(245,158,11,0.3); }
+  .layer-rbac .node.active { border-color: #fbbf24 !important; background: rgba(251,191,36,0.1) !important; box-shadow: 0 0 0 2px rgba(251,191,36,0.2); }
+
+  .layer-data { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.2); }
+  .layer-data .node { border-color: rgba(16,185,129,0.25); }
+  .layer-data .node.active { border-color: #34d399 !important; background: rgba(52,211,153,0.1) !important; }
+
+  .layer-privacy { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.2); }
+  .layer-privacy .node { border-color: rgba(239,68,68,0.25); }
+  .layer-privacy .node.active { border-color: #f87171 !important; background: rgba(248,113,113,0.1) !important; }
+
+  .layer-ai { background: rgba(139,92,246,0.05); border-color: rgba(139,92,246,0.2); }
+  .layer-ai .node { border-color: rgba(139,92,246,0.25); }
+  .layer-ai .node.active { border-color: #a78bfa !important; background: rgba(167,139,250,0.1) !important; }
+
+  .layer-mapping { background: rgba(6,182,212,0.05); border-color: rgba(6,182,212,0.2); }
+  .layer-mapping .node { border-color: rgba(6,182,212,0.25); }
+  .layer-mapping .node.active { border-color: #22d3ee !important; background: rgba(34,211,238,0.1) !important; }
+
+  .file-boundary {
+    background: rgba(239,68,68,0.06);
+    border: 2px dashed rgba(239,68,68,0.4);
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .file-boundary-label { font-size: 10px; font-weight: 800; color: #f87171; letter-spacing: 1px; text-transform: uppercase; }
+  .file-boundary-sub { font-size: 9px; color: #ef4444; opacity: 0.7; }
+
+  .layer-funders { background: rgba(59,130,246,0.05); border-color: rgba(59,130,246,0.2); }
+  .layer-funders .node { border-color: rgba(59,130,246,0.25); }
+  .layer-funders .node.active { border-color: #60a5fa !important; background: rgba(96,165,250,0.1) !important; }
+
+  /* Arrows between layers */
+  .arrow {
+    display: flex; align-items: center; justify-content: center;
+    height: 14px; color: #334155; font-size: 14px; margin-bottom: 0;
+  }
+  .arrow-label { font-size: 8px; color: #475569; margin-left: 6px; font-style: italic; }
+
+  /* ── DETAIL PANEL ── */
+  .detail-panel {
+    width: 280px; flex-shrink: 0;
+    background: #13131e;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    margin-left: 16px;
+    padding: 16px;
+    display: flex; flex-direction: column;
+    transition: all 0.2s ease;
+    overflow-y: auto;
+  }
+  .detail-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: #475569; text-align: center; gap: 8px;
+  }
+  .detail-empty-icon { font-size: 32px; opacity: 0.4; }
+  .detail-empty-text { font-size: 12px; }
+
+  .detail-content { display: none; }
+  .detail-content.visible { display: block; }
+
+  .detail-header { margin-bottom: 14px; }
+  .detail-icon { font-size: 28px; margin-bottom: 6px; }
+  .detail-title { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+  .detail-subtitle { font-size: 11px; color: #64748b; }
+  .detail-layer-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-top: 6px; }
+
+  .detail-section { margin-bottom: 14px; }
+  .detail-section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .detail-text { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+
+  .detail-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .detail-chip { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 600; background: rgba(255,255,255,0.06); color: #94a3b8; }
+
+  .code-block {
+    background: #0d0d16; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px; padding: 10px; margin-top: 6px;
+    font-family: 'Menlo', 'Monaco', monospace; font-size: 10px; color: #94a3b8;
+    line-height: 1.6;
+  }
+  .code-block .key { color: #818cf8; }
+  .code-block .val { color: #34d399; }
+  .code-block .comment { color: #475569; }
+
+  .privacy-rule {
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 6px; padding: 8px 10px; margin-top: 6px;
+    font-size: 11px; color: #fca5a5; line-height: 1.5;
+  }
+  .privacy-rule strong { color: #f87171; }
+
+  .flow-step { display: flex; gap: 8px; margin-bottom: 8px; }
+  .flow-step-num { width: 18px; height: 18px; border-radius: 50%; background: rgba(52,211,153,0.15); color: #34d399; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .flow-step-text { font-size: 11px; color: #94a3b8; line-height: 1.5; }
+  .flow-step-text strong { color: #e2e8f0; }
+
+  .hint { text-align: center; padding: 8px; font-size: 11px; color: #334155; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>OneView — Interactive Architecture</h1>
+  <p>Click any component to explore. This is the Help screen's Architecture tab.</p>
+</div>
+
+<div class="main">
+  <!-- DIAGRAM -->
+  <div class="diagram">
+
+    <!-- Layer 1: Source Systems -->
+    <div class="layer layer-sources">
+      <div class="layer-label">📥 Source Systems — Where data enters</div>
+      <div class="nodes">
+        <div class="node" onclick="show('ms-forms')">
+          <div class="node-icon">📋</div>
+          <div class="node-name">Microsoft Forms</div>
+          <div class="node-sub">Power Automate webhook</div>
+          <div class="node-badge" style="background:rgba(99,102,241,0.2);color:#818cf8">Live</div>
+        </div>
+        <div class="node" onclick="show('salesforce')">
+          <div class="node-icon">☁️</div>
+          <div class="node-name">Salesforce</div>
+          <div class="node-sub">Outbound message / REST</div>
+        </div>
+        <div class="node" onclick="show('csv-import')">
+          <div class="node-icon">📊</div>
+          <div class="node-name">CSV Import</div>
+          <div class="node-sub">Bulk migration</div>
+        </div>
+        <div class="node" onclick="show('direct-entry')">
+          <div class="node-icon">✏️</div>
+          <div class="node-name">Direct Entry</div>
+          <div class="node-sub">Unified Intake screen</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓ <span class="arrow-label">POST /api/clients (authenticated)</span></div>
+
+    <!-- Layer 2: RBAC -->
+    <div class="layer layer-rbac">
+      <div class="layer-label">🔐 Access Control — RBAC gateway</div>
+      <div class="nodes">
+        <div class="node" onclick="show('role-admin')">
+          <div class="node-icon">👑</div>
+          <div class="node-name">Admin</div>
+          <div class="node-sub">Priya · Full access</div>
+        </div>
+        <div class="node" onclick="show('role-caseworker')">
+          <div class="node-icon">👩‍💼</div>
+          <div class="node-name">Caseworker</div>
+          <div class="node-sub">Fatima / David · Program-scoped</div>
+        </div>
+        <div class="node" onclick="show('role-viewer')">
+          <div class="node-icon">👁️</div>
+          <div class="node-name">Viewer</div>
+          <div class="node-sub">Read-only dashboard</div>
+        </div>
+        <div class="node" onclick="show('role-agent')">
+          <div class="node-icon">🤖</div>
+          <div class="node-name">AI Agent</div>
+          <div class="node-sub">API key · Scoped claims</div>
+          <div class="node-badge" style="background:rgba(139,92,246,0.2);color:#a78bfa">New</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓ <span class="arrow-label">consent-scoped queries</span></div>
+
+    <!-- Layer 3: Data + Privacy side by side -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+      <div class="layer layer-data" style="margin-bottom:0">
+        <div class="layer-label">🗄️ Data Layer</div>
+        <div class="nodes" style="flex-direction:column;gap:4px">
+          <div class="node" onclick="show('clients-table')" style="min-width:0">
+            <div class="node-icon">👤</div>
+            <div class="node-name">clients</div>
+            <div class="node-sub">Golden record</div>
+          </div>
+          <div class="node" onclick="show('enrolments-table')" style="min-width:0">
+            <div class="node-icon">📎</div>
+            <div class="node-name">enrolments</div>
+            <div class="node-sub">client ↔ program ↔ funder</div>
+          </div>
+          <div class="node" onclick="show('outcomes-table')" style="min-width:0">
+            <div class="node-icon">🎯</div>
+            <div class="node-name">outcomes</div>
+            <div class="node-sub">immediate → ultimate</div>
+          </div>
+          <div class="node" onclick="show('audit-table')" style="min-width:0">
+            <div class="node-icon">📝</div>
+            <div class="node-name">audit_log</div>
+            <div class="node-sub">Immutable trail</div>
+          </div>
+        </div>
+      </div>
+      <div class="layer layer-privacy" style="margin-bottom:0">
+        <div class="layer-label">🔒 Privacy &amp; Consent</div>
+        <div class="nodes" style="flex-direction:column;gap:4px">
+          <div class="node" onclick="show('consent-engine')" style="min-width:0">
+            <div class="node-icon">✅</div>
+            <div class="node-name">Consent Engine</div>
+            <div class="node-sub">Per-program + cross-program</div>
+          </div>
+          <div class="node" onclick="show('cross-program')" style="min-width:0">
+            <div class="node-icon">🔗</div>
+            <div class="node-name">Cross-Program Link</div>
+            <div class="node-sub">Consent-gated linking</div>
+          </div>
+          <div class="node" onclick="show('phi-wall')" style="min-width:0">
+            <div class="node-icon">🏥</div>
+            <div class="node-name">PHI Wall</div>
+            <div class="node-sub">Mental Health · PHIPA</div>
+            <div class="node-badge" style="background:rgba(239,68,68,0.2);color:#f87171">Hard</div>
+          </div>
+          <div class="node" onclick="show('law-map')" style="min-width:0">
+            <div class="node-icon">⚖️</div>
+            <div class="node-name">Law Map</div>
+            <div class="node-sub">Privacy Act·FIPPA·PHIPA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓ <span class="arrow-label">deterministic SQL metrics only</span></div>
+
+    <!-- Layer 4: AI M&E -->
+    <div class="layer layer-ai">
+      <div class="layer-label">🤖 AI M&E Layer — no hallucination guarantee</div>
+      <div class="nodes">
+        <div class="node" onclick="show('metrics-engine')">
+          <div class="node-icon">📐</div>
+          <div class="node-name">Metrics Engine</div>
+          <div class="node-sub">SQL · deterministic</div>
+        </div>
+        <div class="node" onclick="show('llm-router')">
+          <div class="node-icon">🔀</div>
+          <div class="node-name">LLM Router</div>
+          <div class="node-sub">Gemini · Claude · Groq</div>
+        </div>
+        <div class="node" onclick="show('report-cache')">
+          <div class="node-icon">💾</div>
+          <div class="node-name">Report Cache</div>
+          <div class="node-sub">Demo-safe pre-cache</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓ <span class="arrow-label">funder-shaped rows</span></div>
+
+    <!-- Layer 5: Mapping Engine -->
+    <div class="layer layer-mapping">
+      <div class="layer-label">⚙️ Mapping Engine — config-driven, the core IP</div>
+      <div class="nodes">
+        <div class="node" onclick="show('ircc-schema')">
+          <div class="node-icon">🇨🇦</div>
+          <div class="node-name">IRCC Profile</div>
+          <div class="node-sub">iCARE bulk schema</div>
+        </div>
+        <div class="node" onclick="show('eo-schema')">
+          <div class="node-icon">💼</div>
+          <div class="node-name">EO Profile</div>
+          <div class="node-sub">CaMS worksheet</div>
+        </div>
+        <div class="node" onclick="show('uw-schema')">
+          <div class="node-icon">❤️</div>
+          <div class="node-name">UW Profile</div>
+          <div class="node-sub">Custom report</div>
+        </div>
+        <div class="node" onclick="show('city-schema')">
+          <div class="node-icon">🏙️</div>
+          <div class="node-name">City Profile</div>
+          <div class="node-sub">Custom report</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File boundary -->
+    <div class="file-boundary" onclick="show('file-boundary')">
+      <span>━━━━</span>
+      <div>
+        <div class="file-boundary-label">⛔ FILE BOUNDARY — No live API integration</div>
+        <div class="file-boundary-sub">Government systems (iCARE, EOIS-CaMS) do not accept external connections · Click to learn why</div>
+      </div>
+      <span>━━━━</span>
+    </div>
+
+    <!-- Layer 6: Funder Systems -->
+    <div class="layer layer-funders">
+      <div class="layer-label">🏛️ Funder Systems — external, file-only</div>
+      <div class="nodes">
+        <div class="node" onclick="show('icare')">
+          <div class="node-icon">🍁</div>
+          <div class="node-name">IRCC · iCARE</div>
+          <div class="node-sub">Bulk file upload</div>
+          <div class="node-badge" style="background:rgba(59,130,246,0.2);color:#60a5fa">Upload</div>
+        </div>
+        <div class="node" onclick="show('cams')">
+          <div class="node-icon">📋</div>
+          <div class="node-name">EOIS-CaMS</div>
+          <div class="node-sub">Manual entry · worksheet</div>
+          <div class="node-badge" style="background:rgba(245,158,11,0.2);color:#fbbf24">Manual</div>
+        </div>
+        <div class="node" onclick="show('uw-system')">
+          <div class="node-icon">❤️</div>
+          <div class="node-name">United Way</div>
+          <div class="node-sub">Custom report</div>
+        </div>
+        <div class="node" onclick="show('city-system')">
+          <div class="node-icon">🏙️</div>
+          <div class="node-name">City of Toronto</div>
+          <div class="node-sub">Custom report</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-empty" id="detail-empty">
+      <div class="detail-empty-icon">👆</div>
+      <div class="detail-empty-text">Click any component<br>to explore its details</div>
+    </div>
+
+    <!-- MS Forms -->
+    <div class="detail-content" id="d-ms-forms">
+      <div class="detail-header">
+        <div class="detail-icon">📋</div>
+        <div class="detail-title">Microsoft Forms</div>
+        <div class="detail-subtitle">Source system · Power Automate integration</div>
+        <span class="detail-layer-badge" style="background:rgba(99,102,241,0.15);color:#818cf8">Source Layer</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">How it works</div>
+        <div class="flow-step"><div class="flow-step-num">1</div><div class="flow-step-text">Staff submit existing <strong>Microsoft Form</strong> — zero behaviour change</div></div>
+        <div class="flow-step"><div class="flow-step-num">2</div><div class="flow-step-text"><strong>Power Automate</strong> flow triggers on submission (~20 min to set up)</div></div>
+        <div class="flow-step"><div class="flow-step-num">3</div><div class="flow-step-text">Flow sends <strong>HTTP POST</strong> to OneView <code style="color:#34d399">/api/clients</code></div></div>
+        <div class="flow-step"><div class="flow-step-num">4</div><div class="flow-step-text">OneView routes to correct funder — staff never touch another system</div></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Payload shape</div>
+        <div class="code-block">
+<span class="comment">// Power Automate HTTP action body</span>
+{
+  <span class="key">"full_name"</span>: <span class="val">"Amara Diallo"</span>,
+  <span class="key">"primary_language"</span>: <span class="val">"French"</span>,
+  <span class="key">"immigration_stream"</span>: <span class="val">"Refugee"</span>,
+  <span class="key">"program"</span>: <span class="val">"Settlement Services"</span>,
+  <span class="key">"source"</span>: <span class="val">"ms-forms"</span>
+}
+        </div>
+      </div>
+      <div class="detail-chips">
+        <span class="detail-chip">M365 included</span>
+        <span class="detail-chip">~20 min setup</span>
+        <span class="detail-chip">Zero staff change</span>
+      </div>
+    </div>
+
+    <!-- Salesforce -->
+    <div class="detail-content" id="d-salesforce">
+      <div class="detail-header">
+        <div class="detail-icon">☁️</div>
+        <div class="detail-title">Salesforce</div>
+        <div class="detail-subtitle">Source system · Outbound message / REST</div>
+        <span class="detail-layer-badge" style="background:rgba(99,102,241,0.15);color:#818cf8">Source Layer</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Positioning</div>
+        <div class="detail-text">OneView <strong>completes</strong> Salesforce — it doesn't compete. Salesforce handles your internal CRM. OneView handles the last mile Salesforce can't: generating iCARE files and CaMS worksheets.</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Integration path</div>
+        <div class="flow-step"><div class="flow-step-num">1</div><div class="flow-step-text">Configure <strong>Salesforce Outbound Message</strong> on Client object creation</div></div>
+        <div class="flow-step"><div class="flow-step-num">2</div><div class="flow-step-text">Target: OneView <code style="color:#34d399">/api/clients</code> with API key header</div></div>
+        <div class="flow-step"><div class="flow-step-num">3</div><div class="flow-step-text">OneView maps Salesforce fields to its data model via config</div></div>
+      </div>
+      <div class="detail-chips">
+        <span class="detail-chip">10 free nonprofit seats</span>
+        <span class="detail-chip">~1hr setup</span>
+        <span class="detail-chip">Additive not replacement</span>
+      </div>
+    </div>
+
+    <!-- RBAC: Caseworker -->
+    <div class="detail-content" id="d-role-caseworker">
+      <div class="detail-header">
+        <div class="detail-icon">👩‍💼</div>
+        <div class="detail-title">Caseworker Role</div>
+        <div class="detail-subtitle">Program-scoped access · Fatima / David</div>
+        <span class="detail-layer-badge" style="background:rgba(245,158,11,0.15);color:#fbbf24">RBAC Layer</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Permissions</div>
+        <div class="detail-chips">
+          <span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ View own program</span>
+          <span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ Intake clients</span>
+          <span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ AI Q&A</span>
+          <span class="detail-chip" style="background:rgba(239,68,68,0.1);color:#f87171">✗ Other programs</span>
+          <span class="detail-chip" style="background:rgba(239,68,68,0.1);color:#f87171">✗ Export</span>
+          <span class="detail-chip" style="background:rgba(239,68,68,0.1);color:#f87171">✗ Reset</span>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Amara's cross-program journey</div>
+        <div class="flow-step"><div class="flow-step-num">1</div><div class="flow-step-text">Fatima (Settlement) intakes Amara — consent: IRCC only</div></div>
+        <div class="flow-step"><div class="flow-step-num">2</div><div class="flow-step-text">David (Employment) searches — sees <strong>"Amara in system (Settlement)"</strong></div></div>
+        <div class="flow-step"><div class="flow-step-num">3</div><div class="flow-step-text">Prompt: <strong>"Link records?"</strong> — requires explicit cross-program consent</div></div>
+        <div class="flow-step"><div class="flow-step-num">4</div><div class="flow-step-text">Amara consents → single record, both programs, dashboard aggregates</div></div>
+      </div>
+    </div>
+
+    <!-- AI Agent role -->
+    <div class="detail-content" id="d-role-agent">
+      <div class="detail-header">
+        <div class="detail-icon">🤖</div>
+        <div class="detail-title">AI Agent Role</div>
+        <div class="detail-subtitle">API key auth · Scoped programmatic access</div>
+        <span class="detail-layer-badge" style="background:rgba(139,92,246,0.15);color:#a78bfa">RBAC Layer</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">What an agent can do</div>
+        <div class="detail-text">Any AI agent (Claude, GPT, etc.) can use OneView's API autonomously. The <code style="color:#34d399">/llms.txt</code>, <code style="color:#34d399">/openapi.json</code>, and <code style="color:#34d399">CLAUDE.md</code> give it everything it needs.</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Sample agent workflows</div>
+        <div class="flow-step"><div class="flow-step-num">1</div><div class="flow-step-text"><strong>Intake workflow:</strong> POST /api/clients → verify enrolment created</div></div>
+        <div class="flow-step"><div class="flow-step-num">2</div><div class="flow-step-text"><strong>Report workflow:</strong> POST /api/draft-report → review → POST /api/export</div></div>
+        <div class="flow-step"><div class="flow-step-num">3</div><div class="flow-step-text"><strong>Q&A workflow:</strong> GET /api/clients → POST /api/query with metrics</div></div>
+      </div>
+      <div class="detail-chips">
+        <span class="detail-chip">llms.txt</span>
+        <span class="detail-chip">openapi.json</span>
+        <span class="detail-chip">CLAUDE.md</span>
+        <span class="detail-chip">API key auth</span>
+      </div>
+    </div>
+
+    <!-- PHI Wall -->
+    <div class="detail-content" id="d-phi-wall">
+      <div class="detail-header">
+        <div class="detail-icon">🏥</div>
+        <div class="detail-title">PHI Wall</div>
+        <div class="detail-subtitle">Mental Health · PHIPA hard constraint</div>
+        <span class="detail-layer-badge" style="background:rgba(239,68,68,0.15);color:#f87171">Privacy Layer</span>
+      </div>
+      <div class="privacy-rule">
+        <strong>Hard rule:</strong> Mental Health records are <strong>always siloed</strong>. They never appear in cross-program aggregates, never flow through the mapping engine to other funder schemas, and are never included in AI M&E metrics unless explicitly scoped to the UW program only.
+      </div>
+      <div class="detail-section" style="margin-top:12px">
+        <div class="detail-section-title">Why (PHIPA)</div>
+        <div class="detail-text">Ontario's Personal Health Information Protection Act classifies mental health records as PHI. Consolidation without a proper PHI vault and PIA violates PHIPA. The production roadmap includes a partitioned PHI vault — for the prototype, the 🔒 badge and hard exclusion rule demonstrate awareness.</div>
+      </div>
+    </div>
+
+    <!-- Consent Engine -->
+    <div class="detail-content" id="d-consent-engine">
+      <div class="detail-header">
+        <div class="detail-icon">✅</div>
+        <div class="detail-title">Consent Engine</div>
+        <div class="detail-subtitle">Per-program · Cross-program · Dashboard aggregation</div>
+        <span class="detail-layer-badge" style="background:rgba(239,68,68,0.15);color:#f87171">Privacy Layer</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Three consent levels</div>
+        <div class="flow-step"><div class="flow-step-num">1</div><div class="flow-step-text"><strong>Program consent</strong> — auto-captured at enrollment. "My data is used for [program] reported to [funder]."</div></div>
+        <div class="flow-step"><div class="flow-step-num">2</div><div class="flow-step-text"><strong>Cross-program consent</strong> — explicit toggle. Required to link a client's records across programs.</div></div>
+        <div class="flow-step"><div class="flow-step-num">3</div><div class="flow-step-text"><strong>Dashboard aggregation</strong> — implied by cross-program consent. Client appears in org-wide metrics.</div></div>
+      </div>
+      <div class="privacy-rule"><strong>Mental Health exception:</strong> No consent level permits linking Mental Health to other programs. Hard exclusion.</div>
+    </div>
+
+    <!-- File Boundary -->
+    <div class="detail-content" id="d-file-boundary">
+      <div class="detail-header">
+        <div class="detail-icon">⛔</div>
+        <div class="detail-title">File Boundary</div>
+        <div class="detail-subtitle">Why OneView generates files, not live API pushes</div>
+        <span class="detail-layer-badge" style="background:rgba(239,68,68,0.15);color:#f87171">Hard Constraint</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">The facts</div>
+        <div class="detail-text"><strong>iCARE</strong> (IRCC): accepts bulk file upload — ~75% of records already arrive this way. This is the IRCC-endorsed path.<br><br><strong>EOIS-CaMS</strong> (Employment Ontario): explicitly does not integrate with external systems — IBM Cúram platform, compatibility + privacy constraints. Manual entry only.</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Why this is the moat</div>
+        <div class="detail-text">Every competitor (Salesforce, Apricot, OCMS) also hits this wall. They all leave caseworkers re-keying into funder portals by hand. OneView generates the file. That's the entire value proposition in one sentence.</div>
+      </div>
+    </div>
+
+    <!-- LLM Router -->
+    <div class="detail-content" id="d-llm-router">
+      <div class="detail-header">
+        <div class="detail-icon">🔀</div>
+        <div class="detail-title">LLM Router</div>
+        <div class="detail-subtitle">Provider-agnostic · One env var to switch</div>
+        <span class="detail-layer-badge" style="background:rgba(139,92,246,0.15);color:#a78bfa">AI M&E Layer</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Anti-hallucination guarantee</div>
+        <div class="detail-text">The LLM <strong>never sees raw client data</strong>. It only receives pre-computed metric numbers. It writes prose <em>around</em> those numbers. It cannot invent a figure that isn't in the metrics JSON.</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Providers</div>
+        <div class="code-block">
+<span class="comment"># Switch with one env var</span>
+<span class="key">LLM_PROVIDER</span>=<span class="val">gemini</span>  <span class="comment"># free, Google relationship</span>
+<span class="key">LLM_PROVIDER</span>=<span class="val">claude</span>  <span class="comment"># highest quality</span>
+<span class="key">LLM_PROVIDER</span>=<span class="val">groq</span>    <span class="comment"># fastest inference</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mapping Engine / IRCC -->
+    <div class="detail-content" id="d-ircc-schema">
+      <div class="detail-header">
+        <div class="detail-icon">🇨🇦</div>
+        <div class="detail-title">IRCC Funder Profile</div>
+        <div class="detail-subtitle">iCARE bulk file schema · config-driven</div>
+        <span class="detail-layer-badge" style="background:rgba(6,182,212,0.15);color:#22d3ee">Mapping Engine</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Config shape</div>
+        <div class="code-block">
+{
+  <span class="key">"funder"</span>: <span class="val">"IRCC"</span>,
+  <span class="key">"system"</span>: <span class="val">"iCARE"</span>,
+  <span class="key">"mechanism"</span>: <span class="val">"bulk_upload"</span>,
+  <span class="key">"programs"</span>: [<span class="val">"Settlement"</span>, <span class="val">"Language"</span>],
+  <span class="key">"fieldMap"</span>: {
+    <span class="key">"client_id"</span>: <span class="val">"ClientID"</span>,
+    <span class="key">"full_name"</span>: <span class="val">"ClientName"</span>,
+    <span class="key">"immigration_stream"</span>: <span class="val">"ImmigrationCategory"</span>
+  }
+}
+        </div>
+      </div>
+      <div class="detail-text" style="margin-top:8px">Config-driven means a schema change = edit JSON, not rewrite code. A new funder = add a new config object.</div>
+    </div>
+
+    <!-- Default detail states for unbuilt panels -->
+    <div class="detail-content" id="d-csv-import">
+      <div class="detail-header"><div class="detail-icon">📊</div><div class="detail-title">CSV Import</div><div class="detail-subtitle">Bulk migration from spreadsheets</div><span class="detail-layer-badge" style="background:rgba(99,102,241,0.15);color:#818cf8">Source Layer</span></div>
+      <div class="detail-section"><div class="detail-section-title">Use case</div><div class="detail-text">One-time migration of existing client records from spreadsheets, OCMS exports, or any CSV. Maps to the OneView data model via a column-mapping UI. Runs through the same RBAC and consent checks as direct entry.</div></div>
+    </div>
+    <div class="detail-content" id="d-direct-entry">
+      <div class="detail-header"><div class="detail-icon">✏️</div><div class="detail-title">Direct Entry</div><div class="detail-subtitle">Unified Intake screen</div><span class="detail-layer-badge" style="background:rgba(99,102,241,0.15);color:#818cf8">Source Layer</span></div>
+      <div class="detail-section"><div class="detail-section-title">The native flow</div><div class="detail-text">The Intake screen in OneView. Caseworker selects program, fills required fields, sets consent toggle. On submit: one record created, queued for the correct funder system. Est. 14 minutes saved vs. re-keying into funder portals.</div></div>
+    </div>
+    <div class="detail-content" id="d-role-admin">
+      <div class="detail-header"><div class="detail-icon">👑</div><div class="detail-title">Admin Role</div><div class="detail-subtitle">Full access · Priya (Program Manager)</div><span class="detail-layer-badge" style="background:rgba(245,158,11,0.15);color:#fbbf24">RBAC Layer</span></div>
+      <div class="detail-section"><div class="detail-section-title">Permissions</div><div class="detail-chips"><span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ All screens</span><span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ All programs</span><span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ Export</span><span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ AI M&E</span><span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ Reset</span></div></div>
+    </div>
+    <div class="detail-content" id="d-role-viewer">
+      <div class="detail-header"><div class="detail-icon">👁️</div><div class="detail-title">Viewer Role</div><div class="detail-subtitle">Read-only dashboard access</div><span class="detail-layer-badge" style="background:rgba(245,158,11,0.15);color:#fbbf24">RBAC Layer</span></div>
+      <div class="detail-section"><div class="detail-section-title">Permissions</div><div class="detail-chips"><span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ Dashboard</span><span class="detail-chip" style="background:rgba(52,211,153,0.1);color:#34d399">✓ Help</span><span class="detail-chip" style="background:rgba(239,68,68,0.1);color:#f87171">✗ Intake</span><span class="detail-chip" style="background:rgba(239,68,68,0.1);color:#f87171">✗ Export</span><span class="detail-chip" style="background:rgba(239,68,68,0.1);color:#f87171">✗ Reset</span></div></div>
+    </div>
+    <div class="detail-content" id="d-clients-table">
+      <div class="detail-header"><div class="detail-icon">👤</div><div class="detail-title">clients table</div><div class="detail-subtitle">The golden record</div><span class="detail-layer-badge" style="background:rgba(16,185,129,0.15);color:#34d399">Data Layer</span></div>
+      <div class="code-block">id · full_name · primary_language<br>immigration_stream · created_at</div>
+      <div class="detail-text" style="margin-top:8px">One record per person, regardless of how many programs they're enrolled in. The "capture once" promise lives here.</div>
+    </div>
+    <div class="detail-content" id="d-enrolments-table">
+      <div class="detail-header"><div class="detail-icon">📎</div><div class="detail-title">enrolments table</div><div class="detail-subtitle">client ↔ program ↔ funder</div><span class="detail-layer-badge" style="background:rgba(16,185,129,0.15);color:#34d399">Data Layer</span></div>
+      <div class="code-block">id · client_id · program · funder<br>consent_cross_program · enrolled_at</div>
+      <div class="detail-text" style="margin-top:8px">The consent_cross_program flag is the visible nod to the privacy architecture. Without it = true, records stay siloed.</div>
+    </div>
+    <div class="detail-content" id="d-outcomes-table">
+      <div class="detail-header"><div class="detail-icon">🎯</div><div class="detail-title">outcomes table</div><div class="detail-subtitle">IRCC logic model tiers</div><span class="detail-layer-badge" style="background:rgba(16,185,129,0.15);color:#34d399">Data Layer</span></div>
+      <div class="code-block">id · enrolment_id · tier · label<br>achieved · recorded_at<br><br><span class="comment"># tier: immediate|intermediate|ultimate</span></div>
+    </div>
+    <div class="detail-content" id="d-audit-table">
+      <div class="detail-header"><div class="detail-icon">📝</div><div class="detail-title">audit_log table</div><div class="detail-subtitle">Immutable trail · compliance</div><span class="detail-layer-badge" style="background:rgba(16,185,129,0.15);color:#34d399">Data Layer</span></div>
+      <div class="code-block">id · action · entity · detail · at<br>user_role · source_ip</div>
+      <div class="detail-text" style="margin-top:8px">Every write operation logged. Required for compliance story — mirrors IRCC's own iCARE audit requirements.</div>
+    </div>
+    <div class="detail-content" id="d-cross-program">
+      <div class="detail-header"><div class="detail-icon">🔗</div><div class="detail-title">Cross-Program Linking</div><div class="detail-subtitle">Consent-gated · The "capture once" engine</div><span class="detail-layer-badge" style="background:rgba(239,68,68,0.15);color:#f87171">Privacy Layer</span></div>
+      <div class="detail-section"><div class="detail-section-title">Amara's journey</div><div class="flow-step"><div class="flow-step-num">1</div><div class="flow-step-text">Enrolled in Settlement → record A</div></div><div class="flow-step"><div class="flow-step-num">2</div><div class="flow-step-text">Needs Employment → system finds existing record</div></div><div class="flow-step"><div class="flow-step-num">3</div><div class="flow-step-text"><strong>Explicit consent captured</strong> before linking</div></div><div class="flow-step"><div class="flow-step-num">4</div><div class="flow-step-text">One client, two enrolments, unified dashboard view</div></div></div>
+    </div>
+    <div class="detail-content" id="d-law-map">
+      <div class="detail-header"><div class="detail-icon">⚖️</div><div class="detail-title">Privacy Law Map</div><div class="detail-subtitle">Which law applies to which program</div><span class="detail-layer-badge" style="background:rgba(239,68,68,0.15);color:#f87171">Privacy Layer</span></div>
+      <div class="detail-chips"><span class="detail-chip" style="background:rgba(59,130,246,0.1);color:#60a5fa">Settlement → Privacy Act (IRCC)</span><span class="detail-chip" style="background:rgba(245,158,11,0.1);color:#fbbf24">Employment → FIPPA (EO)</span><span class="detail-chip" style="background:rgba(239,68,68,0.1);color:#f87171">Mental Health → PHIPA</span><span class="detail-chip" style="background:rgba(139,92,246,0.1);color:#a78bfa">Youth → CYFSA Part X</span></div>
+    </div>
+    <div class="detail-content" id="d-metrics-engine">
+      <div class="detail-header"><div class="detail-icon">📐</div><div class="detail-title">Metrics Engine</div><div class="detail-subtitle">Deterministic SQL · No LLM involvement</div><span class="detail-layer-badge" style="background:rgba(139,92,246,0.15);color:#a78bfa">AI M&E Layer</span></div>
+      <div class="detail-text">All numbers computed in SQL before the LLM sees anything. The LLM receives a JSON object of pre-computed metrics and writes prose around them. It cannot invent, estimate, or extrapolate.</div>
+    </div>
+    <div class="detail-content" id="d-report-cache">
+      <div class="detail-header"><div class="detail-icon">💾</div><div class="detail-title">Report Cache</div><div class="detail-subtitle">Demo-safe pre-generation</div><span class="detail-layer-badge" style="background:rgba(139,92,246,0.15);color:#a78bfa">AI M&E Layer</span></div>
+      <div class="detail-text">The showcase report is pre-generated and cached before demo day. Live LLM calls are rate-limited and slow under load. The cache returns instantly. A "Regenerate (live)" toggle is available for judges who want to see real inference.</div>
+    </div>
+    <div class="detail-content" id="d-eo-schema"><div class="detail-header"><div class="detail-icon">💼</div><div class="detail-title">EO Funder Profile</div><div class="detail-subtitle">EOIS-CaMS pre-filled worksheet</div><span class="detail-layer-badge" style="background:rgba(6,182,212,0.15);color:#22d3ee">Mapping Engine</span></div><div class="detail-text" style="margin-top:8px">CaMS does not accept external API connections. OneView generates a pre-filled worksheet with all required fields. Staff open the worksheet and key in the values — dramatically faster than manual lookup.</div></div>
+    <div class="detail-content" id="d-uw-schema"><div class="detail-header"><div class="detail-icon">❤️</div><div class="detail-title">United Way Profile</div><div class="detail-subtitle">Custom stat + narrative report</div><span class="detail-layer-badge" style="background:rgba(6,182,212,0.15);color:#22d3ee">Mapping Engine</span></div><div class="detail-text" style="margin-top:8px">United Way requires a custom statistical + narrative report. OneView generates both the stats (deterministic) and the narrative (AI-drafted, human-reviewed) in one click.</div></div>
+    <div class="detail-content" id="d-city-schema"><div class="detail-header"><div class="detail-icon">🏙️</div><div class="detail-title">City of Toronto Profile</div><div class="detail-subtitle">Custom report</div><span class="detail-layer-badge" style="background:rgba(6,182,212,0.15);color:#22d3ee">Mapping Engine</span></div><div class="detail-text" style="margin-top:8px">City of Toronto requires a custom report format for Mentoring and Women's programs. Config-driven — schema changes = edit config object, not code.</div></div>
+    <div class="detail-content" id="d-icare"><div class="detail-header"><div class="detail-icon">🍁</div><div class="detail-title">IRCC · iCARE</div><div class="detail-subtitle">Bulk file upload · IRCC-endorsed path</div><span class="detail-layer-badge" style="background:rgba(59,130,246,0.15);color:#60a5fa">Funder System</span></div><div class="detail-text">~75% of settlement records already arrive at IRCC via bulk file upload. OneView generates this file. Staff upload via OCMS portal. No new workflow — just automated file generation.</div></div>
+    <div class="detail-content" id="d-cams"><div class="detail-header"><div class="detail-icon">📋</div><div class="detail-title">EOIS-CaMS</div><div class="detail-subtitle">Employment Ontario · Manual entry</div><span class="detail-layer-badge" style="background:rgba(59,130,246,0.15);color:#60a5fa">Funder System</span></div><div class="privacy-rule"><strong>Hard constraint:</strong> CaMS explicitly does not integrate with external systems. Manual entry is the only path.</div><div class="detail-text" style="margin-top:8px">OneView generates a pre-filled CaMS worksheet. Staff open it and key in values — still manual, but 10× faster than looking everything up.</div></div>
+    <div class="detail-content" id="d-uw-system"><div class="detail-header"><div class="detail-icon">❤️</div><div class="detail-title">United Way</div><div class="detail-subtitle">Custom report delivery</div><span class="detail-layer-badge" style="background:rgba(59,130,246,0.15);color:#60a5fa">Funder System</span></div><div class="detail-text">United Way accepts custom reports. OneView generates the full stat + narrative report. Human reviews and signs off, then submits.</div></div>
+    <div class="detail-content" id="d-city-system"><div class="detail-header"><div class="detail-icon">🏙️</div><div class="detail-title">City of Toronto</div><div class="detail-subtitle">Custom report delivery</div><span class="detail-layer-badge" style="background:rgba(59,130,246,0.15);color:#60a5fa">Funder System</span></div><div class="detail-text">City of Toronto accepts custom reports for Mentoring and Women/DWC programs. Same generate-review-submit flow as United Way.</div></div>
+  </div>
+</div>
+
+<div class="hint">← Scroll diagram on small screens · 20 components, all interactive</div>
+
+<script>
+function show(id) {
+  // Hide all detail contents and empty state
+  document.querySelectorAll('.detail-content').forEach(el => el.classList.remove('visible'));
+  document.getElementById('detail-empty').style.display = 'none';
+
+  // Show selected
+  const target = document.getElementById('d-' + id);
+  if (target) {
+    target.classList.add('visible');
+  } else {
+    document.getElementById('detail-empty').style.display = 'flex';
+  }
+
+  // Highlight active node
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+  // Find and highlight clicked node by matching onclick
+  document.querySelectorAll('[onclick]').forEach(el => {
+    if (el.getAttribute('onclick') === `show('${id}')`) el.classList.add('active');
+  });
+}
+</script>
+</body>
+</html>

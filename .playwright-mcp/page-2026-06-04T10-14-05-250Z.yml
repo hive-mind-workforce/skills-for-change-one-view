@@ -1,0 +1,41 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - link "OneView Skills for Change" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: OneView
+        - generic [ref=e7]: Skills for Change
+      - generic [ref=e8]:
+        - button "admin" [ref=e9]
+        - button "caseworker" [ref=e10]
+        - button "viewer" [ref=e11]
+      - link "GitHub repository" [ref=e12] [cursor=pointer]:
+        - /url: https://github.com/hive-mind-workforce/skills-for-change-one-view
+        - img [ref=e13]
+      - button "Demo" [ref=e17]:
+        - img [ref=e18]
+        - generic [ref=e20]: Demo
+    - navigation [ref=e21]:
+      - link "Dashboard" [ref=e22] [cursor=pointer]:
+        - /url: /
+        - img [ref=e23]
+        - text: Dashboard
+      - link "Intake" [ref=e26] [cursor=pointer]:
+        - /url: /intake
+        - img [ref=e27]
+        - text: Intake
+      - link "Export" [ref=e28] [cursor=pointer]:
+        - /url: /export
+        - img [ref=e29]
+        - text: Export
+      - link "AI Reports" [ref=e32] [cursor=pointer]:
+        - /url: /ai
+        - img [ref=e33]
+        - text: AI Reports
+      - link "Help" [ref=e36] [cursor=pointer]:
+        - /url: /help
+        - img [ref=e37]
+        - text: Help
+    - main [ref=e39]
+  - region "Notifications alt+T"
+  - alert [ref=e47]

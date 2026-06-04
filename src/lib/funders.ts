@@ -15,7 +15,7 @@ export const PROGRAM_TO_FUNDER: Record<string, string> = {
 
 export const FUNDERS: Record<string, FunderConfig> = {
   ircc: {
-    label: "IRCC",
+    label: "Immigration, Refugees and Citizenship Canada",
     programs: ["settlement","language"],
     color: "#10b981",
     csvHeaders: ["Client ID","Full Name","Primary Language","Immigration Stream","Program","Enrolled Date","Immediate Outcomes","Intermediate Outcomes","Ultimate Outcomes"],

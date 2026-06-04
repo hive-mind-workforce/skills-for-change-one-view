@@ -64,14 +64,14 @@ const SEED_VOLUMES: Record<string,number> = {
   trades:980,mentoring:1450,youth:1620,women:1340
 }
 const OUTCOME_LABELS: Record<string,string[]> = {
-  settlement:["Language assessment completed","Service plan created","Referral to programs"],
-  employment:["Resume updated","Job interview attended","Employment secured"],
-  language:["CLBA assessment","Language class enrolled","Language milestone achieved"],
-  mental_health:["Initial counselling session","Crisis support provided","Ongoing care plan"],
-  trades:["Skills assessment","Training enrolled","Certification achieved"],
-  mentoring:["Mentor matched","3 sessions completed","Goal achieved"],
-  youth:["Program enrolled","Skill workshop attended","Education plan created"],
-  women:["Safety plan created","Support group attended","Independence goal met"]
+  settlement:["Settlement needs assessment and service plan completed","Referral to community, healthcare, or legal services completed","Successfully settled and independently navigating life in Canada"],
+  employment:["Canadian-format resume and cover letter developed","Job interview coaching and placement support received","Employment secured in field of qualification"],
+  language:["CLBA language assessment and CLB level confirmed","Intermediate to advanced language benchmarks achieved (CLB 4-6)","Language goals met — eligible for citizenship or further education"],
+  mental_health:["Initial individual counselling session completed","Support group or wellness workshop attended","Ongoing personalized mental health care plan established"],
+  trades:["Pre-apprenticeship skills assessment and safety certifications completed","Technical training and workplace readiness coaching underway","Trade certification or apprenticeship placement secured"],
+  mentoring:["Matched with industry-specific mentor in field of practice","Three or more mentoring sessions completed; professional network expanded","Career goal achieved through mentoring relationship"],
+  youth:["Enrolled in youth program with paid training component secured","Sector-specific skill workshops and career counselling completed","Paid work placement or post-secondary education pathway launched"],
+  women:["Program intake and skills assessment completed","Skills training and sector-specific workshops attended","Employment, certification, or career advancement achieved"]
 }
 
 export async function seedDatabase() {
@@ -135,32 +135,35 @@ export async function seedDatabase() {
 }
 
 export async function getClients() {
-  const result = await sql`
-    SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
-      e.program, e.funder, e.consent_cross_program, e.enrolled_at,
-      COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
-      COUNT(o.id) as outcomes_total
-    FROM clients c
-    JOIN enrolments e ON e.client_id = c.id
-    LEFT JOIN outcomes o ON o.enrolment_id = e.id
-    GROUP BY c.id, e.id
-    ORDER BY c.created_at DESC
-    LIMIT 500`
+  const [clientsRes, totalRes, programRes, crossRes, outcomesRes] = await Promise.all([
+    sql`
+      SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
+        e.program, e.funder, e.consent_cross_program, e.enrolled_at,
+        COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
+        COUNT(o.id) as outcomes_total
+      FROM clients c
+      JOIN enrolments e ON e.client_id = c.id
+      LEFT JOIN outcomes o ON o.enrolment_id = e.id
+      GROUP BY c.id, e.id
+      ORDER BY c.created_at DESC
+      LIMIT 50`,
+    sql`SELECT COUNT(*) as c FROM clients`,
+    sql`SELECT program, COUNT(*) as count FROM enrolments GROUP BY program ORDER BY count DESC`,
+    sql`SELECT COUNT(*) as c FROM enrolments WHERE consent_cross_program = true`,
+    sql`SELECT COUNT(*) FILTER (WHERE achieved = true) as achieved, COUNT(*) as total FROM outcomes`,
+  ])
 
-  const byProgram: Record<string,number> = {}
-  let crossProgram = 0, totalOutcomes = 0, achievedOutcomes = 0
-  for (const row of result.rows) {
-    byProgram[row.program] = (byProgram[row.program] || 0) + 1
-    if (row.consent_cross_program) crossProgram++
-    totalOutcomes += parseInt(row.outcomes_total)
-    achievedOutcomes += parseInt(row.outcomes_achieved)
+  const total = parseInt(totalRes.rows[0].c)
+  const byProgram: Record<string, number> = {}
+  for (const row of programRes.rows) {
+    byProgram[row.program] = parseInt(row.count)
   }
-
-  const totalResult = await sql`SELECT COUNT(*) as c FROM clients`
-  const total = parseInt(totalResult.rows[0].c)
+  const crossProgram = parseInt(crossRes.rows[0].c)
+  const achievedOutcomes = parseInt(outcomesRes.rows[0].achieved)
+  const totalOutcomes = parseInt(outcomesRes.rows[0].total)
 
   return {
-    clients: result.rows,
+    clients: clientsRes.rows,
     metrics: {
       total,
       active: total,

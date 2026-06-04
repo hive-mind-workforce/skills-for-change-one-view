@@ -10,18 +10,18 @@ export function formatNumber(n: number): string {
 const PROGRAM_LABELS: Record<string, string> = {
   settlement: "Settlement Services",
   employment: "Employment Services",
-  language: "Language Programs",
-  mental_health: "Mental Health Support",
-  trades: "Skilled Trades",
-  mentoring: "Mentoring Program",
-  youth: "Youth Services",
+  language: "LINC Language Training",
+  mental_health: "Mental Health and Wellness",
+  trades: "Skilled Trades Programs",
+  mentoring: "Mentoring for Change",
+  youth: "Youth Programs",
   women: "Women's Programs",
 }
 
 const FUNDER_LABELS: Record<string, string> = {
-  ircc: "IRCC",
+  ircc: "Immigration, Refugees and Citizenship Canada",
   eo: "Employment Ontario",
-  uw: "United Way",
+  uw: "Community Foundations",
   city: "City of Toronto",
 }
 
