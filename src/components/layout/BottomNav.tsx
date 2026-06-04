@@ -8,7 +8,7 @@ const TABS = [
   { href: "/intake", label: "Intake", icon: Plus, minRole: "caseworker" },
   { href: "/export", label: "Export", icon: Download, minRole: "admin" },
   { href: "/ai", label: "AI", icon: Sparkles, minRole: "caseworker" },
-  { href: "/help", label: "About", icon: Info, minRole: "viewer" },
+  { href: "/about", label: "About", icon: Info, minRole: "viewer" },
 ]
 
 const ROLE_RANK: Record<string, number> = { viewer: 0, caseworker: 1, admin: 2 }

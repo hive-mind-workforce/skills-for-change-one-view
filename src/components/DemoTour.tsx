@@ -152,7 +152,7 @@ export default function DemoTour() {
           },
         },
         {
-          element: "[data-tour=help]",
+          element: "[data-tour=about]",
           popover: {
             title: "Full documentation — always available",
             description: "The About section includes architecture diagrams, privacy compliance maps, and the full migration plan. Accessible to all roles including Viewer.",

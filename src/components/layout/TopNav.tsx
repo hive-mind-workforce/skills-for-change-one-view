@@ -4,11 +4,11 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { Home, Plus, Download, Sparkles, Info, Lock } from "lucide-react"
 
 const TABS = [
-  { href: "/", label: "Dashboard", icon: Home, minRole: "viewer" },
-  { href: "/intake", label: "Intake", icon: Plus, minRole: "caseworker" },
-  { href: "/export", label: "Export", icon: Download, minRole: "admin" },
-  { href: "/ai", label: "AI Reports", icon: Sparkles, minRole: "caseworker" },
-  { href: "/help", label: "About", icon: Info, minRole: "viewer" },
+  { href: "/", label: "Dashboard", icon: Home, minRole: "viewer", tour: "dashboard" },
+  { href: "/intake", label: "Intake", icon: Plus, minRole: "caseworker", tour: "intake" },
+  { href: "/export", label: "Export", icon: Download, minRole: "admin", tour: "export" },
+  { href: "/ai", label: "AI Reports", icon: Sparkles, minRole: "caseworker", tour: "ai" },
+  { href: "/about", label: "About", icon: Info, minRole: "viewer", tour: "about" },
 ]
 
 const ROLE_RANK: Record<string, number> = { viewer: 0, caseworker: 1, admin: 2 }
@@ -24,7 +24,7 @@ export default function TopNav() {
 
   return (
     <nav className="hidden md:flex items-center sticky top-16 z-40 bg-slate-950 border-b border-white/[0.15] px-4 gap-0.5 shadow-[0_1px_0_0_rgba(16,185,129,0.15)]">
-      {TABS.map(({ href, label, icon: Icon, minRole }) => {
+      {TABS.map(({ href, label, icon: Icon, minRole, tour }) => {
         const active = pathname === href
         const allowed = canAccess(role, minRole)
         if (!allowed) {
@@ -44,6 +44,7 @@ export default function TopNav() {
           <Link
             key={href}
             href={`${href}?role=${role}`}
+            data-tour={tour}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-all ${
               active
                 ? "border-emerald-400 text-emerald-400 bg-emerald-500/5"
