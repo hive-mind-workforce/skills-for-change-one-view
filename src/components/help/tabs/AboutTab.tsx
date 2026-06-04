@@ -133,7 +133,6 @@ export default function AboutTab() {
             <span key={t} className="px-3 py-1 bg-white/[0.04] border border-white/[0.08] rounded-full text-slate-300 text-sm">{t}</span>
           ))}
         </div>
-        <p className="text-slate-500 text-xs">Registered Charity: 121471858RR0001 · Serving Toronto and Hamilton · Est. 1982</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
