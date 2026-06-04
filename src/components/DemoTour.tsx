@@ -13,6 +13,12 @@ export default function DemoTour() {
       const role = new URLSearchParams(window.location.search).get("role") ?? "admin"
       const qs = window.location.search
 
+      // Always start from dashboard so first-step elements are present
+      if (window.location.pathname !== "/") {
+        router.push(`/${qs}`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+
       const driverObj = driver({
         animate: true,
         overlayColor: "rgba(6,6,16,0.88)",
