@@ -8,26 +8,26 @@ const PROBLEMS = [
 ]
 
 const SHORT_TERM = [
-  "OneView sits alongside Microsoft Forms and Salesforce: no rip-and-replace, no disruption",
-  "Power Automate webhook: Forms submissions automatically land in OneView with zero staff behavior change",
-  "Salesforce Outbound Message routes to OneView's /api/clients endpoint: additive, not a replacement",
-  "Staff get a live dashboard immediately, without waiting for a system migration",
-  "Funder CSV exports are generated in each funder's exact column format on demand",
-  "AI narrative reports are drafted from real SQL data in seconds, not weeks",
+  "New client intake goes directly into OneView's Postgres database from day one",
+  "Power Automate bridges any in-flight Microsoft Forms submissions during transition — staff change nothing while the switchover happens",
+  "Salesforce Outbound Message routes existing records to OneView's /api/clients endpoint — data consolidates automatically",
+  "OneView's API replaces Salesforce's API as the integration point for funder portals and reporting tools",
+  "Funder CSV exports generated on demand in each funder's exact column format, straight from the database",
+  "AI narrative reports drafted from live SQL data in seconds",
 ]
 
 const LONG_TERM = [
-  { title: "OneView becomes the system of record", desc: "As caseworkers use the native intake form directly, the dependency on Microsoft Forms shrinks. OneView stores every client, every enrolment, every outcome in a structured, queryable database.", icon: Database, color: "text-emerald-400" },
-  { title: "Salesforce dependency eliminated", desc: "Salesforce is an expensive general-purpose CRM. OneView is purpose-built for nonprofit program delivery and funder reporting. Over 2–3 years, OneView's client and outcomes data replaces what Salesforce tracks today, at a fraction of the cost.", icon: TrendingUp, color: "text-indigo-400" },
-  { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes live in one place, funders can receive a live dashboard link instead of a static report. The Q1 narrative writes itself. The PHI Wall is enforced by the database, not a staff checklist.", icon: Zap, color: "text-amber-400" },
-  { title: "Privacy enforced by architecture, not process", desc: "PHIPA, FIPPA, and CYFSA rules are encoded as SQL constraints and consent flags, not policy documents. No staff training refresher can override them. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-400" },
+  { title: "Postgres becomes the single source of truth", desc: "Every client, enrolment, and outcome lives in one structured, queryable Postgres database. This build uses Vercel Postgres (Neon) but any Postgres-compatible host works. No more data split across spreadsheets, Salesforce, and shared drives.", icon: Database, color: "text-emerald-400" },
+  { title: "Salesforce fully retired", desc: "Salesforce is a general-purpose CRM built for sales pipelines, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting at a fraction of the cost. No migration needed for donor and employer CRM if SfC chooses to keep that portion.", icon: TrendingUp, color: "text-indigo-400" },
+  { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is a SQL constraint, not a staff checklist.", icon: Zap, color: "text-amber-400" },
+  { title: "Compliance enforced by architecture", desc: "PHIPA, FIPPA, and CYFSA rules are encoded as SQL constraints and consent flags. No policy document or training refresher can be forgotten. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-400" },
 ]
 
 const FEASIBILITY = [
-  { label: "Week 1", desc: "Deploy to any hosting provider. Connect Microsoft Forms via Power Automate webhook. Staff see a live unified dashboard immediately, no behavior change required.", color: "text-emerald-400" },
-  { label: "30–90 days", desc: "AI tooling migrates historical Salesforce client records into OneView. Data mapping, deduplication, and validation happen in hours, not months of manual work.", color: "text-indigo-400" },
-  { label: "3–6 months", desc: "Teams use native OneView intake directly. Microsoft Forms retired. Salesforce kept only for donor and employer CRM, not client tracking. Quarterly reports generated in minutes.", color: "text-amber-400" },
-  { label: "12 months", desc: "Full system of record. AI drafts all funder narratives. Structured data feeds replace manual portal uploads. Zero dependency on external form tools.", color: "text-violet-400" },
+  { label: "Week 1", desc: "Deploy to any hosting provider with a Postgres database. New intakes go into OneView directly. Power Automate bridges existing Forms submissions. Staff see a unified dashboard immediately.", color: "text-emerald-400" },
+  { label: "30–90 days", desc: "AI tooling maps and migrates historical Salesforce records into OneView's Postgres schema. Data deduplication and validation in hours, not months of manual work.", color: "text-indigo-400" },
+  { label: "3–6 months", desc: "All intake flows through OneView natively. Microsoft Forms retired. Salesforce client tracking retired. Quarterly reports generated in minutes from live data.", color: "text-amber-400" },
+  { label: "12 months", desc: "Full system of record. OneView's API is the integration point for iCARE, EOIS-CaMS, and any future funder portals. AI drafts all funder narratives. Zero dependency on external form or CRM tools.", color: "text-violet-400" },
 ]
 
 export default function AboutTab() {
@@ -82,9 +82,9 @@ export default function AboutTab() {
       <div className="glass rounded-xl p-6">
         <div className="flex items-center gap-2 mb-2">
           <ArrowRight size={16} className="text-emerald-400" />
-          <h3 className="font-sora text-lg text-emerald-400">Short-Term: Works Alongside What You Have</h3>
+          <h3 className="font-sora text-lg text-emerald-400">Getting Started: Migration Begins Day One</h3>
         </div>
-        <p className="text-slate-500 text-sm mb-5 ml-6">No rip-and-replace. OneView connects to Microsoft Forms and Salesforce today via webhooks: staff change nothing, but now have a unified dashboard and on-demand funder exports.</p>
+        <p className="text-slate-500 text-sm mb-5 ml-6">OneView is the destination, not a middleware layer. New data goes into OneView's Postgres database from the start. Webhooks bridge existing systems during the transition so staff see no disruption while the switchover happens.</p>
         <div className="grid sm:grid-cols-2 gap-2">
           {SHORT_TERM.map((item, i) => (
             <div key={i} className="flex items-start gap-2 p-3 bg-emerald-500/[0.04] border border-emerald-500/[0.08] rounded-lg">
@@ -98,9 +98,9 @@ export default function AboutTab() {
       <div className="glass rounded-xl p-6">
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp size={16} className="text-indigo-400" />
-          <h3 className="font-sora text-lg text-indigo-400">Long-Term: Eliminating the Dependencies</h3>
+          <h3 className="font-sora text-lg text-indigo-400">The Destination: Full Replacement</h3>
         </div>
-        <p className="text-slate-500 text-sm mb-5 ml-6">With AI tooling, what would have taken 2–3 years of manual migration can happen in 3–12 months. OneView grows from an integration layer into the full system of record, replacing Microsoft Forms as the intake channel and Salesforce as the client tracking tool, at a fraction of the combined cost.</p>
+        <p className="text-slate-500 text-sm mb-5 ml-6">Microsoft Forms and Salesforce are fully retired. OneView's Postgres database is the system of record. The Next.js backend handles all intake, outcomes, and reporting. With AI-assisted data migration, what would have taken years of manual work can happen in months.</p>
         <div className="grid sm:grid-cols-2 gap-4">
           {LONG_TERM.map((item, i) => (
             <div key={i} className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
@@ -129,7 +129,7 @@ export default function AboutTab() {
       <div className="glass rounded-xl p-6">
         <h3 className="font-sora text-lg text-slate-200 mb-3">Technology Stack</h3>
         <div className="flex flex-wrap gap-2 mb-4">
-          {["Next.js 15","TypeScript","Tailwind CSS 4","shadcn/ui","Vercel Postgres (Neon)","Recharts","driver.js"].map(t => (
+          {["Next.js 15","TypeScript","Tailwind CSS 4","shadcn/ui","Postgres (Vercel / Neon recommended)","Recharts","driver.js"].map(t => (
             <span key={t} className="px-3 py-1 bg-white/[0.04] border border-white/[0.08] rounded-full text-slate-300 text-sm">{t}</span>
           ))}
         </div>
