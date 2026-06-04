@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { Search, CheckCircle, Circle, Lock, Users, ChevronRight } from "lucide-react"
 import ProgramBadge from "@/components/ProgramBadge"
 import FunderBadge from "@/components/FunderBadge"
@@ -9,6 +10,7 @@ const TIER_ORDER = ["immediate", "intermediate", "ultimate"]
 const TIER_LABELS: Record<string, string> = { immediate: "Immediate", intermediate: "Intermediate", ultimate: "Ultimate" }
 
 export default function JourneyViewer() {
+  const searchParams = useSearchParams()
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<any[]>([])
   const [searching, setSearching] = useState(false)
@@ -17,6 +19,24 @@ export default function JourneyViewer() {
   const [loadingJourney, setLoadingJourney] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const skipSearchRef = useRef(false)
+
+  useEffect(() => {
+    const clientId = searchParams.get("clientId")
+    if (!clientId) return
+    setLoadingJourney(true)
+    fetch(`/api/journey?clientId=${clientId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data?.client) {
+          skipSearchRef.current = true
+          setSelected(data.client)
+          setQuery(data.client.full_name)
+          setJourney(data)
+        }
+      })
+      .finally(() => setLoadingJourney(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (skipSearchRef.current) { skipSearchRef.current = false; return }

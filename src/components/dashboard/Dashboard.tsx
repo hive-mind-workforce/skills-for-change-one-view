@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import MetricCard from "@/components/MetricCard"
 import ProgramChart from "./ProgramChart"
 import RecentClients from "./RecentClients"
@@ -74,7 +74,9 @@ export default function Dashboard() {
 
       <section>
         <h2 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-4">Recent Clients</h2>
-        <RecentClients clients={clients.slice(0, 10)} />
+        <Suspense fallback={null}>
+          <RecentClients clients={clients.slice(0, 10)} />
+        </Suspense>
       </section>
     </div>
   )
