@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { GitBranch, Play } from "lucide-react"
+import { GitBranch, Play, Bot } from "lucide-react"
 
 export default function Header() {
   const router = useRouter()
@@ -48,6 +48,16 @@ export default function Header() {
         <div className="hidden sm:block">{rolePicker}</div>
 
         <a
+          href="/llms.txt"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:block p-2 text-slate-400 hover:text-white transition-colors"
+          aria-label="LLMs.txt — AI agent index"
+        >
+          <Bot size={18} />
+        </a>
+
+        <a
           href="https://github.com/hive-mind-workforce/skills-for-change-one-view"
           target="_blank"
           rel="noopener noreferrer"
@@ -68,15 +78,26 @@ export default function Header() {
 
       <div className="flex sm:hidden items-center justify-between bg-[#07071a] border-b border-white/[0.1] px-4 py-2">
         {rolePicker}
-        <a
-          href="https://github.com/hive-mind-workforce/skills-for-change-one-view"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-1.5 text-slate-500 hover:text-white transition-colors"
-          aria-label="GitHub repository"
-        >
-          <GitBranch size={16} />
-        </a>
+        <div className="flex items-center gap-1">
+          <a
+            href="/llms.txt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 text-slate-500 hover:text-white transition-colors"
+            aria-label="LLMs.txt — AI agent index"
+          >
+            <Bot size={16} />
+          </a>
+          <a
+            href="https://github.com/hive-mind-workforce/skills-for-change-one-view"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1.5 text-slate-500 hover:text-white transition-colors"
+            aria-label="GitHub repository"
+          >
+            <GitBranch size={16} />
+          </a>
+        </div>
       </div>
     </div>
   )
