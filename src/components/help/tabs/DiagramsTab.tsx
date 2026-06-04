@@ -52,11 +52,11 @@ const DIAGRAMS = [
   },
   {
     title: "System Context",
-    description: "OneView sits between intake sources (Microsoft Forms, Salesforce, direct UI) and funder reporting systems. All data paths converge on one Postgres database.",
+    description: "OneView sits between intake sources (Microsoft Forms, Excel/SharePoint migration, direct UI) and funder reporting systems. All data paths converge on one Postgres database.",
     code: `graph TB
     subgraph intake [Intake Sources]
         MF[Microsoft Forms]
-        SF[Salesforce CRM]
+        SP[Excel / SharePoint]
         UI[Direct Intake UI]
     end
     subgraph core [OneView]
@@ -71,7 +71,7 @@ const DIAGRAMS = [
         CT[City of Toronto]
     end
     MF -->|Power Automate webhook| API
-    SF -->|Outbound Message| API
+    SP -->|CSV import| API
     UI -->|Direct submission| API
     API <--> DB
     API --> LLM

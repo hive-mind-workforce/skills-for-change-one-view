@@ -57,30 +57,30 @@ const JOURNEY_STAGES = [
 const PROBLEMS = [
   { title: "Data entered multiple times per client on different systems", desc: "Each funder (IRCC, Employment Ontario, Community Foundations, City of Toronto) has its own portal with its own column spec. Staff copy-paste the same client record into each one, every reporting cycle." },
   { title: "Reporting takes weeks, not hours", desc: "Narrative reports are written from scratch against whatever spreadsheet is most current. By the time they're submitted, the numbers are stale. Staff spend significant time each quarter on reporting that could be automated." },
-  { title: "No single source of truth", desc: "Microsoft Forms feeds one spreadsheet. Salesforce tracks another set of interactions. Neither talks to the other. Outcomes (the metric funders care about most) live in a third system entirely." },
+  { title: "No single source of truth", desc: "Microsoft Forms feeds one spreadsheet. A separate Excel file tracks another set of interactions. Neither talks to the other. Outcomes (the metric funders care about most) live in a third system entirely." },
   { title: "Privacy compliance is manual", desc: "PHIPA requires a hard wall between mental health records and all other programs. Enforcing that wall in spreadsheets and shared drives depends on staff remembering a rule, not the system preventing the violation." },
 ]
 
 const SHORT_TERM = [
   "New client intake goes directly into OneView's Postgres database from day one",
   "Power Automate bridges any in-flight Microsoft Forms submissions during transition — staff change nothing while the switchover happens",
-  "Salesforce Outbound Message routes existing records to OneView's /api/clients endpoint — data consolidates automatically",
-  "OneView's API replaces Salesforce's API as the integration point for funder portals and reporting tools",
+  "Historical Excel/SharePoint records imported once via CSV mapping — data consolidates automatically into OneView",
+  "OneView becomes the single integration point for funder portals and reporting tools, replacing manual Excel exports",
   "Funder CSV exports generated on demand in each funder's exact column format, straight from the database",
   "AI narrative reports drafted from live SQL data in seconds",
 ]
 
 const LONG_TERM = [
-  { title: "Postgres becomes the single source of truth", desc: "Every client, enrolment, and outcome lives in one structured, queryable Postgres database. This build uses Vercel Postgres (Neon) but any Postgres-compatible host works. No more data split across spreadsheets, Salesforce, and shared drives.", icon: Database, color: "text-emerald-600 dark:text-emerald-400" },
-  { title: "Salesforce fully retired", desc: "Salesforce is a general-purpose CRM built for sales pipelines, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting at a fraction of the cost. No migration needed for donor and employer CRM if Skills for Change chooses to keep that portion.", icon: TrendingUp, color: "text-indigo-600 dark:text-indigo-400" },
+  { title: "Postgres becomes the single source of truth", desc: "Every client, enrolment, and outcome lives in one structured, queryable Postgres database. This build uses Vercel Postgres (Neon) but any Postgres-compatible host works. No more data split across Excel files, MS Forms, and SharePoint.", icon: Database, color: "text-emerald-600 dark:text-emerald-400" },
+  { title: "Excel and SharePoint retired for client tracking", desc: "Excel is a general-purpose tool built for numbers, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting with structure that spreadsheets cannot provide.", icon: TrendingUp, color: "text-indigo-600 dark:text-indigo-400" },
   { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is a SQL constraint, not a staff checklist.", icon: Zap, color: "text-amber-600 dark:text-amber-400" },
   { title: "Compliance enforced by architecture", desc: "PHIPA, FIPPA, and CYFSA rules are encoded as SQL constraints and consent flags. No policy document or training refresher can be forgotten. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-600 dark:text-rose-400" },
 ]
 
 const FEASIBILITY = [
   { label: "Week 1", desc: "Deploy to any hosting provider with a Postgres database. New intakes go into OneView directly. Power Automate bridges existing Forms submissions during transition. Staff see a unified dashboard immediately.", color: "text-emerald-600 dark:text-emerald-400" },
-  { label: "Month 1–2", desc: "AI tooling maps and migrates historical Salesforce records into OneView's Postgres schema. Data deduplication and validation in hours, not months of manual work. Staff begin using native OneView intake alongside the transition.", color: "text-indigo-600 dark:text-indigo-400" },
-  { label: "Month 3–6", desc: "Microsoft Forms and Salesforce client tracking fully retired. OneView is the system of record. All intake, outcomes, and funder reporting run through OneView's backend. AI drafts funder narratives from live data. Target: full replacement within 6 months.", color: "text-amber-600 dark:text-amber-400" },
+  { label: "Month 1–2", desc: "AI tooling maps and imports historical Excel/SharePoint records into OneView's Postgres schema. Data deduplication and validation in days, not months of manual work. Staff begin using native OneView intake alongside the transition.", color: "text-indigo-600 dark:text-indigo-400" },
+  { label: "Month 3–6", desc: "Microsoft Forms and Excel client tracking fully retired. OneView is the system of record. All intake, outcomes, and funder reporting run through OneView's backend. AI drafts funder narratives from live data. Target: full replacement within 6 months.", color: "text-amber-600 dark:text-amber-400" },
 ]
 
 export default function AboutTab() {
@@ -193,7 +193,7 @@ export default function AboutTab() {
           <TrendingUp size={16} className="text-indigo-600 dark:text-indigo-400" />
           <h3 className="font-sora text-lg text-indigo-600 dark:text-indigo-400">The Destination: Full Replacement</h3>
         </div>
-        <p className="text-slate-500 text-sm mb-5 ml-6">Microsoft Forms and Salesforce are fully retired. OneView's Postgres database is the system of record. The Next.js backend handles all intake, outcomes, and reporting. With AI-assisted data migration, what would have taken years of manual work can happen in months.</p>
+        <p className="text-slate-500 text-sm mb-5 ml-6">Microsoft Forms and Excel/SharePoint are fully retired as client tracking tools. OneView's Postgres database is the system of record. The Next.js backend handles all intake, outcomes, and reporting. With AI-assisted data migration, what would have taken months of manual work can happen in days.</p>
         <div className="grid sm:grid-cols-2 gap-4">
           {LONG_TERM.map((item, i) => (
             <div key={i} className="p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.06] rounded-xl">

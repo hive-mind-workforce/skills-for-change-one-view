@@ -141,7 +141,7 @@ Power Automate field mapping (Microsoft Forms to OneView):
 | Program | program |
 | Consent Shared | consent_cross_program |
 
-Salesforce: Configure Outbound Message or REST webhook to POST to /api/clients with same schema.
+Excel/SharePoint: Export historical records as CSV, map to OneView schema, bulk import via POST /api/clients.
 
 ## Running Tests
 

@@ -24,8 +24,8 @@ const PHASES = [
     border: "border-indigo-500/20",
     bg: "bg-indigo-500/[0.04]",
     tasks: [
-      { task: "Export historical client records from Salesforce (CSV export, no code required)", effort: "1 day" },
-      { task: "AI-assisted field mapping: Salesforce columns to OneView schema", effort: "2–4 days" },
+      { task: "Export historical client records from Excel/SharePoint as CSV (no code required)", effort: "1 day" },
+      { task: "AI-assisted field mapping: Excel columns to OneView schema", effort: "2–4 days" },
       { task: "Run migration with deduplication and validation", effort: "3–5 days" },
       { task: "Caseworker review of migrated records for accuracy", effort: "1 week (shared)" },
       { task: "Parallel run: both systems active while data is verified", effort: "Up to 4 weeks" },
@@ -43,7 +43,7 @@ const PHASES = [
     tasks: [
       { task: "Staff onboarding to native OneView intake form", effort: "4–8 hrs per person" },
       { task: "Decommission Microsoft Forms intake flow in Power Automate", effort: "Half day" },
-      { task: "Cancel or reduce Salesforce client tracking licenses", effort: "Admin" },
+      { task: "Archive Excel/SharePoint client files as read-only historical record", effort: "Half day" },
       { task: "Funder CSV exports replace manual portal uploads", effort: "Half day setup" },
       { task: "AI narrative reports replace manually written quarterly reports", effort: "Half day setup" },
       { task: "Full system of record: all intake, outcomes, and reporting in OneView", effort: "Target: Month 6" },
@@ -55,7 +55,7 @@ const PHASES = [
 ]
 
 const CURRENT_COSTS = [
-  { item: "Salesforce licensing", annual: "$2,000–8,000", notes: "Power of Us gives 10 free seats; premium features, storage, and integrations add cost" },
+  { item: "Excel / SharePoint maintenance", annual: "Staff time", notes: "No licensing cost, but significant manual effort — re-entry, export formatting, version control across caseworkers" },
   { item: "Microsoft Forms", annual: "$0", notes: "Included in existing Microsoft 365 subscription" },
   { item: "System maintenance (integrations, exports)", annual: "Variable", notes: "Ongoing effort to keep manual exports and integrations functional each quarter" },
   { item: "Staff reporting time", annual: "Significant", notes: "Multiple staff, multiple weeks per quarter — redirected to client work with OneView" },
@@ -84,7 +84,7 @@ export default function MigrationTab() {
           <div className="p-4 bg-rose-500/[0.04] border border-rose-500/[0.12] rounded-xl text-center">
             <div className="font-sora text-2xl text-rose-400 mb-1">50–70% lower</div>
             <div className="text-slate-400 text-sm font-medium">Annual licensing cost reduction</div>
-            <div className="text-slate-600 text-xs mt-1">Conservative estimate vs current Salesforce spend</div>
+            <div className="text-slate-600 text-xs mt-1">Staff reporting time recovered for client work</div>
           </div>
           <div className="p-4 bg-amber-500/[0.04] border border-amber-500/[0.12] rounded-xl text-center">
             <div className="font-sora text-2xl text-amber-400 mb-1">1–2 years</div>
@@ -99,7 +99,7 @@ export default function MigrationTab() {
         </div>
         <div className="flex items-start gap-2 mt-4 p-3 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.06] rounded-lg">
           <AlertCircle size={13} className="text-slate-500 mt-0.5 flex-shrink-0" />
-          <p className="text-slate-500 text-xs leading-relaxed">All figures are illustrative estimates. Actual costs depend on hosting provider, Salesforce contract terms, data volume, and existing Microsoft 365 coverage.</p>
+          <p className="text-slate-500 text-xs leading-relaxed">All figures are illustrative estimates. Actual costs depend on hosting provider, data volume, and existing Microsoft 365 coverage.</p>
         </div>
       </div>
 

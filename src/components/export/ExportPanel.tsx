@@ -118,7 +118,7 @@ export default function ExportPanel() {
         <div className="grid md:grid-cols-3 gap-4">
           {[
             { title:"Microsoft Forms", desc:"Power Automate webhook. 20 min setup, zero staff behavior change.", icon:"📋", color:"text-blue-600 dark:text-blue-400" },
-            { title:"Salesforce", desc:"REST webhook from Salesforce to OneView. Additive, not replacement.", icon:"☁️", color:"text-cyan-600 dark:text-cyan-400" },
+            { title:"SharePoint / Excel", desc:"Historical Excel data migrated once via CSV import. SharePoint used for file storage alongside OneView.", icon:"📊", color:"text-cyan-600 dark:text-cyan-400" },
             { title:"iCARE / EOIS-CaMS", desc:"CSV export shaped to government spec. Compliant bulk upload.", icon:"🏛️", color:"text-amber-600 dark:text-amber-400" },
           ].map((item, i) => (
             <div key={i} className="flex gap-3 p-4 bg-slate-50 dark:bg-white/[0.02] rounded-xl border border-slate-100 dark:border-white/[0.06]">

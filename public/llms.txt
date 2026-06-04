@@ -105,6 +105,6 @@ POST /api/reset truncates all tables and re-seeds 16,247 demo clients across 8 p
 ## Integration Notes
 
 Microsoft Forms: Configure Power Automate HTTP action to POST to /api/clients with mapped fields.
-Salesforce: Configure Outbound Message or REST webhook to /api/clients.
+Excel/SharePoint: Export historical records as CSV, map columns to OneView schema, bulk import via /api/clients.
 iCARE: Generate CSV via POST /api/export with funder="ircc", upload manually.
 EOIS-CaMS: Generate CSV via POST /api/export with funder="eo", upload manually.

@@ -49,7 +49,7 @@ export default function DemoTour() {
           element: "#dashboard-hero",
           popover: {
             title: "Marcus needs to file Q1 reports — today",
-            description: "Programs Director at Skills for Change. Four funders, four different column specs, one deadline. He opens OneView instead of Salesforce, three spreadsheets, and four funder portals.",
+            description: "Programs Director at Skills for Change. Four funders, four different column specs, one deadline. He opens OneView instead of five Excel spreadsheets and four funder portals.",
             side: "bottom",
           },
         },

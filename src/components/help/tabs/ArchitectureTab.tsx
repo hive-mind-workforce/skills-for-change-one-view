@@ -8,7 +8,7 @@ const LAYERS = [
   { id: "sources", label: "Sources", nodes: [
     { id:"ms-forms", name:"Microsoft Forms", icon:"📋", color:"#3b82f6", desc:"Microsoft Forms intake. Power Automate webhook posts data to /api/clients in real time.", steps:["Staff fill out Microsoft Form","Power Automate trigger fires on submit","HTTP POST to /api/clients with mapped fields","Client created in OneView database"], code:"POST /api/clients\n{full_name, program, funder, ...}" },
     { id:"power-automate", name:"Power Automate", icon:"⚡", color:"#0078d4", desc:"Low-code bridge from Microsoft 365 to OneView. 20 minutes to configure, zero staff training required.", steps:["HTTP connector in Power Automate","Map form fields to API schema","POST to /api/clients endpoint","Monitor via audit_log table"], code:'{"full_name": "{{Name}}",\n "program": "settlement"}' },
-    { id:"salesforce", name:"Salesforce", icon:"☁️", color:"#00a1e0", desc:"Salesforce Outbound Messages or REST webhooks post client data to OneView. CRM stays as source of truth; OneView adds outcomes layer.", steps:["Salesforce Outbound Message configured","Webhook URL set to /api/clients","Field mapping in Salesforce flow","Outcomes tracked separately in OneView"], code:'Salesforce Outbound Message\nto: /api/clients' },
+    { id:"sharepoint", name:"SharePoint / Excel", icon:"📊", color:"#217346", desc:"Historical client data migrated from Excel/SharePoint via CSV import. One-time migration maps existing columns to OneView schema. SharePoint kept as read-only archive.", steps:["Export Excel data as CSV","AI-assisted column mapping to OneView schema","Bulk import via /api/clients","SharePoint archived as read-only"], code:'CSV Import\n→ /api/clients\n(one-time migration)' },
     { id:"manual", name:"Manual Entry", icon:"✍️", color:"#94a3b8", desc:"Direct intake via the OneView UI. Caseworkers use the /intake page for walk-in clients or offline registrations.", steps:["Caseworker opens /intake page","Fills out client form","Submits to /api/clients","Success toast confirms registration"], code:'<IntakeForm />\n→ POST /api/clients' },
   ]},
   { id: "rbac", label: "RBAC + Auth", nodes: [
@@ -89,12 +89,12 @@ const ARCH_DIAGRAMS = [
   },
   {
     title: "System Context",
-    description: "OneView sits between intake sources (Microsoft Forms, Salesforce, direct UI) and funder reporting systems. All data paths converge on one Postgres database.",
+    description: "OneView sits between intake sources (Microsoft Forms, Excel/SharePoint migration, direct UI) and funder reporting systems. All data paths converge on one Postgres database.",
     id: "arch-context",
     code: `graph TB
     subgraph intake [Intake Sources]
         MF[Microsoft Forms]
-        SF[Salesforce CRM]
+        SP[Excel / SharePoint]
         UI[Direct Intake UI]
     end
     subgraph core [OneView]
@@ -109,7 +109,7 @@ const ARCH_DIAGRAMS = [
         CT[City of Toronto]
     end
     MF -->|Power Automate webhook| API
-    SF -->|Outbound Message| API
+    SP -->|One-time CSV import| API
     UI -->|Direct submission| API
     API <--> DB
     API --> LLM
