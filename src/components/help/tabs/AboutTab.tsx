@@ -2,7 +2,7 @@ import { GitBranch, ExternalLink, CheckCircle, AlertTriangle, ArrowRight, Zap, S
 
 const PROBLEMS = [
   { title: "Data entered multiple times per client on different systems", desc: "Each funder (IRCC, Employment Ontario, Community Foundations, City of Toronto) has its own portal with its own column spec. Staff copy-paste the same client record into each one, every reporting cycle." },
-  { title: "Reporting takes weeks, not hours", desc: "Narrative reports are written from scratch against whatever spreadsheet is most current. By the time they're submitted, the numbers are stale. Staff spend 3–4 weeks per quarter on reporting alone." },
+  { title: "Reporting takes weeks, not hours", desc: "Narrative reports are written from scratch against whatever spreadsheet is most current. By the time they're submitted, the numbers are stale. Staff spend significant time each quarter on reporting that could be automated." },
   { title: "No single source of truth", desc: "Microsoft Forms feeds one spreadsheet. Salesforce tracks another set of interactions. Neither talks to the other. Outcomes (the metric funders care about most) live in a third system entirely." },
   { title: "Privacy compliance is manual", desc: "PHIPA requires a hard wall between mental health records and all other programs. Enforcing that wall in spreadsheets and shared drives depends on staff remembering a rule, not the system preventing the violation." },
 ]
@@ -24,7 +24,7 @@ const LONG_TERM = [
 ]
 
 const FEASIBILITY = [
-  { label: "Week 1", desc: "Deploy to Vercel. Connect Microsoft Forms via Power Automate webhook. Staff see a live unified dashboard immediately, no behavior change required.", color: "text-emerald-400" },
+  { label: "Week 1", desc: "Deploy to any hosting provider. Connect Microsoft Forms via Power Automate webhook. Staff see a live unified dashboard immediately, no behavior change required.", color: "text-emerald-400" },
   { label: "30–90 days", desc: "AI tooling migrates historical Salesforce client records into OneView. Data mapping, deduplication, and validation happen in hours, not months of manual work.", color: "text-indigo-400" },
   { label: "3–6 months", desc: "Teams use native OneView intake directly. Microsoft Forms retired. Salesforce kept only for donor and employer CRM, not client tracking. Quarterly reports generated in minutes.", color: "text-amber-400" },
   { label: "12 months", desc: "Full system of record. AI drafts all funder narratives. Structured data feeds replace manual portal uploads. Zero dependency on external form tools.", color: "text-violet-400" },
@@ -37,26 +37,26 @@ export default function AboutTab() {
       <div className="glass rounded-xl p-8 text-center">
         <p className="text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
         <h2 className="font-sora text-5xl text-white mb-3">OneView</h2>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. A single system of record for 8 programs, 4 funders, and 20,000+ clients: built to eliminate the data fragmentation that costs SfC weeks of staff time every quarter.</p>
+        <p className="text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. A single system of record for 8 programs and 4 funders: built to eliminate the data fragmentation that costs SfC weeks of staff time every quarter.</p>
         <div className="flex flex-wrap justify-center items-center gap-6 mt-8">
           <div className="text-center">
-            <div className="font-sora text-4xl text-emerald-400">20,000+</div>
-            <div className="text-slate-500 text-sm">clients served annually</div>
+            <div className="font-sora text-4xl text-emerald-400">8</div>
+            <div className="text-slate-500 text-sm">programs in one platform</div>
           </div>
           <div className="w-px h-12 bg-white/[0.08]" />
           <div className="text-center">
-            <div className="font-sora text-4xl text-rose-400">3+ systems</div>
-            <div className="text-slate-500 text-sm">client data split across today</div>
+            <div className="font-sora text-4xl text-rose-400">4</div>
+            <div className="text-slate-500 text-sm">funders, one data entry</div>
           </div>
           <div className="w-px h-12 bg-white/[0.08]" />
           <div className="text-center">
-            <div className="font-sora text-4xl text-amber-400">3–4 wks</div>
-            <div className="text-slate-500 text-sm">per quarter on reporting</div>
+            <div className="font-sora text-4xl text-amber-400">3+ systems</div>
+            <div className="text-slate-500 text-sm">replaced by one</div>
           </div>
           <div className="w-px h-12 bg-white/[0.08]" />
           <div className="text-center">
             <div className="font-sora text-4xl text-indigo-400">1×</div>
-            <div className="text-slate-500 text-sm">with OneView</div>
+            <div className="text-slate-500 text-sm">data entry with OneView</div>
           </div>
         </div>
       </div>
