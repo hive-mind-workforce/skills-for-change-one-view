@@ -18,7 +18,7 @@ const SHORT_TERM = [
 
 const LONG_TERM = [
   { title: "Postgres becomes the single source of truth", desc: "Every client, enrolment, and outcome lives in one structured, queryable Postgres database. This build uses Vercel Postgres (Neon) but any Postgres-compatible host works. No more data split across spreadsheets, Salesforce, and shared drives.", icon: Database, color: "text-emerald-400" },
-  { title: "Salesforce fully retired", desc: "Salesforce is a general-purpose CRM built for sales pipelines, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting at a fraction of the cost. No migration needed for donor and employer CRM if SfC chooses to keep that portion.", icon: TrendingUp, color: "text-indigo-400" },
+  { title: "Salesforce fully retired", desc: "Salesforce is a general-purpose CRM built for sales pipelines, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting at a fraction of the cost. No migration needed for donor and employer CRM if Skills for Change chooses to keep that portion.", icon: TrendingUp, color: "text-indigo-400" },
   { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is a SQL constraint, not a staff checklist.", icon: Zap, color: "text-amber-400" },
   { title: "Compliance enforced by architecture", desc: "PHIPA, FIPPA, and CYFSA rules are encoded as SQL constraints and consent flags. No policy document or training refresher can be forgotten. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-400" },
 ]
@@ -36,16 +36,16 @@ export default function AboutTab() {
       <div className="glass rounded-xl p-8 text-center">
         <p className="text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
         <h2 className="font-sora text-5xl text-white mb-3">OneView</h2>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. A single system of record for 8 programs and 4 funders: built to eliminate the data fragmentation that costs SfC weeks of staff time every quarter.</p>
+        <p className="text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. A single system of record across multiple programs and funders: built to eliminate the data fragmentation that costs Skills for Change weeks of staff time every quarter.</p>
         <div className="flex flex-wrap justify-center items-center gap-6 mt-8">
           <div className="text-center">
-            <div className="font-sora text-4xl text-emerald-400">8</div>
+            <div className="font-sora text-4xl text-emerald-400">Multiple</div>
             <div className="text-slate-500 text-sm">programs in one platform</div>
           </div>
           <div className="w-px h-12 bg-white/[0.08]" />
           <div className="text-center">
-            <div className="font-sora text-4xl text-rose-400">4</div>
-            <div className="text-slate-500 text-sm">funders, one data entry</div>
+            <div className="font-sora text-4xl text-rose-400">All funders</div>
+            <div className="text-slate-500 text-sm">one data entry</div>
           </div>
           <div className="w-px h-12 bg-white/[0.08]" />
           <div className="text-center">
