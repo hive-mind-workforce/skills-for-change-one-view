@@ -49,7 +49,7 @@ const JOURNEY_STAGES = [
   { stage: "Eligibility", before: "Eligibility criteria vary by caseworker. No standard checklist. Inconsistent decisions across the same program.", after: "Program-specific eligibility outcomes seeded at intake. Tier-based tracking: immediate, intermediate, and ultimate." },
   { stage: "Intake", before: "Each caseworker has their own MS Forms or Word doc version. 10+ variants in circulation at any time.", after: "One standardized intake per program. Configurable fields. Single submission populates all programs and all funders." },
   { stage: "Training", before: "Training attendance tracked in separate spreadsheets. No link to outcomes data or funder reporting.", after: "Stage updated to training in real time. Outcomes progress visible on the client journey card immediately." },
-  { stage: "Placement", before: "Placement data in a separate Excel file. Employment Ontario gets one export, IRCC gets another — both created manually.", after: "One data entry generates CSV exports for every funder in their exact required column format, on demand." },
+  { stage: "Placement", before: "Placement data in a separate Excel file. Employment Ontario gets one export, IRCC gets another, both created manually.", after: "One data entry generates CSV exports for every funder in their exact required column format, on demand." },
   { stage: "Survey", before: "Exit survey optional and caseworker-dependent. Response rates under 20 percent. No aggregate analysis possible.", after: "Standardized exit survey required to close a journey. Satisfaction score, recommend rate, and barriers captured and charted." },
   { stage: "Reporting", before: "Narrative reports written from scratch each quarter. Takes two to three weeks. Data is often stale by submission date.", after: "AI drafts narrative from live SQL data in seconds. Monthly or ad-hoc. Funder-specific format applied automatically." },
 ]
@@ -63,8 +63,8 @@ const PROBLEMS = [
 
 const SHORT_TERM = [
   "New client intake goes directly into OneView's Postgres database from day one",
-  "Power Automate bridges any in-flight Microsoft Forms submissions during transition — staff change nothing while the switchover happens",
-  "Historical Excel/SharePoint records imported once via CSV mapping — data consolidates automatically into OneView",
+  "Power Automate bridges any in-flight Microsoft Forms submissions during transition; staff change nothing while the switchover happens",
+  "Historical Excel/SharePoint records imported once via CSV mapping; data consolidates automatically into OneView",
   "OneView becomes the single integration point for funder portals and reporting tools, replacing manual Excel exports",
   "Funder CSV exports generated on demand in each funder's exact column format, straight from the database",
   "AI narrative reports drafted from live SQL data in seconds",
@@ -221,7 +221,7 @@ export default function AboutTab() {
 
       <div className="glass rounded-xl p-6">
         <h3 className="font-sora text-xl text-slate-900 dark:text-white mb-1">Client Journey: Before and After OneView</h3>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Eight stages of the SfC client lifecycle — and what changes with OneView at every step.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Eight stages of the SfC client lifecycle and what changes with OneView at every step.</p>
         <div className="space-y-3">
           {JOURNEY_STAGES.map(({ stage, before, after }) => (
             <div key={stage} className="grid md:grid-cols-[120px_1fr_1fr] gap-3 items-start">

@@ -85,7 +85,7 @@ export default function JourneyViewer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Fetch notes and survey whenever the loaded journey changes — covers both URL load and search-select
+  // Fetch notes and survey whenever the loaded journey changes; covers both URL load and search-select
   useEffect(() => {
     const clientId = journey?.client?.id
     if (!clientId) {

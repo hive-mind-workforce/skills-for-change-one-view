@@ -55,10 +55,10 @@ const PHASES = [
 ]
 
 const CURRENT_COSTS = [
-  { item: "Excel / SharePoint maintenance", annual: "Staff time", notes: "No licensing cost, but significant manual effort — re-entry, export formatting, version control across caseworkers" },
+  { item: "Excel / SharePoint maintenance", annual: "Staff time", notes: "No licensing cost, but significant manual effort: re-entry, export formatting, version control across caseworkers" },
   { item: "Microsoft Forms", annual: "$0", notes: "Included in existing Microsoft 365 subscription" },
   { item: "System maintenance (integrations, exports)", annual: "Variable", notes: "Ongoing effort to keep manual exports and integrations functional each quarter" },
-  { item: "Staff reporting time", annual: "Significant", notes: "Multiple staff, multiple weeks per quarter — redirected to client work with OneView" },
+  { item: "Staff reporting time", annual: "Significant", notes: "Multiple staff, multiple weeks per quarter; redirected to client work with OneView" },
 ]
 
 const ONEVIEW_COSTS = [

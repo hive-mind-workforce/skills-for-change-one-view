@@ -125,7 +125,7 @@ const DIAGRAMS = [
   },
   {
     title: "Privacy Architecture",
-    description: "Consent and compliance enforced structurally. The PHI Wall is a database constraint — not a policy document.",
+    description: "Consent and compliance enforced structurally. The PHI Wall is a database constraint, not a policy document.",
     code: `flowchart TD
     A[Data request] --> B{Program?}
     B -->|mental_health| C[PHI Wall\nAlways excluded\nPHIPA enforced]
@@ -210,7 +210,7 @@ function MermaidDiagram({ code, id }: { code: string; id: string }) {
 export default function DiagramsTab() {
   return (
     <div className="space-y-8">
-      <p className="text-slate-500 dark:text-slate-500 text-sm">Engineering diagrams in Mermaid format. Each diagram is AI agent readable — copy the source for use in prompts, CI pipelines, or documentation tools.</p>
+      <p className="text-slate-500 dark:text-slate-500 text-sm">Engineering diagrams in Mermaid format. Each diagram is AI agent readable; copy the source for use in prompts, CI pipelines, or documentation tools.</p>
       {DIAGRAMS.map((d, i) => (
         <div key={i} className="glass rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06] flex items-start justify-between gap-4">

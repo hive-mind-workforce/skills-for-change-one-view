@@ -77,7 +77,7 @@ export default function Header() {
           target="_blank"
           rel="noopener noreferrer"
           className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors shrink-0"
-          aria-label="LLMs.txt — AI agent index"
+          aria-label="LLMs.txt: AI agent index"
         >
           <Bot size={18} />
         </a>

@@ -165,7 +165,7 @@ const ARCH_DIAGRAMS = [
   },
   {
     title: "Privacy Architecture",
-    description: "Consent and compliance enforced structurally. The PHI Wall is a database constraint — not a policy document.",
+    description: "Consent and compliance enforced structurally. The PHI Wall is a database constraint, not a policy document.",
     id: "arch-privacy",
     code: `flowchart TD
     A[Data request] --> B{Program?}

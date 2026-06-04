@@ -39,7 +39,7 @@ const TIMELINE = [
     dot: "bg-indigo-500",
     border: "border-indigo-500/20",
     bg: "bg-indigo-500/[0.04]",
-    desc: "Identify 1-2 staff per program as system champions. Deep training session. Champions become the first point of contact for questions — not IT.",
+    desc: "Identify 1-2 staff per program as system champions. Deep training session. Champions become the first point of contact for questions, not IT.",
   },
   {
     period: "Weeks 3-4",
@@ -102,7 +102,7 @@ export default function ChangeManagementTab() {
         </div>
         <h2 className="font-sora text-3xl text-slate-900 dark:text-white mb-3">Making Change Stick</h2>
         <p className="text-slate-600 dark:text-slate-300 text-base max-w-2xl mx-auto">
-          Staff buy-in is the hardest part of any system migration. This plan puts caseworkers first — reducing their workload immediately, not after a long adjustment period.
+          Staff buy-in is the hardest part of any system migration. This plan puts caseworkers first, reducing their workload immediately, not after a long adjustment period.
         </p>
       </div>
 
@@ -156,7 +156,7 @@ export default function ChangeManagementTab() {
             {TIMELINE.map((phase, i) => (
               <div key={i} className="relative">
                 <div className={`absolute -left-[18px] top-1.5 w-2.5 h-2.5 rounded-full ${phase.dot} ring-2 ring-[#060610]`} />
-                <div className={`text-xs font-semibold mb-1 ${phase.color}`}>{phase.period} — {phase.label}</div>
+                <div className={`text-xs font-semibold mb-1 ${phase.color}`}>{phase.period}: {phase.label}</div>
                 <div className={`p-4 border ${phase.border} ${phase.bg} rounded-xl`}>
                   <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{phase.desc}</p>
                 </div>

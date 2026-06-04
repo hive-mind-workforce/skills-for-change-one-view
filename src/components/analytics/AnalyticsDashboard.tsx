@@ -283,7 +283,7 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
             {dropoffPct}%
           </span>
           <span className="text-slate-500 dark:text-slate-400 text-xs">
-            lower is better — {droppedCount.toLocaleString()} dropped
+            lower is better: {droppedCount.toLocaleString()} dropped
           </span>
         </div>
 

@@ -25,7 +25,7 @@ export default function PrivacyTab() {
           <Lock size={18} className="text-rose-600 dark:text-rose-400" />
           <h3 className="font-sora text-lg text-rose-400">PHI Wall</h3>
         </div>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">Mental Health records are ALWAYS siloed under PHIPA (Personal Health Information Protection Act). No role, consent flag, or configuration can override this — it is enforced at the database layer on every cross-program query.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">Mental Health records are ALWAYS siloed under PHIPA (Personal Health Information Protection Act). No role, consent flag, or configuration can override this; it is enforced at the database layer on every cross-program query.</p>
       </div>
 
       <div className="glass rounded-xl overflow-hidden">
@@ -58,7 +58,7 @@ export default function PrivacyTab() {
       <div className="glass rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.08]">
           <h3 className="font-sora text-lg text-slate-700 dark:text-slate-200">Audit Log</h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Every write and export operation is logged. Append-only — cannot be modified through the application.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Every write and export operation is logged. Append-only; cannot be modified through the application.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">

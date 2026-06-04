@@ -99,7 +99,7 @@ const SEED_VOLUMES: Record<string,number> = {
 const OUTCOME_LABELS: Record<string,string[]> = {
   settlement:["Settlement needs assessment and service plan completed","Referral to community, healthcare, or legal services completed","Successfully settled and independently navigating life in Canada"],
   employment:["Canadian-format resume and cover letter developed","Job interview coaching and placement support received","Employment secured in field of qualification"],
-  language:["CLBA language assessment and CLB level confirmed","Intermediate to advanced language benchmarks achieved (CLB 4-6)","Language goals met — eligible for citizenship or further education"],
+  language:["CLBA language assessment and CLB level confirmed","Intermediate to advanced language benchmarks achieved (CLB 4-6)","Language goals met; eligible for citizenship or further education"],
   mental_health:["Initial individual counselling session completed","Support group or wellness workshop attended","Ongoing personalized mental health care plan established"],
   trades:["Pre-apprenticeship skills assessment and safety certifications completed","Technical training and workplace readiness coaching underway","Trade certification or apprenticeship placement secured"],
   mentoring:["Matched with industry-specific mentor in field of practice","Three or more mentoring sessions completed; professional network expanded","Career goal achieved through mentoring relationship"],
