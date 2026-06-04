@@ -1,6 +1,6 @@
 export const runtime = "nodejs"
 import { NextRequest } from "next/server"
-import { getCachedReport, cacheReport, getClients } from "@/lib/db"
+import { getCachedReport, cacheReport, getClients, logAudit } from "@/lib/db"
 import { generateReport } from "@/lib/llm"
 import { FUNDERS } from "@/lib/funders"
 
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
 
     const narrative = await generateReport(funder, period, funderMetrics)
     await cacheReport(funder, period, narrative)
+    await logAudit("generate_report", "report", { funder, period, cached: false }, "admin", req.headers.get("x-forwarded-for") ?? "")
     return Response.json({ narrative, cached: false, metrics: funderMetrics })
   } catch (err: any) {
     return Response.json({ error: err.message }, { status: 500 })

@@ -25,8 +25,7 @@ export default function PrivacyTab() {
           <Lock size={18} className="text-rose-400" />
           <h3 className="font-sora text-lg text-rose-400">PHI Wall</h3>
         </div>
-        <p className="text-slate-400 text-sm mb-3">Mental Health records are ALWAYS siloed under PHIPA (Personal Health Information Protection Act). No role can override this.</p>
-        <pre className="bg-black/40 rounded-lg p-3 text-xs text-rose-300 font-mono">{"-- Applied to every cross-program SQL query\nAND e.program != 'mental_health'\n-- Cannot be removed or bypassed"}</pre>
+        <p className="text-slate-400 text-sm mb-3">Mental Health records are ALWAYS siloed under PHIPA (Personal Health Information Protection Act). No role, consent flag, or configuration can override this — it is enforced at the database layer on every cross-program query.</p>
       </div>
 
       <div className="glass rounded-xl overflow-hidden">
@@ -57,13 +56,18 @@ export default function PrivacyTab() {
       </div>
 
       <div className="glass rounded-xl p-5">
-        <h3 className="font-sora text-lg text-slate-200 mb-3">Audit Log Sample</h3>
-        <pre className="bg-black/40 rounded-lg p-3 text-xs text-slate-400 font-mono overflow-x-auto">{`action          | entity  | user_role  | at
-----------------+---------+------------+---------------------------
-create_client   | client  | caseworker | 2026-06-04 09:15:23
-export          | ircc    | admin      | 2026-06-04 09:22:11
-ai_query        | query   | caseworker | 2026-06-04 09:30:44
-generate_report | report  | admin      | 2026-06-04 09:31:02`}</pre>
+        <h3 className="font-sora text-lg text-slate-200 mb-1">Audit Log</h3>
+        <p className="text-slate-500 text-sm mb-3">Every write and export operation is logged with the action, affected entity, role, detail payload, and source IP. The log is append-only and cannot be modified through the application.</p>
+        <pre className="bg-black/40 rounded-lg p-3 text-xs text-slate-400 font-mono overflow-x-auto">{`action           | entity  | user_role  | detail                                              | source_ip   | at
+-----------------+---------+------------+-----------------------------------------------------+-------------+---------------------------
+create_client    | client  | caseworker | {"full_name":"A. Hassan","program":"settlement"}     | 142.250.x.x | 2026-06-04 09:15:23
+view_clients     | clients | caseworker | {"program":"settlement","count":47}                 | 142.250.x.x | 2026-06-04 09:18:44
+export           | ircc    | admin      | {"funder":"ircc","rows":312,"period":"Q1 2026"}     | 198.51.x.x  | 2026-06-04 09:22:11
+ai_query         | query   | caseworker | {"question":"Clients who achieved employment?"}     | 142.250.x.x | 2026-06-04 09:30:44
+generate_report  | report  | admin      | {"funder":"ircc","period":"Q1 2026","cached":false} | 198.51.x.x  | 2026-06-04 09:31:02
+export           | eo      | admin      | {"funder":"eo","rows":189,"period":"Q1 2026"}       | 198.51.x.x  | 2026-06-04 09:35:17
+create_client    | client  | caseworker | {"full_name":"M. Osei","program":"employment"}      | 142.250.x.x | 2026-06-04 10:02:08
+generate_report  | report  | admin      | {"funder":"uw","period":"Q1 2026","cached":true}    | 198.51.x.x  | 2026-06-04 10:15:44`}</pre>
       </div>
     </div>
   )

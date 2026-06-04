@@ -54,7 +54,7 @@ export default function IntakeForm() {
   const labelClass = "block text-slate-400 text-sm mb-1.5"
 
   return (
-    <form onSubmit={submit} className="glass rounded-xl p-6 space-y-5">
+    <form id="intake-form" onSubmit={submit} className="glass rounded-xl p-6 space-y-5">
       <div>
         <label className={labelClass}>Full Name *</label>
         <input name="full_name" value={form.full_name} onChange={e=>update("full_name",e.target.value)} className={inputClass("full_name")} placeholder="Client full name" />

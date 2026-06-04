@@ -1,35 +1,181 @@
 "use client"
 import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function DemoTour() {
+  const router = useRouter()
+
   useEffect(() => {
     const startTour = async () => {
       const { driver } = await import("driver.js")
       await import("driver.js/dist/driver.css")
+
+      const role = new URLSearchParams(window.location.search).get("role") ?? "admin"
+      const qs = window.location.search
+
       const driverObj = driver({
         animate: true,
-        overlayColor: "rgba(6,6,16,0.85)",
+        overlayColor: "rgba(6,6,16,0.88)",
         smoothScroll: true,
         allowClose: true,
         stagePadding: 8,
         popoverClass: "oneview-tour",
-        steps: [
-          { element: "#dashboard-hero", popover: { title: "OneView", description: "Capture once, report to every funder. 16,247 clients across 8 programs.", side: "bottom" } },
-          { element: "#metric-cards", popover: { title: "Live Metrics", description: "Real-time SQL-computed program stats. Always accurate.", side: "bottom" } },
-          { element: "#program-chart", popover: { title: "Program Breakdown", description: "Every program at a glance in one chart.", side: "top" } },
-          { element: "[data-tour=intake]", popover: { title: "One Intake Form", description: "Single form feeds every program. Microsoft Forms bridges here via Power Automate.", side: "right" } },
-          { element: "[data-tour=export]", popover: { title: "Smart Export", description: "Select a funder. OneView shapes the CSV to their exact column specification.", side: "right" } },
-          { element: "[data-tour=ai]", popover: { title: "AI Report Writer", description: "SQL computes numbers. AI writes narrative. No hallucinations.", side: "right" } },
-          { element: "[data-tour=help]", popover: { title: "Presentation Ready", description: "Interactive architecture diagram. Every layer documented and clickable.", side: "right" } },
-          { popover: { title: "Built for Skills for Change", description: "Open source, AI-agent ready, deployed on Vercel. The complete solution.", showButtons: ["close"] } },
-        ],
       })
+
+      const adminJourney = [
+        {
+          element: "#dashboard-hero",
+          popover: {
+            title: "Marcus needs to file Q1 reports — today",
+            description: "Programs Director at Skills for Change. Four funders, four different column specs, one deadline. He opens OneView instead of Salesforce, three spreadsheets, and four funder portals.",
+            side: "bottom",
+          },
+        },
+        {
+          element: "#metric-cards",
+          popover: {
+            title: "Live metrics — no spreadsheet needed",
+            description: "Active clients, outcome rates, cross-program enrolments — all computed live from the database. The numbers Marcus needs for his narrative are already here.",
+            side: "bottom",
+          },
+        },
+        {
+          element: "#program-chart",
+          popover: {
+            title: "Program breakdown at a glance",
+            description: "Employment and Trades are at capacity. Settlement has room. This context goes straight into the funder narratives — no manual chart building.",
+            side: "top",
+          },
+        },
+        {
+          element: "[data-tour=export]",
+          popover: {
+            title: "Step 1: Generate the IRCC submission",
+            description: "Marcus clicks Export. He selects IRCC. OneView shapes the CSV to iCARE's exact column specification — 312 client records, ready for bulk upload in seconds.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/export${qs}`)
+              setTimeout(() => driverObj.moveNext(), 400)
+            },
+          },
+        },
+        {
+          element: "[data-tour=ai]",
+          popover: {
+            title: "Step 2: Generate the narrative report",
+            description: "CSV filed. Now the written report. Marcus opens AI Report Writer. SQL has already computed all the figures — the AI writes prose around verified numbers only. No hallucinations.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/ai${qs}`)
+              setTimeout(() => driverObj.moveNext(), 400)
+            },
+          },
+        },
+        {
+          popover: {
+            title: "Four funders. Under 10 minutes.",
+            description: "Marcus repeats for Employment Ontario, United Way, and City of Toronto. What used to take weeks of copy-pasting and narrative writing now takes a single session. The data was always there — OneView just makes it usable.",
+            showButtons: ["close"],
+          },
+        },
+      ]
+
+      const caseworkerJourney = [
+        {
+          element: "#dashboard-hero",
+          popover: {
+            title: "Amara's shift starts",
+            description: "Settlement caseworker at Skills for Change. She checks the dashboard — 47 active clients this week, 68% with outcomes on track. Then a new client walks in.",
+            side: "bottom",
+          },
+        },
+        {
+          element: "#metric-cards",
+          popover: {
+            title: "Everything she needs to start the conversation",
+            description: "Cross-program enrolments, active counts, outcomes achieved — Amara can see the full picture before the intake session begins. No separate system to check.",
+            side: "bottom",
+          },
+        },
+        {
+          element: "[data-tour=intake]",
+          popover: {
+            title: "One form. Every program.",
+            description: "A new client just arrived from Ethiopia. Amara clicks Register a Client. The same form covers all programs — she enters the client's details once, not once per funder.",
+            side: "right",
+            onNextClick: () => {
+              router.push(`/intake${qs}`)
+              setTimeout(() => driverObj.moveNext(), 400)
+            },
+          },
+        },
+        {
+          element: "#intake-form",
+          popover: {
+            title: "Details captured once, available everywhere",
+            description: "Name, language, immigration stream, program. Amara selects Settlement — OneView automatically resolves the correct funder (IRCC). No lookup, no manual mapping.",
+            side: "right",
+          },
+        },
+        {
+          popover: {
+            title: "Outcomes tracking starts at registration",
+            description: "When Amara submits, OneView seeds three outcome tiers — immediate, intermediate, and ultimate — for the client's program. No follow-up data entry. No separate outcomes spreadsheet. The system tracks from day one.",
+            showButtons: ["close"],
+          },
+        },
+      ]
+
+      const viewerJourney = [
+        {
+          element: "#dashboard-hero",
+          popover: {
+            title: "Board member review — no data request needed",
+            description: "A board member checks in before the quarterly meeting. She's logged in as Viewer — aggregate data only, no individual client records, no PII.",
+            side: "bottom",
+          },
+        },
+        {
+          element: "#metric-cards",
+          popover: {
+            title: "The numbers that matter, always current",
+            description: "Active clients, outcomes achieved, cross-program enrolments. She has what she needs for the funding conversation without asking staff for a report.",
+            side: "bottom",
+          },
+        },
+        {
+          element: "#program-chart",
+          popover: {
+            title: "Relative program performance",
+            description: "Mental Health and Employment are at capacity. Youth has room to grow. This context shapes the board's priorities — visible at a glance, no presentation needed.",
+            side: "top",
+          },
+        },
+        {
+          element: "[data-tour=help]",
+          popover: {
+            title: "Full documentation — always available",
+            description: "The Help Center includes architecture diagrams, privacy compliance maps, and the full migration plan. Accessible to all roles including Viewer.",
+            side: "right",
+          },
+        },
+        {
+          popover: {
+            title: "Access boundaries enforced by the system",
+            description: "Intake, Export, and AI Report Writer are locked for Viewers. The system enforces this structurally — no accidental access to PII, no funder data exposure. Role switching is in the top bar.",
+            showButtons: ["close"],
+          },
+        },
+      ]
+
+      const journeys: Record<string, object[]> = { admin: adminJourney, caseworker: caseworkerJourney, viewer: viewerJourney }
+      driverObj.setSteps(journeys[role] ?? adminJourney)
       driverObj.drive()
     }
 
     window.addEventListener("start-demo", startTour)
     return () => window.removeEventListener("start-demo", startTour)
-  }, [])
+  }, [router])
 
   return null
 }
