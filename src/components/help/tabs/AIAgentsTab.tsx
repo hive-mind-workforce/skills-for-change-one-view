@@ -30,7 +30,7 @@ export default function AIAgentsTab() {
         <div className="space-y-3">
           {[
             { step:1, title:"Read CLAUDE.md", code:"# CLAUDE.md contains the complete architecture\n# data model, API reference, and build conventions" },
-            { step:2, title:"Verify connectivity", code:"curl https://skills-for-change-one-view.vercel.app/api/health" },
+            { step:2, title:"Verify connectivity", code:"curl https://sfc-oneview.vercel.app/api/health" },
             { step:3, title:"Query program metrics", code:'curl -X POST /api/query \\\n  -d \'{"question":"Total clients by program?"}\''},
             { step:4, title:"Generate funder narrative", code:'curl -X POST /api/draft-report \\\n  -d \'{"funder":"ircc","period":"Q1 2026"}\''},
             { step:5, title:"Export funder CSV", code:'curl -X POST /api/export \\\n  -d \'{"funder":"ircc"}\' > ircc-export.csv'},

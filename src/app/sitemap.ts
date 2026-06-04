@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next"
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://skills-for-change-one-view.vercel.app"
+  const base = "https://sfc-oneview.vercel.app"
   return [
     { url: base, lastModified: "2026-06-04", changeFrequency: "daily", priority: 1 },
     { url: `${base}/intake`, lastModified: "2026-06-04", changeFrequency: "weekly", priority: 0.8 },
