@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { X, Copy, CheckCircle, Maximize2 } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -250,13 +251,22 @@ interface DiagramEntry { title: string; description: string; id: string; code: s
 export default function ArchitectureTab() {
   const [selected, setSelected] = useState<Node|null>(null)
   const [zoomed, setZoomed] = useState<DiagramEntry|null>(null)
+  const [mounted, setMounted] = useState(false)
 
-  return (
-    <div className="space-y-8">
+  useEffect(() => { setMounted(true) }, [])
 
-    {zoomed && (
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col animate-fade-in" onClick={() => setZoomed(null)}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]" onClick={e => e.stopPropagation()}>
+  useEffect(() => {
+    if (!zoomed) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setZoomed(null) }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [zoomed])
+
+  const modal = zoomed && (
+    <>
+      <div className="fixed inset-0 z-[9998] bg-black/80 backdrop-blur-sm" onClick={() => setZoomed(null)} />
+      <div className="fixed inset-0 z-[9999] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0d0d1f]">
           <div>
             <h3 className="font-sora text-lg text-white">{zoomed.title}</h3>
             <p className="text-slate-400 text-xs mt-0.5">{zoomed.description}</p>
@@ -268,11 +278,17 @@ export default function ArchitectureTab() {
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto p-6 bg-[#050510]" onClick={e => e.stopPropagation()}>
+        <div className="flex-1 overflow-auto p-6 bg-[#050510]">
           <MermaidDiagram code={zoomed.code} id={`zoom-${zoomed.id}`} />
         </div>
       </div>
-    )}
+    </>
+  )
+
+  return (
+    <div className="space-y-8">
+
+    {mounted && modal && createPortal(modal, document.body)}
 
     <div className="flex gap-6 relative">
       <div className={`flex-1 space-y-3 transition-all duration-300 ${selected ? "opacity-60 md:opacity-100" : ""}`}>

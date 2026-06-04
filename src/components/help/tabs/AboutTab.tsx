@@ -17,16 +17,16 @@ const SHORT_TERM = [
 ]
 
 const LONG_TERM = [
-  { title: "Postgres becomes the single source of truth", desc: "Every client, enrolment, and outcome lives in one structured, queryable Postgres database. This build uses Vercel Postgres (Neon) but any Postgres-compatible host works. No more data split across spreadsheets, Salesforce, and shared drives.", icon: Database, color: "text-emerald-400" },
-  { title: "Salesforce fully retired", desc: "Salesforce is a general-purpose CRM built for sales pipelines, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting at a fraction of the cost. No migration needed for donor and employer CRM if Skills for Change chooses to keep that portion.", icon: TrendingUp, color: "text-indigo-400" },
-  { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is a SQL constraint, not a staff checklist.", icon: Zap, color: "text-amber-400" },
-  { title: "Compliance enforced by architecture", desc: "PHIPA, FIPPA, and CYFSA rules are encoded as SQL constraints and consent flags. No policy document or training refresher can be forgotten. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-400" },
+  { title: "Postgres becomes the single source of truth", desc: "Every client, enrolment, and outcome lives in one structured, queryable Postgres database. This build uses Vercel Postgres (Neon) but any Postgres-compatible host works. No more data split across spreadsheets, Salesforce, and shared drives.", icon: Database, color: "text-emerald-600 dark:text-emerald-400" },
+  { title: "Salesforce fully retired", desc: "Salesforce is a general-purpose CRM built for sales pipelines, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting at a fraction of the cost. No migration needed for donor and employer CRM if Skills for Change chooses to keep that portion.", icon: TrendingUp, color: "text-indigo-600 dark:text-indigo-400" },
+  { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is a SQL constraint, not a staff checklist.", icon: Zap, color: "text-amber-600 dark:text-amber-400" },
+  { title: "Compliance enforced by architecture", desc: "PHIPA, FIPPA, and CYFSA rules are encoded as SQL constraints and consent flags. No policy document or training refresher can be forgotten. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-600 dark:text-rose-400" },
 ]
 
 const FEASIBILITY = [
-  { label: "Week 1", desc: "Deploy to any hosting provider with a Postgres database. New intakes go into OneView directly. Power Automate bridges existing Forms submissions during transition. Staff see a unified dashboard immediately.", color: "text-emerald-400" },
-  { label: "Month 1–2", desc: "AI tooling maps and migrates historical Salesforce records into OneView's Postgres schema. Data deduplication and validation in hours, not months of manual work. Staff begin using native OneView intake alongside the transition.", color: "text-indigo-400" },
-  { label: "Month 3–6", desc: "Microsoft Forms and Salesforce client tracking fully retired. OneView is the system of record. All intake, outcomes, and funder reporting run through OneView's backend. AI drafts funder narratives from live data. Target: full replacement within 6 months.", color: "text-amber-400" },
+  { label: "Week 1", desc: "Deploy to any hosting provider with a Postgres database. New intakes go into OneView directly. Power Automate bridges existing Forms submissions during transition. Staff see a unified dashboard immediately.", color: "text-emerald-600 dark:text-emerald-400" },
+  { label: "Month 1–2", desc: "AI tooling maps and migrates historical Salesforce records into OneView's Postgres schema. Data deduplication and validation in hours, not months of manual work. Staff begin using native OneView intake alongside the transition.", color: "text-indigo-600 dark:text-indigo-400" },
+  { label: "Month 3–6", desc: "Microsoft Forms and Salesforce client tracking fully retired. OneView is the system of record. All intake, outcomes, and funder reporting run through OneView's backend. AI drafts funder narratives from live data. Target: full replacement within 6 months.", color: "text-amber-600 dark:text-amber-400" },
 ]
 
 export default function AboutTab() {
@@ -34,7 +34,7 @@ export default function AboutTab() {
     <div className="space-y-8">
 
       <div className="glass rounded-xl p-8 text-center">
-        <p className="text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
+        <p className="text-emerald-600 dark:text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
         <h2 className="font-sora text-5xl text-slate-900 dark:text-white mb-3">OneView</h2>
         <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. A single system of record across multiple programs and funders: built to eliminate the data fragmentation that costs Skills for Change weeks of staff time every quarter.</p>
         <div className="flex flex-wrap justify-center items-center gap-6 mt-8">
@@ -62,15 +62,15 @@ export default function AboutTab() {
 
       <div className="glass rounded-xl p-6">
         <div className="flex items-center gap-2 mb-5">
-          <AlertTriangle size={16} className="text-rose-400" />
-          <h3 className="font-sora text-lg text-rose-400">The Problem with the Current System</h3>
+          <AlertTriangle size={16} className="text-rose-600 dark:text-rose-400" />
+          <h3 className="font-sora text-lg text-rose-600 dark:text-rose-400">The Problem with the Current System</h3>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           {PROBLEMS.map((p, i) => (
             <div key={i} className="p-4 bg-rose-500/[0.04] border border-rose-500/[0.12] rounded-xl">
               <div className="flex items-start gap-2 mb-2">
-                <span className="text-rose-400 font-bold text-sm mt-0.5 flex-shrink-0">✕</span>
-                <p className="text-slate-200 text-sm font-medium">{p.title}</p>
+                <span className="text-rose-600 dark:text-rose-400 font-bold text-sm mt-0.5 flex-shrink-0">✕</span>
+                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium">{p.title}</p>
               </div>
               <p className="text-slate-500 text-xs leading-relaxed pl-4">{p.desc}</p>
             </div>
@@ -80,8 +80,8 @@ export default function AboutTab() {
 
       <div className="glass rounded-xl p-6">
         <div className="flex items-center gap-2 mb-2">
-          <ArrowRight size={16} className="text-emerald-400" />
-          <h3 className="font-sora text-lg text-emerald-400">Getting Started: Migration Begins Day One</h3>
+          <ArrowRight size={16} className="text-emerald-600 dark:text-emerald-400" />
+          <h3 className="font-sora text-lg text-emerald-600 dark:text-emerald-400">Getting Started: Migration Begins Day One</h3>
         </div>
         <p className="text-slate-500 text-sm mb-5 ml-6">OneView is the destination, not a middleware layer. New data goes into OneView's Postgres database from the start. Webhooks bridge existing systems during the transition so staff see no disruption while the switchover happens.</p>
         <div className="grid sm:grid-cols-2 gap-2">
@@ -96,8 +96,8 @@ export default function AboutTab() {
 
       <div className="glass rounded-xl p-6">
         <div className="flex items-center gap-2 mb-2">
-          <TrendingUp size={16} className="text-indigo-400" />
-          <h3 className="font-sora text-lg text-indigo-400">The Destination: Full Replacement</h3>
+          <TrendingUp size={16} className="text-indigo-600 dark:text-indigo-400" />
+          <h3 className="font-sora text-lg text-indigo-600 dark:text-indigo-400">The Destination: Full Replacement</h3>
         </div>
         <p className="text-slate-500 text-sm mb-5 ml-6">Microsoft Forms and Salesforce are fully retired. OneView's Postgres database is the system of record. The Next.js backend handles all intake, outcomes, and reporting. With AI-assisted data migration, what would have taken years of manual work can happen in months.</p>
         <div className="grid sm:grid-cols-2 gap-4">
