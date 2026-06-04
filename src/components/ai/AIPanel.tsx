@@ -70,7 +70,7 @@ export default function AIPanel() {
           <p className="text-slate-500 dark:text-slate-400">SQL computes the numbers. AI writes the narrative. Every figure is grounded in real data.</p>
           <div className="flex items-center gap-2 mt-2">
             <CheckCircle size={14} className="text-emerald-400" />
-            <span className="text-emerald-400 text-xs">All figures verified against live database</span>
+            <span className="text-emerald-600 dark:text-emerald-400 text-xs">All figures verified against live database</span>
           </div>
         </div>
         {isAdmin ? (
@@ -92,7 +92,7 @@ export default function AIPanel() {
         ) : (
           <div className="flex items-center gap-3 p-4 bg-amber-500/[0.06] border border-amber-500/20 rounded-xl">
             <Lock size={16} className="text-amber-400 flex-shrink-0" />
-            <p className="text-amber-300 text-sm">Funder report generation requires Admin access. You can use the Q&A below.</p>
+            <p className="text-amber-700 dark:text-amber-300 text-sm">Funder report generation requires Admin access. You can use the Q&A below.</p>
           </div>
         )}
       </section>

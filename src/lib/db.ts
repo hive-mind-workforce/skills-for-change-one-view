@@ -49,8 +49,8 @@ export async function initDB() {
     )`
 }
 
-const FIRST_NAMES = ["Amara","Fatima","Mohammed","Ana","Carlos","Priya","David","Sarah","Yusuf","Mei","Elena","Amir","Rosa","James","Nadia","Omar","Linh","Kwame","Isabella","Hassan","Zara","Marco","Aisha","Daniel","Sofia","Ahmed","Maria","Kevin","Layla","Tobias","Nour","Grace","Ivan","Yasmin","Luis","Diane","Khalid","Tanya","Victor","Mira","Jerome","Hana","Ricardo","Olga","Jamal","Nadia","Elena","Boris","Chloe","Rafael"]
-const LAST_NAMES = ["Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin","Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson","Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores","Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts","Patel"]
+const FIRST_NAMES = ["Amara","Fatima","Mohammed","Ana","Carlos","Priya","David","Sarah","Yusuf","Mei","Elena","Amir","Rosa","James","Nadia","Omar","Linh","Kwame","Isabella","Hassan","Zara","Marco","Aisha","Daniel","Sofia","Ahmed","Maria","Kevin","Layla","Tobias","Nour","Grace","Ivan","Yasmin","Luis","Diane","Khalid","Tanya","Victor","Mira","Jerome","Hana","Ricardo","Olga","Jamal","Boris","Chloe","Rafael","Aditi","Tariq","Yemi","Ingrid","Soren","Leila","Arjun","Chioma","Emeka","Fiona","Gabriel","Halima","Idris","Jamilah","Kenji","Lena","Moussa","Nkechi","Pavel","Quynh","Rahim","Svetlana","Thabo","Ursula","Valentina","Wanjiku","Xochitl","Yolanda","Zuberi","Abena","Bakar","Comfort","Desta","Elan","Freya","Gao","Hira","Ismail","Jaya","Kofi","Lila","Mamadou","Njeri","Olumide","Pita","Rashida","Siham","Taini","Uche","Veronika","Wendell","Xiomara","Yara","Zineb","Adaeze","Biruk","Celeste","Dayo","Elif","Farida","Gopal","Hyun","Imani","Jomo"]
+const LAST_NAMES = ["Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin","Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson","Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores","Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts","Patel","Osei","Mensah","Diallo","Tremblay","Bergeron","Kovacs","Petrov","Okafor","Abubakar","Mwangi","Kimani","Nkosi","Dlamini","Abdi","Warsame","Hassan","Ibrahim","Mohamud","Yilmaz","Demir","Kaya","Ahmadi","Rahimi","Hosseini","Nguyen","Tran","Pham","Santos","Ferreira","Oliveira","Sharma","Verma","Gupta","Singh","Kumar","Kaur","Fernandez","Reyes","Cruz","Morales","Jimenez","Romero","Alves","Carvalho","Lima","Sousa","Andrade","Barbosa","Cunha","Fonseca","Gomes"]
 const LANGUAGES = ["English","Arabic","Somali","Spanish","Tagalog","Mandarin","Hindi","French","Portuguese","Ukrainian","Tigrinya","Amharic","Punjabi","Vietnamese","Persian"]
 const STREAMS = ["Refugee","Economic Immigrant","Family Reunification","International Student","Temporary Worker"]
 
@@ -101,7 +101,7 @@ export async function seedDatabase() {
         const cVals = chunk.map((_, j) => `($${j * 4 + 1},$${j * 4 + 2},$${j * 4 + 3},$${j * 4 + 4})`).join(",")
         const cParams = chunk.flatMap(r => [
           r.clientId,
-          FIRST_NAMES[r.idx % FIRST_NAMES.length] + " " + LAST_NAMES[(r.idx * 3) % LAST_NAMES.length],
+          FIRST_NAMES[r.idx % FIRST_NAMES.length] + " " + LAST_NAMES[Math.floor(r.idx / FIRST_NAMES.length) % LAST_NAMES.length],
           LANGUAGES[(r.idx * 7) % LANGUAGES.length],
           STREAMS[(r.idx * 5) % STREAMS.length],
         ])

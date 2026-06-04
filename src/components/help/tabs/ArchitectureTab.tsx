@@ -1,6 +1,7 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { X } from "lucide-react"
+import { useTheme } from "next-themes"
 
 const LAYERS = [
   { id: "sources", label: "Sources", nodes: [
@@ -37,12 +38,102 @@ const LAYERS = [
   ]},
 ]
 
+const ARCH_DIAGRAMS = [
+  {
+    title: "System Context",
+    description: "OneView sits between intake sources and funder reporting systems. All data paths converge on one Postgres database.",
+    id: "arch-context",
+    code: `graph TB
+    subgraph intake [Intake Sources]
+        MF[Microsoft Forms]
+        SF[Salesforce CRM]
+        UI[Direct Intake UI]
+    end
+    subgraph core [OneView]
+        API[Next.js API Routes]
+        DB[(Postgres Database)]
+        LLM[LLM Engine]
+    end
+    subgraph funders [Funder Systems]
+        IC[iCARE - IRCC]
+        EO[EOIS-CaMS - EO]
+        UW[United Way Portal]
+        CT[City of Toronto]
+    end
+    MF -->|Power Automate webhook| API
+    SF -->|Outbound Message| API
+    UI -->|Direct submission| API
+    API <--> DB
+    API --> LLM
+    API -->|CSV export| IC
+    API -->|CSV export| EO
+    API -->|CSV export| UW
+    API -->|CSV export| CT`,
+  },
+  {
+    title: "Data Flow",
+    description: "Client data enters once, SQL aggregates it, and the LLM writes narrative around verified figures only.",
+    id: "arch-flow",
+    code: `flowchart LR
+    A[Client Intake] --> B[POST /api/clients]
+    B --> C[(clients)]
+    B --> D[(enrolments)]
+    D --> E[(outcomes)]
+    C & D & E --> F[SQL aggregation]
+    F --> G[Dashboard]
+    F --> H[POST /api/export]
+    H --> I[Funder CSV]
+    F --> J[POST /api/draft-report]
+    J --> K[SQL metrics JSON]
+    K --> L[LLM narrative]
+    I -->|Staff uploads| N[Funder portal]`,
+  },
+]
+
+function MermaidDiagram({ code, id }: { code: string; id: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === "dark"
+
+  useEffect(() => {
+    let cancelled = false
+    async function render() {
+      try {
+        const mermaid = (await import("mermaid")).default
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: isDark ? "dark" : "default",
+          themeVariables: isDark ? {
+            background: "transparent", primaryColor: "#10b981",
+            primaryTextColor: "#e2e8f0", primaryBorderColor: "#10b981",
+            lineColor: "#475569", secondaryColor: "#1e293b",
+            tertiaryColor: "#0f172a", fontFamily: "Inter, sans-serif",
+          } : {
+            background: "transparent", primaryColor: "#10b981",
+            primaryTextColor: "#1e293b", primaryBorderColor: "#10b981",
+            lineColor: "#94a3b8", fontFamily: "Inter, sans-serif",
+          },
+        })
+        const { svg } = await mermaid.render(`mermaid-${id}`, code)
+        if (!cancelled && ref.current) ref.current.innerHTML = svg
+      } catch { if (!cancelled) setError(true) }
+    }
+    render()
+    return () => { cancelled = true }
+  }, [code, id, isDark])
+
+  if (error) return <p className="text-slate-500 text-xs p-4">Diagram rendering unavailable.</p>
+  return <div ref={ref} className="w-full overflow-x-auto" />
+}
+
 interface Node { id:string; name:string; icon:string; color:string; desc:string; steps:string[]; code:string }
 
 export default function ArchitectureTab() {
   const [selected, setSelected] = useState<Node|null>(null)
 
   return (
+    <div className="space-y-8">
     <div className="flex gap-6 relative">
       <div className={`flex-1 space-y-3 transition-all duration-300 ${selected ? "opacity-60 md:opacity-100" : ""}`}>
         {LAYERS.map(layer => (
@@ -103,6 +194,21 @@ export default function ArchitectureTab() {
           </div>
         </div>
       )}
+    </div>
+
+    <div className="space-y-6">
+      {ARCH_DIAGRAMS.map((d) => (
+        <div key={d.id} className="glass rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06]">
+            <h3 className="font-sora text-base text-slate-900 dark:text-white">{d.title}</h3>
+            <p className="text-slate-500 text-xs mt-0.5">{d.description}</p>
+          </div>
+          <div className="p-5 bg-slate-50 dark:bg-[#050510]">
+            <MermaidDiagram code={d.code} id={d.id} />
+          </div>
+        </div>
+      ))}
+    </div>
     </div>
   )
 }

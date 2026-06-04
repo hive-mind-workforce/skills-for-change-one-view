@@ -41,7 +41,7 @@ export default function JourneyTab() {
               {step.phiWall ? (
                 <div className="flex items-start gap-2 p-3 bg-rose-500/10 rounded-lg border border-rose-500/20">
                   <Lock size={14} className="text-rose-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-rose-300 text-xs">PHIPA hard rule: Mental Health records are ALWAYS siloed. This record is invisible in cross-program view regardless of consent level. Enforced at SQL level.</p>
+                  <p className="text-rose-600 dark:text-rose-300 text-xs">PHIPA hard rule: Mental Health records are ALWAYS siloed. This record is invisible in cross-program view regardless of consent level. Enforced at SQL level.</p>
                 </div>
               ) : (
                 <div className="flex items-start gap-2 p-3 bg-slate-50 dark:bg-white/[0.03] rounded-lg border border-slate-100 dark:border-white/[0.06]">

@@ -44,7 +44,7 @@ export default function Dashboard() {
         />
         <div className="absolute inset-0 bg-[#060610]/75" />
         <div className="relative z-10 text-center py-16 px-4">
-          <p className="text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
+          <p className="text-emerald-600 dark:text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto</p>
           <h1 className="font-sora text-6xl md:text-8xl text-white drop-shadow-[0_0_40px_rgba(16,185,129,0.4)]">
             {formatNumber(metrics.total ?? 19140)}
           </h1>

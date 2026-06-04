@@ -89,7 +89,7 @@ export default function IntakeForm() {
       {form.program === "mental_health" && (
         <div className="flex items-start gap-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
           <Shield size={16} className="text-rose-400 mt-0.5 flex-shrink-0" />
-          <p className="text-rose-300 text-sm">Mental Health records are protected under PHIPA and cannot be shared with other programs.</p>
+          <p className="text-rose-600 dark:text-rose-300 text-sm">Mental Health records are protected under PHIPA and cannot be shared with other programs.</p>
         </div>
       )}
       <div className="flex items-start gap-3">

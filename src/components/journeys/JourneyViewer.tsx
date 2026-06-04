@@ -16,8 +16,10 @@ export default function JourneyViewer() {
   const [journey, setJourney] = useState<any | null>(null)
   const [loadingJourney, setLoadingJourney] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const skipSearchRef = useRef(false)
 
   useEffect(() => {
+    if (skipSearchRef.current) { skipSearchRef.current = false; return }
     if (query.length < 2) { setResults([]); return }
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(async () => {
@@ -32,6 +34,7 @@ export default function JourneyViewer() {
   }, [query])
 
   async function selectClient(client: any) {
+    skipSearchRef.current = true
     setSelected(client); setResults([]); setQuery(client.full_name)
     setLoadingJourney(true); setJourney(null)
     try {

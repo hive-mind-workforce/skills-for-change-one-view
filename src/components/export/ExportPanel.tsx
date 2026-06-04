@@ -67,7 +67,7 @@ export default function ExportPanel() {
             <div className="p-4" style={{ borderTop: `2px solid ${f.color}40` }}>
               <div className="text-slate-400 text-xs mb-2">{f.sub}</div>
               <div className="flex flex-wrap gap-1.5">
-                {f.programs.map(p => <span key={p} className="px-2 py-0.5 rounded-full text-xs text-slate-300" style={{ background:`${f.color}22` }}>{p}</span>)}
+                {f.programs.map(p => <span key={p} className="px-2 py-0.5 rounded-full text-xs text-slate-600 dark:text-slate-300" style={{ background:`${f.color}22` }}>{p}</span>)}
               </div>
             </div>
           </button>
@@ -93,7 +93,7 @@ export default function ExportPanel() {
               <p className="text-slate-500 dark:text-slate-400 text-xs mb-3">CSV columns for {selectedFunder?.label} ({FUNDER_CONFIGS[selected].csvHeaders.length} columns):</p>
               <div className="flex flex-wrap gap-1.5">
                 {FUNDER_CONFIGS[selected].csvHeaders.map((col, i) => (
-                  <span key={col} className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs font-mono text-emerald-300">
+                  <span key={col} className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs font-mono text-emerald-700 dark:text-emerald-300">
                     <span className="text-emerald-500/50">{i + 1}</span> {col}
                   </span>
                 ))}
@@ -117,9 +117,9 @@ export default function ExportPanel() {
         <h2 className="font-sora text-lg text-slate-700 dark:text-slate-200 mb-4">Integration Story</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { title:"Microsoft Forms", desc:"Power Automate webhook. 20 min setup, zero staff behavior change.", icon:"📋", color:"text-blue-400" },
-            { title:"Salesforce", desc:"REST webhook from Salesforce to OneView. Additive, not replacement.", icon:"☁️", color:"text-cyan-400" },
-            { title:"iCARE / EOIS-CaMS", desc:"CSV export shaped to government spec. Compliant bulk upload.", icon:"🏛️", color:"text-amber-400" },
+            { title:"Microsoft Forms", desc:"Power Automate webhook. 20 min setup, zero staff behavior change.", icon:"📋", color:"text-blue-600 dark:text-blue-400" },
+            { title:"Salesforce", desc:"REST webhook from Salesforce to OneView. Additive, not replacement.", icon:"☁️", color:"text-cyan-600 dark:text-cyan-400" },
+            { title:"iCARE / EOIS-CaMS", desc:"CSV export shaped to government spec. Compliant bulk upload.", icon:"🏛️", color:"text-amber-600 dark:text-amber-400" },
           ].map((item, i) => (
             <div key={i} className="flex gap-3 p-4 bg-slate-50 dark:bg-white/[0.02] rounded-xl border border-slate-100 dark:border-white/[0.06]">
               <span className="text-2xl">{item.icon}</span>
@@ -131,9 +131,9 @@ export default function ExportPanel() {
           ))}
         </div>
         <div className="mt-4 flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
-          <span><strong className="text-emerald-400">4</strong> funders</span>
-          <span><strong className="text-indigo-400">8</strong> programs</span>
-          <span><strong className="text-amber-400">1</strong> system of record</span>
+          <span><strong className="text-emerald-600 dark:text-emerald-400">4</strong> funders</span>
+          <span><strong className="text-indigo-600 dark:text-indigo-400">8</strong> programs</span>
+          <span><strong className="text-amber-600 dark:text-amber-400">1</strong> system of record</span>
         </div>
       </div>
     </div>

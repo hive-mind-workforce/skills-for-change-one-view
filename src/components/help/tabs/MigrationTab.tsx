@@ -3,7 +3,7 @@ import { CheckCircle, Clock, DollarSign, TrendingDown, AlertCircle, Calendar } f
 const PHASES = [
   {
     label: "Week 1",
-    color: "text-emerald-400",
+    color: "text-emerald-600 dark:text-emerald-400",
     border: "border-emerald-500/20",
     bg: "bg-emerald-500/[0.04]",
     tasks: [
@@ -20,7 +20,7 @@ const PHASES = [
   },
   {
     label: "Month 1–2",
-    color: "text-indigo-400",
+    color: "text-indigo-600 dark:text-indigo-400",
     border: "border-indigo-500/20",
     bg: "bg-indigo-500/[0.04]",
     tasks: [
@@ -37,7 +37,7 @@ const PHASES = [
   },
   {
     label: "Month 3–6",
-    color: "text-amber-400",
+    color: "text-amber-600 dark:text-amber-400",
     border: "border-amber-500/20",
     bg: "bg-amber-500/[0.04]",
     tasks: [

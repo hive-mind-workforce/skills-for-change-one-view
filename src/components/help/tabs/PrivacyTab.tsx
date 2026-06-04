@@ -22,7 +22,7 @@ export default function PrivacyTab() {
 
       <div className="glass rounded-xl p-5 border-l-4 border-rose-500">
         <div className="flex items-center gap-2 mb-2">
-          <Lock size={18} className="text-rose-400" />
+          <Lock size={18} className="text-rose-600 dark:text-rose-400" />
           <h3 className="font-sora text-lg text-rose-400">PHI Wall</h3>
         </div>
         <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">Mental Health records are ALWAYS siloed under PHIPA (Personal Health Information Protection Act). No role, consent flag, or configuration can override this — it is enforced at the database layer on every cross-program query.</p>

@@ -10,7 +10,7 @@ export default function NarrativePanel({ narrative, funder, period, cached, load
           <span className="font-medium text-slate-700 dark:text-slate-200">{funder.toUpperCase()} Report</span>
           <span className="text-slate-400 dark:text-slate-500 text-sm ml-2">{period}</span>
         </div>
-        {cached && <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">Cached</span>}
+        {cached && <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs rounded-full border border-emerald-500/30">Cached</span>}
       </div>
       <div className="p-5">
         {loading ? (

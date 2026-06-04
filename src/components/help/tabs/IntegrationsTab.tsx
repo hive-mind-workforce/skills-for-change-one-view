@@ -9,7 +9,7 @@ export default function IntegrationsTab() {
       </div>
 
       <div className="glass rounded-xl p-6">
-        <h3 className="font-sora text-lg text-blue-400 mb-4">Microsoft Forms</h3>
+        <h3 className="font-sora text-lg text-blue-600 dark:text-blue-400 mb-4">Microsoft Forms</h3>
         <div className="flex items-center gap-2 flex-wrap text-sm mb-4">
           {["Microsoft Form","Power Automate","HTTP POST","/api/clients","OneView DB"].map((step, i, arr) => (
             <span key={i} className="flex items-center gap-2">
@@ -20,7 +20,7 @@ export default function IntegrationsTab() {
         </div>
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-            <div className="text-blue-400 font-medium text-sm mb-1">Setup Time</div>
+            <div className="text-blue-600 dark:text-blue-400 font-medium text-sm mb-1">Setup Time</div>
             <div className="text-slate-500 dark:text-slate-400 text-xs">Approximately 20 minutes in Power Automate. No code deployment. No staff retraining.</div>
           </div>
           <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
@@ -31,7 +31,7 @@ export default function IntegrationsTab() {
       </div>
 
       <div className="glass rounded-xl p-6">
-        <h3 className="font-sora text-lg text-cyan-400 mb-4">Salesforce</h3>
+        <h3 className="font-sora text-lg text-cyan-600 dark:text-cyan-400 mb-4">Salesforce</h3>
         <div className="flex items-center gap-2 flex-wrap text-sm mb-4">
           {["Salesforce","Outbound Message","REST Webhook","/api/clients","OneView DB"].map((step, i, arr) => (
             <span key={i} className="flex items-center gap-2">
