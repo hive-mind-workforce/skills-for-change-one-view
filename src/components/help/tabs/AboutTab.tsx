@@ -129,7 +129,7 @@ export default function AboutTab() {
       <div className="glass rounded-xl p-6">
         <h3 className="font-sora text-lg text-slate-200 mb-3">Technology Stack</h3>
         <div className="flex flex-wrap gap-2 mb-4">
-          {["Next.js 15","TypeScript","Tailwind CSS 4","shadcn/ui","Vercel Postgres (Neon)","Recharts","driver.js","MIT License"].map(t => (
+          {["Next.js 15","TypeScript","Tailwind CSS 4","shadcn/ui","Vercel Postgres (Neon)","Recharts","driver.js"].map(t => (
             <span key={t} className="px-3 py-1 bg-white/[0.04] border border-white/[0.08] rounded-full text-slate-300 text-sm">{t}</span>
           ))}
         </div>
