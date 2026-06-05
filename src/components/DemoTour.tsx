@@ -255,11 +255,11 @@ export default function DemoTour() {
         },
       },
       {
-        element: "#survey-satisfaction",
+        element: "#survey-submit",
         popover: {
           title: "Layla's exit survey: 5 stars",
           description: "The survey form is pre-filled. In production, this link goes directly to the client by email. Click Next to submit.",
-          side: "bottom" as const,
+          side: "top" as const,
           onNextClick: async () => {
             try {
               window.dispatchEvent(new CustomEvent("demo:submit-survey"))
