@@ -1008,7 +1008,7 @@ export default function JourneyViewer() {
                     ) : (
                       <div className="glass rounded-xl p-4 space-y-3 border border-white/[0.12]">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Enrol in Program</span>
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Enroll in Program</span>
                           <button onClick={() => setAddingProgram(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={14} /></button>
                         </div>
                         <select
@@ -1036,7 +1036,7 @@ export default function JourneyViewer() {
                             disabled={savingProgram}
                             className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-medium transition-colors"
                           >
-                            {savingProgram ? "Enrolling…" : "Enrol"}
+                            {savingProgram ? "Enrolling…" : "Enroll"}
                           </button>
                         </div>
                       </div>

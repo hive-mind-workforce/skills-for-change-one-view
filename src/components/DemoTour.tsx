@@ -112,7 +112,7 @@ export default function DemoTour() {
         element: "[data-tour='journey-outcomes']",
         popover: {
           title: "Three outcome tiers seeded at intake",
-          description: "Immediate, Intermediate, and Ultimate outcomes are created automatically at enrolment. Click Next to mark all three achieved and then enrol Layla in Mental Health Support.",
+          description: "Immediate, Intermediate, and Ultimate outcomes are created automatically at enrollment. Click Next to mark all three achieved and then enroll Layla in Mental Health Support.",
           side: "bottom" as const,
           onNextClick: async () => {
             try {
@@ -139,12 +139,12 @@ export default function DemoTour() {
         element: "[data-tour='journey-add-program']",
         popover: {
           title: "Adding Mental Health Support",
-          description: "Layla needs mental health services too. Selecting Mental Health enforces the PHIPA wall via Row Level Security. No cross-program query can touch these records. Click Next to enrol.",
+          description: "Layla needs mental health services too. Selecting Mental Health enforces the PHIPA wall via Row Level Security. No cross-program query can touch these records. Click Next to enroll.",
           side: "bottom" as const,
           onNextClick: async () => {
             try {
               const buttons = document.querySelectorAll('[data-tour="journey-add-program"] button')
-              const enrolBtn = Array.from(buttons).find(b => b.textContent?.trim() === "Enrol") as HTMLButtonElement | null
+              const enrolBtn = Array.from(buttons).find(b => b.textContent?.trim() === "Enroll") as HTMLButtonElement | null
               if (enrolBtn) {
                 enrolBtn.click()
                 await waitForEvent("demo:journey-loaded", 6000)
@@ -217,7 +217,7 @@ export default function DemoTour() {
         element: "[data-tour='journey-survey-result']",
         popover: {
           title: "Journey complete",
-          description: "Layla's rating and success story are captured. They feed directly into program analytics and AI-generated insights. The full journey: intake, enrolments, outcomes, and survey, is now audited and reportable to every funder.",
+          description: "Layla's rating and success story are captured. They feed directly into program analytics and AI-generated insights. The full journey: intake, enrollments, outcomes, and survey, is now audited and reportable to every funder.",
           showButtons: ["close"],
         },
       },

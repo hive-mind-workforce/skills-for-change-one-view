@@ -108,9 +108,9 @@ const MIGRATION_DAYS = [
 ]
 
 const DESTINATION = [
-  { title: "Postgres is the single source of truth", desc: "Every client, enrolment, and outcome lives in one structured, queryable Postgres database. No data split across Excel files, MS Forms, and SharePoint. Any question answerable in seconds.", icon: Database, color: "text-emerald-600 dark:text-emerald-400" },
+  { title: "Postgres is the single source of truth", desc: "Every client, enrollment, and outcome lives in one structured, queryable Postgres database. No data split across Excel files, MS Forms, and SharePoint. Any question answerable in seconds.", icon: Database, color: "text-emerald-600 dark:text-emerald-400" },
   { title: "Excel and SharePoint retired for client tracking", desc: "Excel is a general-purpose tool built for numbers, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting with structure that spreadsheets cannot provide.", icon: TrendingUp, color: "text-indigo-600 dark:text-indigo-400" },
-  { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is enforced by Row Level Security, not a staff checklist.", icon: Zap, color: "text-amber-600 dark:text-amber-400" },
+  { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrollment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is enforced by Row Level Security, not a staff checklist.", icon: Zap, color: "text-amber-600 dark:text-amber-400" },
   { title: "Compliance enforced by architecture", desc: "PHIPA, FIPPA, and CYFSA rules are enforced through Row Level Security policies and consent flags in Postgres. No policy document or training refresher can be forgotten. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-600 dark:text-rose-400" },
 ]
 

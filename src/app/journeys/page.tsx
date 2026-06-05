@@ -29,7 +29,7 @@ export default function JourneysPage() {
           <Route size={22} className="text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
           <div>
             <h1 className="font-sora text-3xl text-slate-900 dark:text-white">Client Journeys</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-sm">View a client's full program history, outcomes, and consent status across all enrolments.</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-sm">View a client's full program history, outcomes, and consent status across all enrollments.</p>
           </div>
         </div>
         <Suspense fallback={null}><JourneysContent /></Suspense>

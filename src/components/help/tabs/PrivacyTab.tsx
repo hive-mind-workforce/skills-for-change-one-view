@@ -163,7 +163,7 @@ export default function PrivacyTab() {
           {[
             "Enforced by a Postgres Row Level Security policy (phi_wall) on the enrolments table: program != 'mental_health' OR bypass flag set.",
             "No application code path can retrieve mental health records in a cross-program context.",
-            "Mental Health enrolments and outcomes are accessible only within the mental_health program scope.",
+            "Mental Health enrollments and outcomes are accessible only within the mental_health program scope.",
             "Enforced at the database layer, not as a UI toggle or role permission that could be misconfigured.",
           ].map((point, i) => (
             <div key={i} className="flex items-start gap-2">

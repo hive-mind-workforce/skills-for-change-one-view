@@ -155,7 +155,7 @@ const SUCCESS_STORIES = [
   "The settlement advisor guided me through every government form. Within six months our family had housing, school placements, and health cards.",
   "I had no connections in Canada. After the mentoring program I had a network of twenty professionals who opened doors I did not know existed.",
   "The electrical pre-apprenticeship gave me a Red Seal path. I start my registered apprenticeship next month at a union contractor.",
-  "Arriving as a refugee I felt lost. The youth caseworker helped me enrol in high school and apply for a co-op placement at a tech firm.",
+  "Arriving as a refugee I felt lost. The youth caseworker helped me enroll in high school and apply for a co-op placement at a tech firm.",
   "The women's program was the first place I felt safe asking for help. I completed my pharmacy technician certificate and accepted a full-time offer.",
   "I spoke no French or English on arrival. Two years of language classes later I passed the IELTS at a level that unlocked my university application.",
   "My engineering credentials were not recognized here. Skills for Change connected me with a bridging program and I now work as a project engineer.",

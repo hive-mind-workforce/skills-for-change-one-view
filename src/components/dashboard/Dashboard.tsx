@@ -172,7 +172,7 @@ function DashboardInner() {
       {/* ── Metric cards ── */}
       <section id="metric-cards" className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricCard label="Total Clients" value={formatNumber(metrics.total ?? 0)} sub="across all programs" icon={<Users size={16} />} />
-        <MetricCard label="Active Enrolments" value={formatNumber(metrics.active ?? 0)} sub="currently enrolled" icon={<TrendingUp size={16} />} color="#6366f1" />
+        <MetricCard label="Active Enrollments" value={formatNumber(metrics.active ?? 0)} sub="currently enrolled" icon={<TrendingUp size={16} />} color="#6366f1" />
         <MetricCard label="Outcomes Achieved" value={(metrics.outcomesAchievedPct ?? 0) + "%"} sub="of all tracked outcomes" icon={<Target size={16} />} color="#f59e0b" />
         <MetricCard label="Cross-Program" value={formatNumber(metrics.crossProgram ?? 0)} sub="consent granted" icon={<GitMerge size={16} />} color="#8b5cf6" />
       </section>

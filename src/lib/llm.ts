@@ -61,7 +61,7 @@ function buildQuestionFallback(question: string, metrics: any): string {
     const pLine = byProgram.length > 0
       ? ` Largest program: ${byProgram[0].program} with ${byProgram[0].clients?.toLocaleString() ?? "?"} clients.`
       : ""
-    return `Skills for Change is currently serving ${total} clients across all funded programs.${pLine} Cross-program enrolment: ${cross} clients with written consent.`
+    return `Skills for Change is currently serving ${total} clients across all funded programs.${pLine} Cross-program enrollment: ${cross} clients with written consent.`
   }
   if (q.match(/outcome|achiev|success|complet/)) {
     const topProg = byProgram.length > 0 ? byProgram.reduce((a: any, b: any) => (b.outcome_rate ?? 0) > (a.outcome_rate ?? 0) ? b : a, byProgram[0]) : null
