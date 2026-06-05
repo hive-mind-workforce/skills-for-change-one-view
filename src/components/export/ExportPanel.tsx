@@ -282,7 +282,7 @@ export default function ExportPanel() {
       </div>
 
       {/* Funder selector */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" data-tour="export-funders">
         {FUNDERS.map(f => (
           <button
             key={f.key}

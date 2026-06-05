@@ -61,7 +61,7 @@ export default function AIPanel() {
 
   return (
     <div className="space-y-10">
-      <section className="space-y-5">
+      <section className="space-y-5" data-tour="ai-report-section">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Sparkles size={20} className="text-emerald-400" />

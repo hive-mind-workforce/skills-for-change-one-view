@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Star, CheckCircle, Send } from "lucide-react"
 
 interface Props {
@@ -17,6 +17,8 @@ export default function SurveyForm({ clientId }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState("")
+
+  const submitFnRef = useRef<() => Promise<void>>(async () => {})
 
   useEffect(() => {
     fetch(`/api/survey-form/${clientId}`)
@@ -55,12 +57,44 @@ export default function SurveyForm({ clientId }: Props) {
         body: JSON.stringify({ stage: "complete", role: "caseworker" }),
       })
       setSubmitted(true)
+      window.dispatchEvent(new CustomEvent("demo:survey-done", { detail: { clientId } }))
     } catch {
       setError("Something went wrong. Please try again.")
     } finally {
       setSubmitting(false)
     }
   }
+
+  // Keep ref current so demo:submit-survey always calls the latest closure
+  submitFnRef.current = submit
+
+  // Dispatch demo:survey-form-ready when loaded and ready for input
+  useEffect(() => {
+    if (!loading && info && !submitted) {
+      window.dispatchEvent(new CustomEvent("demo:survey-form-ready", { detail: {
+        clientId,
+        enrolmentId: info.enrolment_id,
+      }}))
+    }
+  }, [loading, info, submitted, clientId])
+
+  // Demo event listeners
+  useEffect(() => {
+    function fillHandler(e: Event) {
+      const d = (e as CustomEvent).detail
+      if (d.satisfaction !== undefined) setSatisfaction(d.satisfaction)
+      if (d.wouldRecommend !== undefined) setWouldRecommend(d.wouldRecommend)
+      if (d.barriers !== undefined) setBarriers(d.barriers)
+      if (d.successStory !== undefined) setSuccessStory(d.successStory)
+    }
+    function submitHandler() { submitFnRef.current() }
+    window.addEventListener("demo:fill-survey", fillHandler)
+    window.addEventListener("demo:submit-survey", submitHandler)
+    return () => {
+      window.removeEventListener("demo:fill-survey", fillHandler)
+      window.removeEventListener("demo:submit-survey", submitHandler)
+    }
+  }, [])
 
   if (loading) {
     return (
@@ -117,7 +151,7 @@ export default function SurveyForm({ clientId }: Props) {
         </div>
 
         {/* Satisfaction */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 space-y-4">
+        <div id="survey-satisfaction" className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 space-y-4">
           <label className="block text-sm font-medium text-slate-200">
             How satisfied were you with the program? <span className="text-rose-400">*</span>
           </label>
@@ -200,6 +234,7 @@ export default function SurveyForm({ clientId }: Props) {
         {error && <p className="text-rose-400 text-sm text-center">{error}</p>}
 
         <button
+          id="survey-submit"
           onClick={submit}
           disabled={satisfaction === 0 || submitting}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"

@@ -1,4 +1,4 @@
-import { GitBranch, ExternalLink, CheckCircle, AlertTriangle, ArrowRight, Zap, Shield, TrendingUp, Database, XCircle, Brain, MessageSquare, BarChart3, FileText, Cpu, RefreshCw } from "lucide-react"
+import { GitBranch, ExternalLink, CheckCircle, AlertTriangle, ArrowRight, Zap, Shield, TrendingUp, Database, XCircle, Brain, MessageSquare, BarChart3, FileText, Cpu, RefreshCw, Target } from "lucide-react"
 
 const PROBLEMS = [
   {
@@ -7,7 +7,7 @@ const PROBLEMS = [
   },
   {
     title: "Reporting takes 2–3 weeks and the data is already out of date",
-    desc: "Narrative reports are written from scratch each quarter against whichever spreadsheet was last updated. By the time the report reaches a funder, the numbers no longer reflect reality. Staff spend significant time every quarter on work that should take hours.",
+    desc: "Narrative reports are written from scratch each quarter against whichever spreadsheet was last updated. By the time the report reaches a funder, the numbers no longer reflect reality. Staff spend 2–3 weeks every quarter on work that OneView reduces to seconds.",
   },
   {
     title: "There is no single source of truth",
@@ -85,7 +85,7 @@ const AI_FEATURES = [
     detail: [
       { label: "Provider abstraction", text: "lib/llm.ts wraps Gemini, Claude, and Groq behind a single generate() call. Switch providers by changing one env variable." },
       { label: "No PII in prompts", text: "All LLM calls receive aggregated metrics only, never client names, IDs, or individual records." },
-      { label: "PHI Wall enforced", text: "Mental health program data is excluded from every analytics query before it reaches the LLM, by SQL constraint." },
+      { label: "PHI Wall enforced", text: "Mental health program data is excluded from every analytics query by Row Level Security before it reaches the LLM." },
     ],
   },
 ]
@@ -110,8 +110,8 @@ const MIGRATION_DAYS = [
 const DESTINATION = [
   { title: "Postgres is the single source of truth", desc: "Every client, enrolment, and outcome lives in one structured, queryable Postgres database. No data split across Excel files, MS Forms, and SharePoint. Any question answerable in seconds.", icon: Database, color: "text-emerald-600 dark:text-emerald-400" },
   { title: "Excel and SharePoint retired for client tracking", desc: "Excel is a general-purpose tool built for numbers, not nonprofit program delivery. OneView's purpose-built backend handles client tracking, outcome recording, and funder reporting with structure that spreadsheets cannot provide.", icon: TrendingUp, color: "text-indigo-600 dark:text-indigo-400" },
-  { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is a SQL constraint, not a staff checklist.", icon: Zap, color: "text-amber-600 dark:text-amber-400" },
-  { title: "Compliance enforced by architecture", desc: "PHIPA, FIPPA, and CYFSA rules are encoded as SQL constraints and consent flags. No policy document or training refresher can be forgotten. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-600 dark:text-rose-400" },
+  { title: "Real-time outcomes, not quarterly retrospectives", desc: "When intake, enrolment, and outcomes share one database, funders can receive a live dashboard link instead of a static report. Narrative reports write themselves from real SQL. The PHI Wall is enforced by Row Level Security, not a staff checklist.", icon: Zap, color: "text-amber-600 dark:text-amber-400" },
+  { title: "Compliance enforced by architecture", desc: "PHIPA, FIPPA, and CYFSA rules are enforced through Row Level Security policies and consent flags in Postgres. No policy document or training refresher can be forgotten. No spreadsheet formula accidentally crosses a compliance line.", icon: Shield, color: "text-rose-600 dark:text-rose-400" },
 ]
 
 export default function AboutTab() {
@@ -160,6 +160,42 @@ export default function AboutTab() {
                 <p className="text-slate-800 dark:text-slate-200 text-sm font-medium">{p.title}</p>
               </div>
               <p className="text-slate-500 text-xs leading-relaxed pl-5">{p.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Executive Pitch ── */}
+      <div className="glass rounded-xl p-6 border border-emerald-500/20">
+        <div className="flex items-center gap-2 mb-5">
+          <Target size={16} className="text-emerald-600 dark:text-emerald-400" />
+          <h3 className="font-sora text-lg text-emerald-600 dark:text-emerald-400">Why OneView</h3>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {[
+            {
+              title: "One platform, four funders",
+              desc: "A single data entry point replaces four funder portals, two intake systems, and a quarterly spreadsheet cycle. Caseworkers stop copying data; funders stop receiving stale reports.",
+            },
+            {
+              title: "Deploy in a week, full system in six months",
+              desc: "Connect Microsoft Forms via Power Automate on day one. Migrate historical records with AI-assisted mapping over six months. No disruption to existing workflows during transition.",
+            },
+            {
+              title: "Compliance enforced at the database layer",
+              desc: "PHIPA, FIPPA, and CYFSA rules are Row Level Security policies in Postgres. The PHI wall cannot be bypassed by a role, a consent flag, or an accidental spreadsheet paste.",
+            },
+            {
+              title: "AI turns live SQL into funder-ready narratives",
+              desc: "Quarterly reports that used to take 2–3 weeks of manual writing now draft in seconds from verified database metrics. No figures are hand-entered; all narratives are grounded in real data.",
+            },
+          ].map((item, i) => (
+            <div key={i} className="p-4 bg-emerald-500/[0.04] border border-emerald-500/[0.1] rounded-xl">
+              <div className="flex items-start gap-2 mb-2">
+                <CheckCircle size={14} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                <p className="text-slate-800 dark:text-slate-200 text-sm font-medium">{item.title}</p>
+              </div>
+              <p className="text-slate-500 text-xs leading-relaxed pl-5">{item.desc}</p>
             </div>
           ))}
         </div>

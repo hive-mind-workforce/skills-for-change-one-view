@@ -171,6 +171,7 @@ export default function JourneyViewer() {
 
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [recentClients, setRecentClients] = useState<any[]>([])
+  const journeyRef = useRef<any>(null)
 
   // Edit state
   const [editing, setEditing] = useState(false)
@@ -201,6 +202,31 @@ export default function JourneyViewer() {
   const [savingCompletion, setSavingCompletion] = useState(false)
   const [savingDropOff, setSavingDropOff] = useState(false)
 
+  // Keep journeyRef current for demo event handlers
+  useEffect(() => { journeyRef.current = journey }, [journey])
+
+  // Demo: refresh journey on request
+  useEffect(() => {
+    async function handleRefresh() {
+      const clientId = journeyRef.current?.client?.id
+      if (!clientId) return
+      const res = await fetch(`/api/journey?clientId=${clientId}`)
+      const data = await res.json()
+      setJourney(data)
+      window.dispatchEvent(new CustomEvent("demo:journey-loaded", { detail: data }))
+    }
+    function handleSetNewProgram(e: Event) {
+      const { program } = (e as CustomEvent).detail
+      setNewProgram(program)
+    }
+    window.addEventListener("demo:refresh-journey", handleRefresh)
+    window.addEventListener("demo:set-new-program", handleSetNewProgram)
+    return () => {
+      window.removeEventListener("demo:refresh-journey", handleRefresh)
+      window.removeEventListener("demo:set-new-program", handleSetNewProgram)
+    }
+  }, [])
+
   // Load recent clients on mount for quick access
   useEffect(() => {
     fetch("/api/recent-clients")
@@ -221,6 +247,7 @@ export default function JourneyViewer() {
           setSelected(data.client)
           setQuery(data.client.full_name)
           setJourney(data)
+          window.dispatchEvent(new CustomEvent("demo:journey-loaded", { detail: data }))
         }
       })
       .finally(() => setLoadingJourney(false))
@@ -242,7 +269,7 @@ export default function JourneyViewer() {
 
     fetch(`/api/survey/${clientId}`)
       .then(r => r.json())
-      .then(data => setSurvey(data ?? null))
+      .then(data => setSurvey(data?.survey ?? null))
       .catch(() => setSurvey(null))
   }, [journey?.client?.id])
 
@@ -268,7 +295,9 @@ export default function JourneyViewer() {
     setNotes([]); setSurvey(null); setAddingNote(false); setNoteText("")
     try {
       const res = await fetch(`/api/journey?clientId=${client.id}`)
-      setJourney(await res.json())
+      const journeyData = await res.json()
+      setJourney(journeyData)
+      window.dispatchEvent(new CustomEvent("demo:journey-loaded", { detail: journeyData }))
     } finally {
       setLoadingJourney(false)
     }
@@ -369,7 +398,9 @@ export default function JourneyViewer() {
         body: JSON.stringify({ achieved: !current, role }),
       })
       const res = await fetch(`/api/journey?clientId=${journey.client.id}`)
-      setJourney(await res.json())
+      const journeyData = await res.json()
+      setJourney(journeyData)
+      window.dispatchEvent(new CustomEvent("demo:journey-loaded", { detail: journeyData }))
     } finally {
       setTogglingOutcome(null)
     }
@@ -489,7 +520,9 @@ export default function JourneyViewer() {
         body: JSON.stringify({ client_id: journey.client.id, program: newProgram, consent_cross_program: newProgramConsent }),
       })
       const res = await fetch(`/api/journey?clientId=${journey.client.id}`)
-      setJourney(await res.json())
+      const journeyData = await res.json()
+      setJourney(journeyData)
+      window.dispatchEvent(new CustomEvent("demo:journey-loaded", { detail: journeyData }))
       setAddingProgram(false)
       setNewProgram("")
       setNewProgramConsent(false)
@@ -612,7 +645,7 @@ export default function JourneyViewer() {
                   </button>
                 )}
                 {canAddNote && !["complete","survey","dropped"].includes(journey.client.stage ?? "") && (
-                  <button onClick={() => setCompletingJourney(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors">
+                  <button onClick={() => setCompletingJourney(true)} data-tour="journey-complete-btn" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors">
                     <CheckCheck size={12} /> Complete Journey
                   </button>
                 )}
@@ -661,7 +694,7 @@ export default function JourneyViewer() {
               ]
               const currentIdx = PIPELINE_STAGES.findIndex(s => s.db === journey.client.stage)
               return (
-                <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4">
+                <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4" data-tour="journey-stage-bar">
                   <div className="flex items-center gap-1 overflow-x-auto pb-1">
                     {PIPELINE_STAGES.map((s, i) => {
                       const isDone = currentIdx > i
@@ -871,7 +904,7 @@ export default function JourneyViewer() {
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4" data-tour="journey-outcomes">
             {journey.enrolments.map((enrol: any, i: number) => {
               const color = programColor(enrol.program)
               const outcomes = enrol.outcomes ?? []
@@ -888,7 +921,7 @@ export default function JourneyViewer() {
                       <div className="w-px flex-1 mt-2 bg-slate-200 dark:bg-white/[0.08]" />
                     )}
                   </div>
-                  <div className="flex-1 glass rounded-xl p-5 mb-4" style={isPhi ? { borderColor: "rgba(244,63,94,0.3)" } : {}}>
+                  <div className="flex-1 glass rounded-xl p-5 mb-4" style={isPhi ? { borderColor: "rgba(244,63,94,0.3)" } : {}} {...(isPhi ? { "data-tour": "journey-phi-card" } : {})}>
                     <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <ProgramBadge program={enrol.program} />
@@ -958,7 +991,7 @@ export default function JourneyViewer() {
               const available = ALL_PROGRAMS.filter(p => !enrolled.has(p))
               if (available.length === 0) return null
               return (
-                <div className="flex gap-4">
+                <div className="flex gap-4" data-tour="journey-add-program">
                   <div className="flex flex-col items-center flex-shrink-0">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-white/[0.06] text-slate-400">
                       <Plus size={16} />
@@ -1132,7 +1165,7 @@ export default function JourneyViewer() {
 
           {/* SURVEY RESULT CARD */}
           {survey && survey.satisfaction != null && (
-            <div className="glass rounded-xl p-5 space-y-3" style={{ borderColor: "rgba(245,158,11,0.25)" }}>
+            <div className="glass rounded-xl p-5 space-y-3" data-tour="journey-survey-result" style={{ borderColor: "rgba(245,158,11,0.25)" }}>
               <div className="flex items-center gap-2">
                 <Star size={18} className="text-amber-500 dark:text-amber-400" />
                 <h3 className="font-sora text-lg text-slate-900 dark:text-white">Exit Survey</h3>
@@ -1186,7 +1219,7 @@ export default function JourneyViewer() {
 
           {/* SURVEY FLOW */}
           {canAddNote && !survey && (
-            <div className="glass rounded-xl p-5 space-y-4" style={{ borderColor: "rgba(245,158,11,0.2)" }}>
+            <div className="glass rounded-xl p-5 space-y-4" data-tour="journey-survey-section" style={{ borderColor: "rgba(245,158,11,0.2)" }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ClipboardList size={18} className="text-amber-500 dark:text-amber-400" />

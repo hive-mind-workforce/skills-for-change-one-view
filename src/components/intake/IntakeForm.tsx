@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Shield } from "lucide-react"
 
@@ -65,6 +65,15 @@ export default function IntakeForm() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string,string>>({})
 
+  useEffect(() => {
+    function handler(e: Event) {
+      const data = (e as CustomEvent).detail
+      setForm(prev => ({ ...prev, ...data }))
+    }
+    window.addEventListener("demo:fill-intake", handler)
+    return () => window.removeEventListener("demo:fill-intake", handler)
+  }, [])
+
   const funder = FUNDER_MAP[form.program] ?? "ircc"
 
   function update(field: keyof FormState, value: string | boolean) {
@@ -101,7 +110,9 @@ export default function IntakeForm() {
           consent_aggregate: form.consent_aggregate,
         }),
       })
-      if (!res.ok) throw new Error((await res.json()).error)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      window.dispatchEvent(new CustomEvent("demo:intake-registered", { detail: { clientId: data.clientId } }))
       toast.success(`${form.full_name} registered in ${PROGRAMS.find(p=>p.value===form.program)?.label}`)
       setForm({
         full_name: "",
@@ -319,6 +330,7 @@ export default function IntakeForm() {
       <button
         type="submit"
         disabled={loading}
+        data-tour="intake-submit"
         className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-semibold rounded-lg transition-colors text-sm"
       >
         {loading ? "Registering..." : "Register Client"}

@@ -79,7 +79,7 @@ export default function AuditTable() {
         </div>
       </div>
 
-      <div className="glass rounded-xl overflow-hidden">
+      <div className="glass rounded-xl overflow-hidden" data-tour="audit-table">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
