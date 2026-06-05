@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     if (!clientId) return Response.json({ error: "clientId required" }, { status: 400 })
     await initDB()
     const notes = await getClientNotes(clientId)
-    return Response.json({ notes })
+    return Response.json(notes)
   } catch (err: any) {
     return Response.json({ error: err.message }, { status: 500 })
   }
@@ -16,9 +16,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { clientId, author, content, noteType } = await req.json()
-    if (!clientId || !author || !content) {
-      return Response.json({ error: "clientId, author, content required" }, { status: 400 })
+    const body = await req.json()
+    const { clientId, content, noteType } = body
+    const author = body.author ?? body.authorRole ?? "caseworker"
+    if (!clientId || !content) {
+      return Response.json({ error: "clientId and content required" }, { status: 400 })
     }
     await initDB()
     const note = await addClientNote(clientId, author, content, noteType)

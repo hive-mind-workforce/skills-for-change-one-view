@@ -123,7 +123,7 @@ export default function DemoTour() {
                 const btn = document.querySelector('[data-tour="journey-outcomes"] button[title="Mark as achieved"]') as HTMLButtonElement | null
                 if (!btn) break
                 btn.click()
-                await delay(2500)
+                await delay(1000)
               }
               // Open Add Program panel and pre-select Mental Health
               const addBtn = document.querySelector('[data-tour="journey-add-program"] button') as HTMLButtonElement | null
@@ -190,7 +190,7 @@ export default function DemoTour() {
               while (remaining.length > 0 && safetyCount < 10) {
                 safetyCount++
                 ;(remaining[0] as HTMLButtonElement).click()
-                await delay(2500)
+                await delay(1000)
                 remaining = document.querySelectorAll('button[title="Mark as achieved"]')
               }
             } catch { /* continue */ }
@@ -227,7 +227,7 @@ export default function DemoTour() {
               const sendBtn = Array.from(document.querySelectorAll("button")).find(b => b.textContent?.includes("Send Survey")) as HTMLButtonElement | null
               if (sendBtn) {
                 sendBtn.click()
-                await delay(2500)
+                await delay(1000)
               }
               if (registeredClientId) {
                 router.push(`/survey/${registeredClientId}`)

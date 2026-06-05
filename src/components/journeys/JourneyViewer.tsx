@@ -325,7 +325,7 @@ export default function JourneyViewer() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientId: journey.client.id,
-          authorRole: role,
+          author: role,
           noteType,
           content: noteText.trim(),
         }),
@@ -497,9 +497,9 @@ export default function JourneyViewer() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientId: journey.client.id,
+          author: role,
           content: `Client marked as dropped off. Reason: ${dropOffReason}`,
           noteType: "observation",
-          role,
         }),
       })
       const [journeyRes, notesRes] = await Promise.all([
