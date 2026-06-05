@@ -1172,7 +1172,7 @@ export default function JourneyViewer() {
           </div>
 
           {/* SURVEY RESULT CARD */}
-          {survey && survey.satisfaction != null && (
+          {survey && survey.satisfaction != null && ["survey","complete"].includes(journey.client.stage ?? "") && (
             <div className="glass rounded-xl p-5 space-y-3" data-tour="journey-survey-result" style={{ borderColor: "rgba(245,158,11,0.25)" }}>
               <div className="flex items-center gap-2">
                 <Star size={18} className="text-amber-500 dark:text-amber-400" />
@@ -1226,7 +1226,7 @@ export default function JourneyViewer() {
           )}
 
           {/* SURVEY FLOW */}
-          {canAddNote && !survey && (
+          {canAddNote && !survey && ["survey","complete"].includes(journey.client.stage ?? "") && (
             <div className="glass rounded-xl p-5 space-y-4" data-tour="journey-survey-section" style={{ borderColor: "rgba(245,158,11,0.2)" }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

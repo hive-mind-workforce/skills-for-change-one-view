@@ -413,8 +413,8 @@ export async function seedDatabase() {
       )
     }
 
-    // Seed surveys for survey/complete stage clients + ~33% sample of others
-    const surveyRows = allRows.filter(r => r.stage === "survey" || r.stage === "complete" || (r.idx * PRIME) % 3 === 0)
+    // Seed surveys only for clients who have reached survey or complete stage
+    const surveyRows = allRows.filter(r => r.stage === "survey" || r.stage === "complete")
     for (let start = 0; start < surveyRows.length; start += CHUNK) {
       const chunk = surveyRows.slice(start, start + CHUNK)
       const sVals = chunk.map((_, j) =>
