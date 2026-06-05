@@ -123,25 +123,28 @@ export default function AboutTab() {
         <p className="text-emerald-600 dark:text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto · Change-a-thon 2026</p>
         <h2 className="font-sora text-5xl text-slate-900 dark:text-white mb-3">OneView</h2>
         <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. One system of record across multiple programs and multiple funders, built to eliminate the fragmentation that costs Skills for Change weeks of staff time every quarter.</p>
-        <div className="flex flex-wrap justify-center items-center gap-6 mt-8">
-          <div className="text-center">
-            <div className="font-sora text-3xl text-emerald-500">Multiple programs</div>
-            <div className="text-slate-500 text-sm">one platform</div>
+        <div className="flex flex-col items-center gap-4 mt-8">
+          <div className="flex flex-wrap justify-center items-center gap-6">
+            <div className="text-center">
+              <div className="font-sora text-3xl text-emerald-500">Multiple programs</div>
+              <div className="text-slate-500 text-sm">one platform</div>
+            </div>
+            <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
+            <div className="text-center">
+              <div className="font-sora text-3xl text-indigo-500">Multiple funders</div>
+              <div className="text-slate-500 text-sm">customized exports</div>
+            </div>
           </div>
-          <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
-          <div className="text-center">
-            <div className="font-sora text-3xl text-indigo-500">Multiple funders</div>
-            <div className="text-slate-500 text-sm">one data entry</div>
-          </div>
-          <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
-          <div className="text-center">
-            <div className="font-sora text-3xl text-amber-500">2–3 weeks</div>
-            <div className="text-slate-500 text-sm">of quarterly reporting → seconds</div>
-          </div>
-          <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
-          <div className="text-center">
-            <div className="font-sora text-3xl text-rose-500">6 months</div>
-            <div className="text-slate-500 text-sm">to full replacement</div>
+          <div className="flex flex-wrap justify-center items-center gap-6">
+            <div className="text-center">
+              <div className="font-sora text-3xl text-amber-500">2–3 weeks</div>
+              <div className="text-slate-500 text-sm">of quarterly reporting → seconds</div>
+            </div>
+            <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
+            <div className="text-center">
+              <div className="font-sora text-3xl text-rose-500">6 months</div>
+              <div className="text-slate-500 text-sm">to full replacement</div>
+            </div>
           </div>
         </div>
       </div>
