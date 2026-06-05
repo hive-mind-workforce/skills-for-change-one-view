@@ -113,7 +113,7 @@ Demo mode uses the ?role= query parameter. Production would use JWT.
 
 ## Privacy and Compliance
 
-PHI Wall: `AND e.program != 'mental_health'` is applied to EVERY cross-program SQL query. This is a PHIPA hard rule enforced at the database layer. No role or consent flag can override it.
+PHI Wall: Enforced by a Postgres Row Level Security policy (`phi_wall`) on the enrolments table. Cross-program SQL queries also add `WHERE e.program != 'mental_health'` as defense in depth. This is a PHIPA hard rule. No role or consent flag can override it.
 
 Consent levels:
 1. Program consent (automatic) - data used for program's funder only

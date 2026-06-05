@@ -108,8 +108,7 @@ women: immediate="Safety plan created", intermediate="Skills training completed"
 ## Privacy Rules
 
 ### PHI Wall
-mental_health program data is ALWAYS excluded from cross-program queries regardless of consent. This is a PHIPA hard requirement enforced at the SQL layer on every cross-program query:
-  AND e.program != 'mental_health'
+mental_health program data is ALWAYS excluded from cross-program queries regardless of consent. This is a PHIPA hard requirement enforced by a Postgres Row Level Security policy (phi_wall) on the enrolments table. Cross-program analytics queries also add a WHERE filter as defense in depth.
 No role, API key, or consent flag can override this.
 
 ### Consent Levels
