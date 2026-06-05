@@ -187,7 +187,7 @@ function ColumnManager({ columns, onChange, exportData }: ColumnManagerProps) {
 
 // ── Main export panel ─────────────────────────────────────────────────────────
 
-export default function ExportPanel() {
+export default function ExportPanel({ role = "admin" }: { role?: string }) {
   const [selected, setSelected] = useState<string | null>(null)
   const [showColumnMgr, setShowColumnMgr] = useState(false)
   const [columns, setColumns] = useState<ColumnItem[]>([])
@@ -208,7 +208,7 @@ export default function ExportPanel() {
     if (!selected) return
     setExportLoading(true)
     try {
-      const res = await fetch("/api/export", {
+      const res = await fetch(`/api/export?role=${role}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ funder: selected }),
@@ -226,7 +226,7 @@ export default function ExportPanel() {
     if (!data) {
       setExportLoading(true)
       try {
-        const res = await fetch("/api/export", {
+        const res = await fetch(`/api/export?role=${role}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ funder: selected }),
@@ -262,7 +262,7 @@ export default function ExportPanel() {
   async function generateNarrative() {
     if (!selected) return
     setNarrativeLoading(true); setNarrative(null)
-    const res = await fetch("/api/draft-report", {
+    const res = await fetch(`/api/draft-report?role=${role}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ funder: selected, period: "Q1 2026" }),

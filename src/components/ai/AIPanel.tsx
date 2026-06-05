@@ -31,7 +31,7 @@ export default function AIPanel() {
   async function generateReport() {
     setReportLoading(true); setReport(null); setReportError(null)
     try {
-      const res = await fetch("/api/draft-report", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({funder, period}) })
+      const res = await fetch(`/api/draft-report?role=${role}`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({funder, period}) })
       const data = await res.json()
       if (data.error) { setReportError(data.error); return }
       setReport({ text: data.narrative ?? "", cached: data.cached ?? false })
@@ -46,7 +46,7 @@ export default function AIPanel() {
     if (!question.trim()) return
     setQLoading(true); setAnswer(null); setQError(null)
     try {
-      const res = await fetch("/api/query", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({question}) })
+      const res = await fetch(`/api/query?role=${role}`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({question}) })
       const data = await res.json()
       if (data.error) { setQError(data.error); return }
       setAnswer(data.answer ?? "No answer returned.")

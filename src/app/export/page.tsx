@@ -12,7 +12,7 @@ function ExportContent() {
   const searchParams = useSearchParams()
   const role = searchParams.get("role") ?? "admin"
   if (role !== "admin") return <AccessRestricted requiredRole="admin" currentRole={role} />
-  return <ExportPanel />
+  return <ExportPanel role={role} />
 }
 
 export default function ExportPage() {
