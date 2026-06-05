@@ -1,10 +1,10 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { useSearchParams } from "next/navigation"
-import { Search, CheckCircle, Circle, Lock, Users, ChevronRight, FileText, Phone, Calendar, Eye, Star, Plus, X, Pencil, Trash2, ClipboardList, AlertTriangle } from "lucide-react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { Search, CheckCircle, Circle, Lock, Users, ChevronRight, FileText, Phone, Calendar, Eye, Star, Plus, X, Pencil, Trash2, ClipboardList, AlertTriangle, ArrowLeft, Mail, UserMinus, CheckCheck, BarChart3, Send } from "lucide-react"
 import ProgramBadge from "@/components/ProgramBadge"
 import FunderBadge from "@/components/FunderBadge"
-import { formatDate, programLabel, programColor } from "@/lib/helpers"
+import { formatDate, programLabel, programColor, countryName } from "@/lib/helpers"
 
 const TIER_ORDER = ["immediate", "intermediate", "ultimate"]
 const TIER_LABELS: Record<string, string> = { immediate: "Immediate", intermediate: "Intermediate", ultimate: "Ultimate" }
@@ -45,9 +45,113 @@ interface Survey {
   completed_at: string
 }
 
+function SurveyPendingPanel({ clientId, clientName, onSimulate }: { clientId: string; clientName: string; onSimulate: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const [pending, setPending] = useState<{ days_waiting: number } | null>(null)
+  const surveyUrl = typeof window !== "undefined" ? `${window.location.origin}/survey/${clientId}` : `/survey/${clientId}`
+
+  useEffect(() => {
+    fetch("/api/pending-surveys")
+      .then(r => r.json())
+      .then(d => {
+        const match = (d.pending ?? []).find((p: any) => p.id === clientId)
+        if (match) setPending(match)
+      })
+      .catch(() => {})
+  }, [clientId])
+
+  function copyLink() {
+    navigator.clipboard.writeText(surveyUrl).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const daysWaiting = pending ? Math.max(0, Math.round(pending.days_waiting)) : null
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/[0.06] border border-blue-500/20">
+        <Mail size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-slate-700 dark:text-slate-300 font-medium">Survey sent to {clientName}</p>
+            {daysWaiting !== null && (
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${daysWaiting > 7 ? "bg-amber-500/20 text-amber-600 dark:text-amber-400" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"}`}>
+                {daysWaiting}d waiting, no response yet
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Share the link below if the email didn't arrive.</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08]">
+        <span className="text-xs text-slate-500 dark:text-slate-400 truncate flex-1 font-mono">{surveyUrl}</span>
+        <button
+          onClick={copyLink}
+          className="flex-shrink-0 px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/[0.08] hover:bg-slate-200 dark:hover:bg-white/[0.14] text-slate-600 dark:text-slate-300 text-xs font-medium transition-colors"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
+        <a
+          href={surveyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-shrink-0 px-3 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-medium transition-colors"
+        >
+          Open →
+        </a>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {[
+          { label: "Email Sent", icon: Mail, done: true },
+          { label: "Client Reviews", icon: Eye, done: false },
+          { label: "Survey Filled", icon: ClipboardList, done: false },
+          { label: "Results Received", icon: CheckCircle, done: false },
+          { label: "Analytics Updated", icon: BarChart3, done: false },
+        ].map((step, i) => {
+          const Icon = step.icon
+          return (
+            <div key={i} className="flex items-center gap-2 flex-shrink-0">
+              <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${step.done ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-slate-100 dark:bg-white/[0.06] text-slate-400"}`}>
+                <Icon size={11} /> {step.label}
+              </div>
+              {i < 4 && <div className="w-3 h-px bg-slate-200 dark:bg-white/[0.1] flex-shrink-0" />}
+            </div>
+          )
+        })}
+      </div>
+
+      <button
+        onClick={onSimulate}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-amber-400/50 text-amber-600 dark:text-amber-400 text-sm hover:bg-amber-500/5 transition-colors"
+      >
+        <ClipboardList size={14} /> Simulate: Client fills survey →
+      </button>
+    </div>
+  )
+}
+
 export default function JourneyViewer() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const role = searchParams.get("role") ?? "admin"
+
+  // Back-to-pipeline link with filter restoration
+  const fromPipeline = searchParams.get("fromPipeline") === "1"
+  const pipelineBackUrl = (() => {
+    if (!fromPipeline) return null
+    const params = new URLSearchParams()
+    if (role && role !== "admin") params.set("role", role)
+    const pSearch = searchParams.get("pSearch")
+    const pPrograms = searchParams.get("pPrograms")
+    if (pSearch) params.set("restoreSearch", pSearch)
+    if (pPrograms) params.set("restorePrograms", pPrograms)
+    const qs = params.toString()
+    return `/pipeline${qs ? `?${qs}` : ""}`
+  })()
 
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<any[]>([])
@@ -82,6 +186,20 @@ export default function JourneyViewer() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [togglingOutcome, setTogglingOutcome] = useState<string | null>(null)
+
+  // Add program state
+  const [addingProgram, setAddingProgram] = useState(false)
+  const [newProgram, setNewProgram] = useState("")
+  const [newProgramConsent, setNewProgramConsent] = useState(false)
+  const [savingProgram, setSavingProgram] = useState(false)
+
+  // Complete journey / drop-off state
+  const [completingJourney, setCompletingJourney] = useState(false)
+  const [surveyEmailSent, setSurveyEmailSent] = useState(false)
+  const [droppingOff, setDroppingOff] = useState(false)
+  const [dropOffReason, setDropOffReason] = useState("No further contact")
+  const [savingCompletion, setSavingCompletion] = useState(false)
+  const [savingDropOff, setSavingDropOff] = useState(false)
 
   // Load recent clients on mount for quick access
   useEffect(() => {
@@ -200,6 +318,10 @@ export default function JourneyViewer() {
       full_name: journey.client.full_name ?? "",
       primary_language: journey.client.primary_language ?? "",
       immigration_stream: journey.client.immigration_stream ?? "",
+      country_of_origin: journey.client.country_of_origin ?? "",
+      age_group: journey.client.age_group ?? "",
+      gender: journey.client.gender ?? "",
+      source: journey.client.source ?? "",
       stage: journey.client.stage ?? "intake",
     })
     setEditing(true)
@@ -209,11 +331,26 @@ export default function JourneyViewer() {
     if (!journey?.client?.id) return
     setSavingEdit(true)
     try {
+      // Update client fields: resolve self-describe gender to typed value
+      const resolvedForm = { ...editForm }
+      if (resolvedForm.gender === "Self-describe…") {
+        resolvedForm.gender = resolvedForm.gender_self_describe?.trim() || "Self-describe…"
+      }
+      delete resolvedForm.gender_self_describe
       await fetch(`/api/clients/${journey.client.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...editForm, role }),
+        body: JSON.stringify({ ...resolvedForm, role }),
       })
+      // Update consent on each enrolment if changed
+      const consentUpdates = journey.enrolments
+        .filter((e: any) => editForm[`consent_${e.id}`] !== undefined && String(editForm[`consent_${e.id}`]) !== String(e.consent_cross_program))
+        .map((e: any) => fetch(`/api/enrolments/${e.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ consent_cross_program: editForm[`consent_${e.id}`] === "true", role }),
+        }))
+      await Promise.all(consentUpdates)
       const res = await fetch(`/api/journey?clientId=${journey.client.id}`)
       setJourney(await res.json())
       setEditing(false)
@@ -257,9 +394,20 @@ export default function JourneyViewer() {
           role,
         }),
       })
-      const res = await fetch(`/api/survey/${journey.client.id}`)
-      const data = await res.json()
-      setSurvey(data.survey ?? null)
+      if (journey.client.stage === "survey") {
+        await fetch(`/api/clients/${journey.client.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stage: "complete", role }),
+        })
+      }
+      const [surveyRes, journeyRes] = await Promise.all([
+        fetch(`/api/survey/${journey.client.id}`).then(r => r.json()),
+        fetch(`/api/journey?clientId=${journey.client.id}`).then(r => r.json()),
+      ])
+      setSurvey(surveyRes.survey ?? null)
+      setJourney(journeyRes)
+      setSurveyEmailSent(false)
       setShowSurveyForm(false)
     } finally {
       setSavingSurvey(false)
@@ -278,11 +426,89 @@ export default function JourneyViewer() {
     }
   }
 
+  async function completeJourney() {
+    if (!journey?.client?.id) return
+    setSavingCompletion(true)
+    try {
+      await fetch(`/api/clients/${journey.client.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: "survey", role }),
+      })
+      const res = await fetch(`/api/journey?clientId=${journey.client.id}`)
+      setJourney(await res.json())
+      setCompletingJourney(false)
+      setSurveyEmailSent(true)
+    } finally {
+      setSavingCompletion(false)
+    }
+  }
+
+  async function submitDropOff() {
+    if (!journey?.client?.id) return
+    setSavingDropOff(true)
+    try {
+      await fetch(`/api/clients/${journey.client.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: "dropped", role }),
+      })
+      await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: journey.client.id,
+          content: `Client marked as dropped off. Reason: ${dropOffReason}`,
+          noteType: "observation",
+          role,
+        }),
+      })
+      const [journeyRes, notesRes] = await Promise.all([
+        fetch(`/api/journey?clientId=${journey.client.id}`).then(r => r.json()),
+        fetch(`/api/notes?clientId=${journey.client.id}`).then(r => r.json()),
+      ])
+      setJourney(journeyRes)
+      setNotes(Array.isArray(notesRes) ? notesRes : [])
+      setDroppingOff(false)
+    } finally {
+      setSavingDropOff(false)
+    }
+  }
+
   const canAddNote = role === "admin" || role === "caseworker"
-  const STAGES = ["outreach", "vetting", "eligibility", "intake", "training", "placement", "complete", "survey"]
+  const STAGES = ["outreach", "vetting", "eligibility", "intake", "training", "placement", "survey", "complete", "dropped"]
+  const ALL_PROGRAMS = ["settlement", "employment", "language", "mental_health", "trades", "mentoring", "youth", "women"]
+
+  async function addProgram() {
+    if (!journey?.client?.id || !newProgram) return
+    setSavingProgram(true)
+    try {
+      await fetch("/api/enrolments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_id: journey.client.id, program: newProgram, consent_cross_program: newProgramConsent }),
+      })
+      const res = await fetch(`/api/journey?clientId=${journey.client.id}`)
+      setJourney(await res.json())
+      setAddingProgram(false)
+      setNewProgram("")
+      setNewProgramConsent(false)
+    } finally {
+      setSavingProgram(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
+      {pipelineBackUrl && (
+        <button
+          onClick={() => router.push(pipelineBackUrl)}
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+        >
+          <ArrowLeft size={14} />
+          Back to Pipeline
+        </button>
+      )}
       <div className="relative max-w-lg">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         <input
@@ -336,7 +562,7 @@ export default function JourneyViewer() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-slate-800 dark:text-slate-200 text-sm font-medium truncate">{c.full_name}</div>
-                  <div className="text-slate-500 dark:text-slate-400 text-xs truncate">{c.program} · {c.primary_language}</div>
+                  <div className="text-slate-500 dark:text-slate-400 text-xs truncate">{c.primary_language} · {countryName(c.country_of_origin)}</div>
                 </div>
                 <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
               </button>
@@ -379,10 +605,20 @@ export default function JourneyViewer() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {canAddNote && (
                   <button onClick={openEdit} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.12] text-slate-600 dark:text-slate-300 text-xs font-medium transition-colors">
                     <Pencil size={12} /> Edit
+                  </button>
+                )}
+                {canAddNote && !["complete","survey","dropped"].includes(journey.client.stage ?? "") && (
+                  <button onClick={() => setCompletingJourney(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors">
+                    <CheckCheck size={12} /> Complete Journey
+                  </button>
+                )}
+                {canAddNote && journey.client.stage !== "dropped" && (
+                  <button onClick={() => setDroppingOff(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-medium transition-colors">
+                    <UserMinus size={12} /> Drop Off
                   </button>
                 )}
                 {role === "admin" && !confirmDelete && (
@@ -403,36 +639,228 @@ export default function JourneyViewer() {
               </div>
             </div>
 
+            {/* Stage progression bar */}
+            {(() => {
+              if (journey.client.stage === "dropped") {
+                return (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <UserMinus size={14} className="text-amber-500 flex-shrink-0" />
+                    <span className="text-sm text-amber-700 dark:text-amber-400 font-medium">Client has dropped off this program.</span>
+                  </div>
+                )
+              }
+              const PIPELINE_STAGES = [
+                { db: "outreach",    label: "Outreach"  },
+                { db: "vetting",     label: "Vetting"   },
+                { db: "eligibility", label: "Eligible"  },
+                { db: "intake",      label: "Enrolled"  },
+                { db: "training",    label: "Training"  },
+                { db: "placement",   label: "Placed"    },
+                { db: "survey",      label: "Survey"    },
+                { db: "complete",    label: "Complete"  },
+              ]
+              const currentIdx = PIPELINE_STAGES.findIndex(s => s.db === journey.client.stage)
+              return (
+                <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4">
+                  <div className="flex items-center gap-1 overflow-x-auto pb-1">
+                    {PIPELINE_STAGES.map((s, i) => {
+                      const isDone = currentIdx > i
+                      const isCurrent = currentIdx === i
+                      return (
+                        <div key={s.db} className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            disabled={!canAddNote}
+                            onClick={async () => {
+                              if (!canAddNote || isCurrent) return
+                              await fetch(`/api/clients/${journey.client.id}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ stage: s.db, role }),
+                              })
+                              const res = await fetch(`/api/journey?clientId=${journey.client.id}`)
+                              setJourney(await res.json())
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                              isCurrent
+                                ? "bg-emerald-500 text-white shadow-sm"
+                                : isDone
+                                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-500/30"
+                                  : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-slate-500 cursor-pointer hover:bg-slate-200 dark:hover:bg-white/[0.12]"
+                            }`}
+                          >
+                            {isDone && !isCurrent ? "✓ " : ""}{s.label}
+                          </button>
+                          {i < PIPELINE_STAGES.length - 1 && (
+                            <div className={`w-4 h-px flex-shrink-0 ${isDone ? "bg-emerald-400/60" : "bg-slate-200 dark:bg-white/[0.08]"}`} />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Complete Journey dialog */}
+            {completingJourney && (
+              <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <CheckCheck size={16} className="text-emerald-500" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Complete Client Journey</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <Mail size={12} />
+                    <span className="font-medium">To:</span>
+                    <span>{journey.client.full_name}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400"><span className="font-medium">Subject:</span> Your Skills for Change experience: quick survey</div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                    "Thank you for completing the program. We'd love to hear about your experience. The survey takes 2 minutes and helps us improve for future clients."
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Survey link:</span>
+                    <a
+                      href={typeof window !== "undefined" ? `${window.location.origin}/survey/${journey.client.id}` : `/survey/${journey.client.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-mono truncate max-w-[260px]"
+                    >
+                      {typeof window !== "undefined" ? `${window.location.origin}/survey/${journey.client.id}` : `/survey/${journey.client.id}`}
+                    </a>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">This will mark the journey as complete and queue a satisfaction survey to the client.</p>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setCompletingJourney(false)} className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Cancel</button>
+                  <button onClick={completeJourney} disabled={savingCompletion} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-medium transition-colors">
+                    <Send size={11} /> {savingCompletion ? "Sending…" : "Send Survey & Complete"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Drop Off dialog */}
+            {droppingOff && (
+              <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <UserMinus size={16} className="text-amber-500" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Record Drop-Off</span>
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Reason</label>
+                  <select
+                    value={dropOffReason}
+                    onChange={e => setDropOffReason(e.target.value)}
+                    className="w-full ov-input rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-500/60"
+                  >
+                    {["Financial barriers","Found employment independently","Location or transportation issues","Schedule conflict","Program not suitable","No further contact"].map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setDroppingOff(false)} className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Cancel</button>
+                  <button onClick={submitDropOff} disabled={savingDropOff} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-medium transition-colors">
+                    {savingDropOff ? "Saving…" : "Confirm Drop-Off"}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Edit form */}
             {editing && canAddNote && (
-              <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4 space-y-3">
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Edit Client</p>
+              <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4 space-y-4">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Edit Client Details</p>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {[
-                    { key: "full_name", label: "Full Name" },
-                    { key: "primary_language", label: "Language" },
-                    { key: "immigration_stream", label: "Immigration Stream" },
-                  ].map(({ key, label }) => (
-                    <div key={key}>
-                      <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{label}</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Full Name</label>
+                    <input
+                      value={editForm.full_name ?? ""}
+                      onChange={e => setEditForm(f => ({ ...f, full_name: e.target.value }))}
+                      className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Language</label>
+                    <select value={editForm.primary_language ?? ""} onChange={e => setEditForm(f => ({ ...f, primary_language: e.target.value }))} className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
+                      <option value="">Select...</option>
+                      {["English","Arabic","Somali","Spanish","Tagalog","Mandarin","Hindi","French","Portuguese","Ukrainian","Tigrinya","Amharic","Punjabi","Vietnamese","Persian"].map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Immigration Stream</label>
+                    <select value={editForm.immigration_stream ?? ""} onChange={e => setEditForm(f => ({ ...f, immigration_stream: e.target.value }))} className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
+                      <option value="">Select...</option>
+                      {["Refugee","Economic Immigrant","Family Reunification","International Student","Temporary Worker"].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Country of Origin</label>
+                    <select value={editForm.country_of_origin ?? ""} onChange={e => setEditForm(f => ({ ...f, country_of_origin: e.target.value }))} className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
+                      <option value="">Select...</option>
+                      {[["SO","Somalia"],["IN","India"],["SY","Syria"],["PH","Philippines"],["CO","Colombia"],["NG","Nigeria"],["ET","Ethiopia"],["UA","Ukraine"],["MX","Mexico"],["CN","China"],["PK","Pakistan"],["BD","Bangladesh"],["KE","Kenya"],["GH","Ghana"],["JM","Jamaica"],["BR","Brazil"],["EG","Egypt"],["IR","Iran"],["AF","Afghanistan"],["TZ","Tanzania"],["MR","Mauritania"],["SD","Sudan"],["SS","South Sudan"],["ER","Eritrea"],["VN","Vietnam"],["TR","Turkey"],["ID","Indonesia"],["RU","Russia"]].map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Age Group</label>
+                    <select value={editForm.age_group ?? ""} onChange={e => setEditForm(f => ({ ...f, age_group: e.target.value }))} className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
+                      <option value="">Select...</option>
+                      {["18-24","25-34","35-44","45-54","55+"].map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Gender</label>
+                    <select value={editForm.gender ?? ""} onChange={e => setEditForm(f => ({ ...f, gender: e.target.value }))} className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
+                      <option value="">Select...</option>
+                      {["Woman","Man","Non-binary","Two-Spirit","Transgender woman","Transgender man","Genderfluid","Agender","Gender non-conforming","Genderqueer","Bigender","Questioning","Self-describe…","Prefer not to say"].map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                    {editForm.gender === "Self-describe…" && (
                       <input
-                        value={editForm[key] ?? ""}
-                        onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
-                        className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60"
+                        value={editForm.gender_self_describe ?? ""}
+                        onChange={e => setEditForm(f => ({ ...f, gender_self_describe: e.target.value }))}
+                        placeholder="Please describe your gender identity"
+                        className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60 mt-2"
                       />
-                    </div>
-                  ))}
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Source</label>
+                    <select value={editForm.source ?? ""} onChange={e => setEditForm(f => ({ ...f, source: e.target.value }))} className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
+                      <option value="">Select...</option>
+                      <option value="referral">Referral</option>
+                      <option value="walk-in">Walk-in</option>
+                      <option value="online">Online</option>
+                      <option value="event">Event</option>
+                      <option value="partner">Partner</option>
+                      <option value="direct">Direct</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Stage</label>
-                    <select
-                      value={editForm.stage ?? "intake"}
-                      onChange={e => setEditForm(f => ({ ...f, stage: e.target.value }))}
-                      className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60"
-                    >
+                    <select value={editForm.stage ?? "intake"} onChange={e => setEditForm(f => ({ ...f, stage: e.target.value }))} className="w-full ov-input rounded-lg px-3 py-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-emerald-500/60">
                       {STAGES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                     </select>
                   </div>
                 </div>
+                {journey?.enrolments?.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cross-Program Consent</p>
+                    {journey.enrolments.map((e: any) => (
+                      <label key={e.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editForm[`consent_${e.id}`] !== undefined ? editForm[`consent_${e.id}`] === "true" : Boolean(e.consent_cross_program)}
+                          onChange={ev => setEditForm(f => ({ ...f, [`consent_${e.id}`]: ev.target.checked ? "true" : "false" }))}
+                          className="rounded border-slate-300 dark:border-white/20 accent-emerald-500"
+                        />
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
+                          <span className="font-medium capitalize">{e.program}</span>: allow data sharing across programs
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
                 <div className="flex justify-end gap-2">
                   <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Cancel</button>
                   <button onClick={saveEdit} disabled={savingEdit} className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-medium transition-colors">
@@ -524,6 +952,66 @@ export default function JourneyViewer() {
                 </div>
               )
             })}
+
+            {canAddNote && (() => {
+              const enrolled = new Set(journey.enrolments.map((e: any) => e.program))
+              const available = ALL_PROGRAMS.filter(p => !enrolled.has(p))
+              if (available.length === 0) return null
+              return (
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-white/[0.06] text-slate-400">
+                      <Plus size={16} />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    {!addingProgram ? (
+                      <button
+                        onClick={() => { setAddingProgram(true); setNewProgram(available[0]) }}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-slate-300 dark:border-white/[0.15] text-slate-500 dark:text-slate-400 hover:border-emerald-400 dark:hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 text-sm transition-colors w-full justify-center"
+                      >
+                        <Plus size={14} /> Add Program
+                      </button>
+                    ) : (
+                      <div className="glass rounded-xl p-4 space-y-3 border border-white/[0.12]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Enrol in Program</span>
+                          <button onClick={() => setAddingProgram(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={14} /></button>
+                        </div>
+                        <select
+                          value={newProgram}
+                          onChange={e => setNewProgram(e.target.value)}
+                          className="w-full ov-input rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-emerald-500/60"
+                        >
+                          {available.map(p => (
+                            <option key={p} value={p}>{programLabel(p)}</option>
+                          ))}
+                        </select>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newProgramConsent}
+                            onChange={e => setNewProgramConsent(e.target.checked)}
+                            className="rounded border-slate-300 dark:border-white/[0.2] text-emerald-500"
+                          />
+                          <span className="text-xs text-slate-500 dark:text-slate-400">Cross-program consent obtained</span>
+                        </label>
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => setAddingProgram(false)} className="px-3 py-1.5 rounded-lg text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">Cancel</button>
+                          <button
+                            onClick={addProgram}
+                            disabled={savingProgram}
+                            className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-medium transition-colors"
+                          >
+                            {savingProgram ? "Enrolling…" : "Enrol"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           {/* CASE NOTES SECTION */}
@@ -653,6 +1141,9 @@ export default function JourneyViewer() {
                     <CheckCircle size={10} /> Would recommend
                   </span>
                 )}
+                <span className="ml-auto flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs rounded-full border border-emerald-500/20">
+                  <BarChart3 size={10} /> Feeds Analytics
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map(n => (
@@ -664,31 +1155,62 @@ export default function JourneyViewer() {
                 <span className="text-sm text-slate-600 dark:text-slate-400 ml-2">{survey.satisfaction}/5</span>
               </div>
               {(survey as any).barriers && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">Barriers: {(survey as any).barriers}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Barriers reported: {(survey as any).barriers}</p>
               )}
               {(survey as any).success_story && (
                 <blockquote className="border-l-2 border-amber-400 pl-3 text-slate-600 dark:text-slate-300 text-sm italic leading-relaxed">
                   {(survey as any).success_story}
                 </blockquote>
               )}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 border-t border-slate-100 dark:border-white/[0.06]">
+                {[
+                  { label: "Email Sent", icon: Mail, done: true },
+                  { label: "Client Reviewed", icon: Eye, done: true },
+                  { label: "Survey Filled", icon: ClipboardList, done: true },
+                  { label: "Results Received", icon: CheckCircle, done: true },
+                  { label: "Analytics Updated", icon: BarChart3, done: true },
+                ].map((step, i) => {
+                  const Icon = step.icon
+                  return (
+                    <div key={i} className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                        <Icon size={10} /> {step.label}
+                      </div>
+                      {i < 4 && <div className="w-3 h-px bg-emerald-400/40 flex-shrink-0" />}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 
-          {/* SURVEY INITIATION */}
+          {/* SURVEY FLOW */}
           {canAddNote && !survey && (
             <div className="glass rounded-xl p-5 space-y-4" style={{ borderColor: "rgba(245,158,11,0.2)" }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ClipboardList size={18} className="text-amber-500 dark:text-amber-400" />
                   <h3 className="font-sora text-lg text-slate-900 dark:text-white">Exit Survey</h3>
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Not completed</span>
+                  {journey.client.stage === "survey"
+                    ? <span className="px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">Survey sent</span>
+                    : <span className="px-2 py-0.5 rounded-full text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Not sent</span>
+                  }
                 </div>
-                {!showSurveyForm && (
+                {!showSurveyForm && journey.client.stage !== "survey" && (
                   <button onClick={() => setShowSurveyForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-medium transition-colors">
                     <Plus size={13} /> Record Survey
                   </button>
                 )}
               </div>
+
+              {/* Survey pipeline flow */}
+              {(journey.client.stage === "survey" || surveyEmailSent) && !showSurveyForm && (
+                <SurveyPendingPanel
+                  clientId={journey.client.id}
+                  clientName={journey.client.full_name}
+                  onSimulate={() => setShowSurveyForm(true)}
+                />
+              )}
 
               {showSurveyForm && (
                 <div className="space-y-4 border-t border-slate-100 dark:border-white/[0.08] pt-4">
@@ -709,7 +1231,7 @@ export default function JourneyViewer() {
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" checked={surveyForm.wouldRecommend} onChange={e => setSurveyForm(f => ({ ...f, wouldRecommend: e.target.checked }))}
                       className="w-4 h-4 accent-emerald-500 rounded" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">Client would recommend SfC to others</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Client would recommend Skills for Change to others</span>
                   </label>
                   <div>
                     <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Barriers faced (optional)</label>

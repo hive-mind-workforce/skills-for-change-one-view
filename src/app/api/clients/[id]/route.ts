@@ -6,7 +6,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const { id } = await params
     const body = await req.json()
-    const allowed = ["full_name", "primary_language", "immigration_stream", "stage", "country_of_origin", "age_group", "gender"]
+    const allowed = ["full_name", "primary_language", "immigration_stream", "stage", "country_of_origin", "age_group", "gender", "source"]
     const data: Record<string, any> = {}
     for (const key of allowed) {
       if (body[key] !== undefined) data[key] = body[key]

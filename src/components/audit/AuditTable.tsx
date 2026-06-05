@@ -127,7 +127,7 @@ export default function AuditTable() {
                           <Shield size={10} />{row.user_role}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-400 dark:text-slate-500 text-xs font-mono hidden lg:table-cell">{row.source_ip || "—"}</td>
+                      <td className="px-4 py-3 text-slate-400 dark:text-slate-500 text-xs font-mono hidden lg:table-cell">{row.source_ip || "N/A"}</td>
                       <td className="px-4 py-3 text-right">
                         {expanded === row.id
                           ? <ChevronUp size={14} className="ml-auto text-slate-400 dark:text-slate-500" />

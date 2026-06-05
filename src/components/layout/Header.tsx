@@ -50,24 +50,30 @@ export default function Header() {
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-0.5 bg-black/[0.04] dark:bg-white/[0.04] rounded-lg p-1 shrink-0">
-          {["admin", "caseworker", "viewer"].map(r => {
-            const labels = ROLE_LABELS[r]
-            return (
-              <button
-                key={r}
-                onClick={() => setRole(r)}
-                className={`px-2 sm:px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                  role === r
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                }`}
-              >
-                <span className="sm:hidden">{labels.short}</span>
-                <span className="hidden sm:inline">{labels.full}</span>
-              </button>
-            )
-          })}
+        <div className="relative group shrink-0">
+          <div className="flex items-center gap-0.5 bg-black/[0.04] dark:bg-white/[0.04] rounded-lg p-1">
+            {["admin", "caseworker", "viewer"].map(r => {
+              const labels = ROLE_LABELS[r]
+              return (
+                <button
+                  key={r}
+                  onClick={() => setRole(r)}
+                  className={`px-2 sm:px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                    role === r
+                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <span className="sm:hidden">{labels.short}</span>
+                  <span className="hidden sm:inline">{labels.full}</span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="pointer-events-none absolute top-full right-0 mt-2 w-64 px-3 py-2 rounded-lg bg-slate-900 dark:bg-slate-700 text-white text-xs leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50 shadow-lg">
+            Demo only: production will replace this with JWT/SSO authentication.
+            <div className="absolute -top-1 right-6 w-2 h-2 bg-slate-900 dark:bg-slate-700 rotate-45" />
+          </div>
         </div>
 
         <ThemeToggle />

@@ -115,11 +115,43 @@ const OUTCOME_LABELS: Record<string,string[]> = {
 }
 
 const STAGES = ["outreach","vetting","eligibility","intake","training","placement","survey","complete"]
-const SOURCES = ["referral","walk_in","microsoft_forms","partner_agency","website","phone"]
-const COUNTRIES = ["SO","IN","SY","PH","CO","NG","ET","UA","MX","CN","PK","BD","KE","GH","JM","BR","EG","IR","AF","TZ"]
+const SOURCES = ["referral","walk-in","online","event","partner","direct"]
+const COUNTRIES = ["SO","IN","SY","PH","CO","NG","ET","UA","MX","CN","VN","BD","KE","GH","JM","BR","EG","IR","AF","TZ"]
 const AGE_GROUPS = ["18-24","25-34","35-44","45-54","55+"]
-const GENDERS = ["female","male","non_binary","prefer_not_to_say"]
+const GENDERS = ["Woman","Man","Non-binary","Two-Spirit","Transgender woman","Transgender man","Genderfluid","Agender","Gender non-conforming","Genderqueer","Bigender","Questioning","Prefer not to say"]
 const BARRIERS_LIST = ["Transportation","Language barrier","Childcare","Work schedule","None"]
+const SUCCESS_STORIES = [
+  "After completing the program I secured a full-time position as an accounting clerk. The resume workshop and mock interviews made all the difference.",
+  "Skills for Change helped me understand the Canadian workplace culture. Within three months of graduating I was hired by a healthcare company.",
+  "The language training gave me the confidence to communicate with my colleagues and supervisors. I just received my first promotion.",
+  "I came to Canada not knowing anyone. The mentoring program connected me with a professional in my field and I now work at the same company.",
+  "The childcare support during training sessions was essential for me as a single mother. I finished the program and found stable employment.",
+  "My caseworker helped me get my foreign credentials recognized. I am now practicing my profession in Canada for the first time in four years.",
+  "The trades certification opened doors I thought were closed to me as a newcomer. I am earning more than I ever did in my home country.",
+  "The youth program showed me a clear path forward. I enrolled in college and received a scholarship with support from my program coordinator.",
+  "I arrived not speaking English well. Through LINC classes I reached CLB 7 and I am now studying for my Canadian citizenship exam.",
+  "The settlement advisor guided me through every government form. Within six months our family had housing, school placements, and health cards.",
+  "I had no connections in Canada. After the mentoring program I had a network of twenty professionals who opened doors I did not know existed.",
+  "The electrical pre-apprenticeship gave me a Red Seal path. I start my registered apprenticeship next month at a union contractor.",
+  "Arriving as a refugee I felt lost. The youth caseworker helped me enrol in high school and apply for a co-op placement at a tech firm.",
+  "The women's program was the first place I felt safe asking for help. I completed my pharmacy technician certificate and accepted a full-time offer.",
+  "I spoke no French or English on arrival. Two years of language classes later I passed the IELTS at a level that unlocked my university application.",
+  "My engineering credentials were not recognized here. Skills for Change connected me with a bridging program and I now work as a project engineer.",
+  "The peer support group met every Thursday. Knowing others shared my experience gave me the strength to keep going through a very difficult winter.",
+  "After job searching alone for eight months I joined the employment program. Within six weeks I had three interviews and one offer.",
+  "The trades program covered my tools, my safety boots, and my certification exam fees. Barriers I could not have removed on my own.",
+  "My mentor had walked the same path fifteen years earlier. Her guidance saved me years of trial and error navigating the Canadian finance sector.",
+  "The interview coaching sessions were recorded so I could watch myself and improve. By my fifth mock interview I felt genuinely confident.",
+  "Settlement services helped us understand our rights as tenants. We moved out of an unsafe unit and into stable housing within two months.",
+  "I joined the youth program unsure of my future. I leave with a college acceptance, a part-time job, and a clear plan for the next three years.",
+  "The employer partnership meant I interviewed for a real position on graduation day. I started work the following Monday.",
+  "Language classes were scheduled around my work shifts. Skills for Change made it possible to learn and earn at the same time.",
+  "My caseworker attended the credential recognition meeting with me. Having an advocate in the room changed the outcome completely.",
+  "The network of alumni from the program became my community in a new city. Three years later those friendships are still my strongest support.",
+  "The women's entrepreneurship module gave me the skills to register my catering business. I now employ two other program graduates.",
+  "After the trades program I earned more in my first year than I did in five years in my home country. Canada gave me a second career.",
+  "I completed the mental health program and learned to name what I was feeling. That vocabulary alone helped me communicate with my doctor and my family.",
+]
 const NOTE_AUTHORS = ["Maria Santos","James Osei","Priya Sharma","Ahmed Hassan","Laura Tremblay"]
 const NOTE_CONTENTS = [
   "Initial assessment completed. Client shows strong motivation and clear goals.",
@@ -139,12 +171,125 @@ export async function seedDatabase() {
   const count = await sql`SELECT COUNT(*) as c FROM clients`
   if (parseInt(count.rows[0].c) > 0) return
 
+  const TOTAL = Object.values(SEED_VOLUMES).reduce((a, b) => a + b, 0) // 19140
+  const PRIME = 7919 // coprime with 19140, so bijection covers all indices
+
+  // Stage distribution: most clients completed, small active pipeline, tiny drop-off
+  // complete+placement+survey = 80%, dropped = 2% → success rate = 80/82 = 97.6%
+  function stageForIdx(idx: number): string {
+    const v = (idx * PRIME) % 100
+    if (v < 1)  return "outreach"
+    if (v < 3)  return "vetting"
+    if (v < 5)  return "eligibility"
+    if (v < 10) return "intake"
+    if (v < 18) return "training"
+    if (v < 28) return "placement"
+    if (v < 40) return "survey"
+    if (v < 98) return "complete"
+    return "dropped"
+  }
+
+  // Spread created_at over 18 months; power 2.0 puts ~24% of clients in the last 30 days
+  // producing a clear upward monthly intake trend and meaningful differences across time intervals
+  function createdAtForIdx(idx: number): string {
+    const dateIdx = (idx * PRIME) % TOTAL
+    const daysBack = Math.floor(540 * Math.pow(1 - dateIdx / (TOTAL - 1), 2.0))
+    return new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+  }
+
+  // Weighted gender: reflects diverse client population
+  function genderForIdx(idx: number): string {
+    const v = (idx * 7919) % 1000
+    if (v < 500) return "Woman"
+    if (v < 880) return "Man"
+    if (v < 910) return "Non-binary"
+    if (v < 920) return "Two-Spirit"
+    if (v < 932) return "Transgender woman"
+    if (v < 944) return "Transgender man"
+    if (v < 954) return "Genderfluid"
+    if (v < 960) return "Agender"
+    if (v < 970) return "Gender non-conforming"
+    if (v < 976) return "Genderqueer"
+    if (v < 982) return "Bigender"
+    if (v < 992) return "Questioning"
+    if (v < 995) return "Neutrois"
+    if (v < 998) return "Demi-girl"
+    return "Prefer not to say"
+  }
+
+  // Weighted source: referral/partner dominate, online growing, event/direct rare
+  function sourceForIdx(idx: number): string {
+    const v = (idx * 3571) % 100
+    if (v < 35) return "referral"
+    if (v < 58) return "partner"
+    if (v < 73) return "walk-in"
+    if (v < 85) return "online"
+    if (v < 93) return "event"
+    return "direct"
+  }
+
+  // Weighted age: newcomer population skews young (18-34 = 75% of clients)
+  function ageForIdx(idx: number): string {
+    const v = (idx * 6271) % 100
+    if (v < 35) return "18-24"
+    if (v < 75) return "25-34"
+    if (v < 90) return "35-44"
+    if (v < 97) return "45-54"
+    return "55+"
+  }
+
+  // Per-program outcome rates [immediate%, intermediate%, ultimate%]
+  // High base rates reflecting a high-performing organisation
+  const PROGRAM_OUTCOME_RATES: Record<string, [number, number, number]> = {
+    settlement:   [93, 84, 72],
+    employment:   [96, 90, 80],
+    language:     [94, 87, 75],
+    mental_health:[86, 74, 60],
+    trades:       [97, 92, 84],
+    mentoring:    [93, 85, 74],
+    youth:        [91, 84, 72],
+    women:        [94, 87, 76],
+  }
+
+  function outcomeAchieved(idx: number, tier: string, program: string): boolean {
+    const rates = PROGRAM_OUTCOME_RATES[program] ?? [70, 50, 30]
+    const tierIdx = tier === "immediate" ? 0 : tier === "intermediate" ? 1 : 2
+    // Recent clients get a slight boost (creates upward trend in short-interval views)
+    const dateIdx = (idx * PRIME) % TOTAL
+    const recencyBucket = Math.floor(dateIdx / (TOTAL / 10)) // 0=oldest, 9=newest
+    // Recency boost so 30d view shows better rates than all-time
+    const adjustedRate = Math.min(99, rates[tierIdx] + recencyBucket * 1)
+    const seed = (idx * 3571 + tierIdx * 1000) % 100
+    return seed < adjustedRate
+  }
+
+  // Per-program satisfaction baselines: % who give 5 stars (avg sat ~4.7/5)
+  const SAT_FIVE_RATE: Record<string, number> = {
+    employment: 82, trades: 80, mentoring: 78, language: 76,
+    settlement: 74, women: 80, youth: 72, mental_health: 66,
+  }
+  // Per-program recommend rates
+  const REC_RATE: Record<string, number> = {
+    employment: 97, trades: 96, mentoring: 95, language: 94,
+    settlement: 93, women: 95, youth: 91, mental_health: 85,
+  }
+
+  function surveySat(idx: number, program: string): number {
+    const give5 = SAT_FIVE_RATE[program] ?? 62
+    const v = (idx * 3571) % 100
+    if (v < give5) return 5
+    if (v < give5 + 20) return 4
+    if (v < give5 + 28) return 3
+    if (v < give5 + 32) return 2
+    return 1
+  }
+
   const CHUNK = 1000
   const conn = await db.connect()
   try {
     let clientIndex = 0
 
-    type AllRow = { clientId: string; enrolId: string; idx: number; program: string }
+    type AllRow = { clientId: string; enrolId: string; idx: number; program: string; stage: string }
     const allRows: AllRow[] = []
 
     for (const program of PROGRAMS) {
@@ -155,57 +300,54 @@ export async function seedDatabase() {
       type Row = { clientId: string; enrolId: string; idx: number }
       const rows: Row[] = Array.from({ length: volume }, (_, i) => {
         const idx = clientIndex + i
-        return {
-          clientId: randomUUID(),
-          enrolId: randomUUID(),
-          idx,
-        }
+        return { clientId: randomUUID(), enrolId: randomUUID(), idx }
       })
       clientIndex += volume
 
       for (const row of rows) {
-        allRows.push({ ...row, program })
+        allRows.push({ ...row, program, stage: stageForIdx(row.idx) })
       }
 
       for (let start = 0; start < rows.length; start += CHUNK) {
         const chunk = rows.slice(start, start + CHUNK)
 
-        // 9 fields per client row: id, full_name, primary_language, immigration_stream, stage, source, country_of_origin, age_group, gender
+        // 10 fields per client row: id, full_name, primary_language, immigration_stream, stage, source, country_of_origin, age_group, gender, created_at
         const cVals = chunk.map((_, j) =>
-          `($${j * 9 + 1},$${j * 9 + 2},$${j * 9 + 3},$${j * 9 + 4},$${j * 9 + 5},$${j * 9 + 6},$${j * 9 + 7},$${j * 9 + 8},$${j * 9 + 9})`
+          `($${j * 10 + 1},$${j * 10 + 2},$${j * 10 + 3},$${j * 10 + 4},$${j * 10 + 5},$${j * 10 + 6},$${j * 10 + 7},$${j * 10 + 8},$${j * 10 + 9},$${j * 10 + 10})`
         ).join(",")
         const cParams = chunk.flatMap(r => [
           r.clientId,
           FIRST_NAMES[r.idx % FIRST_NAMES.length] + " " + LAST_NAMES[Math.floor(r.idx / FIRST_NAMES.length) % LAST_NAMES.length],
           LANGUAGES[(r.idx * 7) % LANGUAGES.length],
           STREAMS[(r.idx * 5) % STREAMS.length],
-          STAGES[(r.idx * 3) % 8],
-          SOURCES[(r.idx * 11) % 6],
-          COUNTRIES[(r.idx * 7 + Math.floor(r.idx / 3)) % 20],
-          AGE_GROUPS[(r.idx * 3) % 5],
-          GENDERS[(r.idx * 3) % 4],
+          stageForIdx(r.idx),
+          sourceForIdx(r.idx),
+          COUNTRIES[(r.idx * 7 + Math.floor(r.idx / 3)) % COUNTRIES.length],
+          ageForIdx(r.idx),
+          genderForIdx(r.idx),
+          createdAtForIdx(r.idx),
         ])
         await conn.query(
-          `INSERT INTO clients (id,full_name,primary_language,immigration_stream,stage,source,country_of_origin,age_group,gender) VALUES ${cVals}`,
+          `INSERT INTO clients (id,full_name,primary_language,immigration_stream,stage,source,country_of_origin,age_group,gender,created_at) VALUES ${cVals}`,
           cParams
         )
 
-        const eVals = chunk.map((_, j) => `($${j * 5 + 1},$${j * 5 + 2},$${j * 5 + 3},$${j * 5 + 4},$${j * 5 + 5})`).join(",")
-        const eParams = chunk.flatMap(r => [r.enrolId, r.clientId, program, funder, r.idx % 5 === 0])
-        await conn.query(`INSERT INTO enrolments (id,client_id,program,funder,consent_cross_program) VALUES ${eVals}`, eParams)
+        const eVals = chunk.map((_, j) => `($${j * 6 + 1},$${j * 6 + 2},$${j * 6 + 3},$${j * 6 + 4},$${j * 6 + 5},$${j * 6 + 6})`).join(",")
+        const eParams = chunk.flatMap(r => [r.enrolId, r.clientId, program, funder, (r.idx * PRIME) % 5 === 0, createdAtForIdx(r.idx)])
+        await conn.query(`INSERT INTO enrolments (id,client_id,program,funder,consent_cross_program,enrolled_at) VALUES ${eVals}`, eParams)
 
         const oRows: string[] = []
         const oParams: (string | boolean)[] = []
         let p = 1
         for (let k = 0; k < chunk.length; k++) {
-          const r = chunk[k], i = start + k
-          for (const [tier, label, achieved] of [
-            ["immediate", labels[0], i % 3 === 0],
-            ["intermediate", labels[1], i % 5 === 0],
-            ["ultimate", labels[2], i % 10 === 0],
-          ] as [string, string, boolean][]) {
+          const r = chunk[k]
+          for (const [tier, label] of [
+            ["immediate", labels[0]],
+            ["intermediate", labels[1]],
+            ["ultimate", labels[2]],
+          ] as [string, string][]) {
             oRows.push(`($${p},$${p + 1},$${p + 2},$${p + 3})`)
-            oParams.push(r.enrolId, tier, label, achieved)
+            oParams.push(r.enrolId, tier, label, outcomeAchieved(r.idx, tier, program))
             p += 4
           }
         }
@@ -213,11 +355,8 @@ export async function seedDatabase() {
       }
     }
 
-    // Seed placements for placed/complete clients
-    const placementRows = allRows.filter(r => {
-      const stage = STAGES[(r.idx * 3) % 8]
-      return stage === 'placement' || stage === 'complete'
-    })
+    // Seed placements for placement/complete clients
+    const placementRows = allRows.filter(r => r.stage === "placement" || r.stage === "complete")
     for (let start = 0; start < placementRows.length; start += CHUNK) {
       const chunk = placementRows.slice(start, start + CHUNK)
       const pVals = chunk.map((_, j) =>
@@ -238,8 +377,8 @@ export async function seedDatabase() {
       )
     }
 
-    // Seed surveys for clients where idx % 3 === 0 (~6380 records)
-    const surveyRows = allRows.filter(r => r.idx % 3 === 0)
+    // Seed surveys for survey/complete stage clients + ~33% sample of others
+    const surveyRows = allRows.filter(r => r.stage === "survey" || r.stage === "complete" || (r.idx * PRIME) % 3 === 0)
     for (let start = 0; start < surveyRows.length; start += CHUNK) {
       const chunk = surveyRows.slice(start, start + CHUNK)
       const sVals = chunk.map((_, j) =>
@@ -248,10 +387,10 @@ export async function seedDatabase() {
       const sParams = chunk.flatMap(r => [
         r.clientId,
         r.enrolId,
-        (r.idx % 5) + 1,
-        r.idx % 4 !== 0,
-        BARRIERS_LIST[r.idx % 5],
-        null,
+        surveySat(r.idx, r.program),
+        (r.idx * 3571) % 100 < (REC_RATE[r.program] ?? 85),
+        BARRIERS_LIST[r.idx % BARRIERS_LIST.length],
+        (r.idx * 3571) % 3 === 0 ? SUCCESS_STORIES[r.idx % SUCCESS_STORIES.length] : null,
       ])
       await conn.query(
         `INSERT INTO surveys (client_id,enrolment_id,satisfaction,would_recommend,barriers,success_story) VALUES ${sVals}`,
@@ -259,14 +398,8 @@ export async function seedDatabase() {
       )
     }
 
-    // Seed case_notes: stop after 500 total notes
-    let noteCount = 0
-    const noteChunkRows: Array<{ clientId: string; idx: number }> = []
-    for (const r of allRows) {
-      if (noteCount >= 500) break
-      noteChunkRows.push({ clientId: r.clientId, idx: r.idx })
-      noteCount++
-    }
+    // Seed case_notes: 500 notes across first 500 clients
+    const noteChunkRows = allRows.slice(0, 500)
     for (let start = 0; start < noteChunkRows.length; start += CHUNK) {
       const chunk = noteChunkRows.slice(start, start + CHUNK)
       const nVals = chunk.map((_, j) =>
@@ -274,9 +407,9 @@ export async function seedDatabase() {
       ).join(",")
       const nParams = chunk.flatMap(r => [
         r.clientId,
-        NOTE_AUTHORS[r.idx % 5],
-        NOTE_CONTENTS[r.idx % 5],
-        NOTE_TYPES[r.idx % 5],
+        NOTE_AUTHORS[r.idx % NOTE_AUTHORS.length],
+        NOTE_CONTENTS[r.idx % NOTE_CONTENTS.length],
+        NOTE_TYPES[r.idx % NOTE_TYPES.length],
       ])
       await conn.query(
         `INSERT INTO case_notes (client_id,author,content,note_type) VALUES ${nVals}`,
@@ -363,6 +496,21 @@ export async function createClient(data: {
   return { clientId, enrolId }
 }
 
+export async function addEnrolment(clientId: string, program: string, consent_cross_program = false) {
+  const funder = PROGRAM_FUNDERS[program]
+  if (!funder) throw new Error(`Unknown program: ${program}`)
+  const enrolResult = await sql`
+    INSERT INTO enrolments (client_id, program, funder, consent_cross_program)
+    VALUES (${clientId}, ${program}, ${funder}, ${consent_cross_program})
+    RETURNING id`
+  const enrolId = enrolResult.rows[0].id
+  const labels = OUTCOME_LABELS[program] || ["Initial assessment", "Progress milestone", "Goal achieved"]
+  await sql`INSERT INTO outcomes (enrolment_id,tier,label) VALUES (${enrolId},'immediate',${labels[0]})`
+  await sql`INSERT INTO outcomes (enrolment_id,tier,label) VALUES (${enrolId},'intermediate',${labels[1]})`
+  await sql`INSERT INTO outcomes (enrolment_id,tier,label) VALUES (${enrolId},'ultimate',${labels[2]})`
+  return { enrolId }
+}
+
 export async function getCachedReport(funder: string, period: string) {
   const result = await sql`SELECT narrative FROM report_cache WHERE funder=${funder} AND period=${period}`
   return result.rows[0]?.narrative ?? null
@@ -427,50 +575,95 @@ export async function getClientJourney(clientId: string) {
   return { client: clientRes.rows[0], enrolments: enrolRes.rows }
 }
 
-export async function getAnalyticsData() {
-  const [stageRes, countryRes, programRes, surveyRes, sourceRes, ageRes, genderRes, totalRes] = await Promise.all([
-    sql`SELECT stage, COUNT(*) as count FROM clients GROUP BY stage ORDER BY count DESC`,
+export async function getAnalyticsData(since?: string | null) {
+  // Client-level time filter (null = all time)
+  const cf = since ? "AND c.created_at >= $1" : ""
+  const ef = since ? "AND e.enrolled_at >= $1" : ""
+  const sf = since ? "AND s.completed_at >= $1" : ""
+  const p = since ? [since] : []
+
+  const [stageRes, countryRes, programRes, stageByProgramRes, surveyRes, sourceRes, ageRes, genderRes, totalRes, testimonialsRes, barriersRes] = await Promise.all([
+    sql.query(`SELECT stage, COUNT(*) as count FROM clients c WHERE 1=1 ${cf} GROUP BY stage ORDER BY count DESC`, p),
     sql`SELECT country_of_origin, COUNT(*) as count FROM clients GROUP BY country_of_origin ORDER BY count DESC LIMIT 20`,
-    sql`SELECT e.program,
+    sql.query(`SELECT e.program,
       COUNT(DISTINCT e.client_id) as clients,
-      ROUND(AVG(CASE WHEN o.achieved THEN 100.0 ELSE 0 END), 1) as outcome_rate
-      FROM enrolments e LEFT JOIN outcomes o ON o.enrolment_id = e.id
-      GROUP BY e.program ORDER BY clients DESC`,
-    sql`SELECT
+      ROUND(AVG(CASE WHEN o.achieved THEN 100.0 ELSE 0 END), 1) as outcome_rate,
+      ROUND(AVG(sa.avg_sat), 1) as avg_satisfaction,
+      ROUND(AVG(sa.rec_pct), 1) as recommend_pct,
+      COALESCE(SUM(sa.survey_cnt), 0)::int as survey_count
+      FROM enrolments e
+      LEFT JOIN outcomes o ON o.enrolment_id = e.id
+      LEFT JOIN (
+        SELECT enrolment_id,
+          AVG(satisfaction) as avg_sat,
+          SUM(CASE WHEN would_recommend THEN 1.0 ELSE 0 END) * 100.0 / COUNT(*) as rec_pct,
+          COUNT(*) as survey_cnt
+        FROM surveys GROUP BY enrolment_id
+      ) sa ON sa.enrolment_id = e.id AND e.program != 'mental_health'
+      WHERE 1=1 ${ef}
+      GROUP BY e.program ORDER BY clients DESC`, p),
+    sql.query(`SELECT c.stage, e.program, COUNT(*) as count FROM clients c JOIN enrolments e ON e.client_id = c.id WHERE 1=1 ${cf} GROUP BY c.stage, e.program`, p),
+    sql.query(`SELECT
       ROUND(AVG(satisfaction), 1) as avg_sat,
       COUNT(*) as total,
       ROUND(SUM(CASE WHEN would_recommend THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) as recommend_pct
-      FROM surveys`,
-    sql`SELECT source, COUNT(*) as count FROM clients GROUP BY source ORDER BY count DESC`,
-    sql`SELECT age_group, COUNT(*) as count FROM clients GROUP BY age_group ORDER BY count DESC`,
-    sql`SELECT gender, COUNT(*) as count FROM clients GROUP BY gender ORDER BY count DESC`,
-    sql`SELECT COUNT(*) as c FROM clients`,
+      FROM surveys s WHERE 1=1 ${sf}`, p),
+    sql.query(`SELECT source, COUNT(*) as count FROM clients c WHERE 1=1 ${cf} GROUP BY source ORDER BY count DESC`, p),
+    sql.query(`SELECT age_group, COUNT(*) as count FROM clients c WHERE 1=1 ${cf} GROUP BY age_group ORDER BY count DESC`, p),
+    sql.query(`SELECT gender, COUNT(*) as count FROM clients c WHERE 1=1 ${cf} GROUP BY gender ORDER BY count DESC`, p),
+    sql.query(`SELECT COUNT(*) as c FROM clients c WHERE 1=1 ${cf}`, p),
+    sql.query(`WITH deduped AS (
+      SELECT DISTINCT ON (s.success_story) s.success_story, s.satisfaction, e.program, c.full_name
+      FROM surveys s
+      JOIN enrolments e ON e.id = s.enrolment_id
+      JOIN clients c ON c.id = s.client_id
+      WHERE s.success_story IS NOT NULL AND e.program != 'mental_health' ${sf}
+      ORDER BY s.success_story, s.satisfaction DESC
+    ), ranked AS (
+      SELECT *, ROW_NUMBER() OVER (PARTITION BY program ORDER BY satisfaction DESC) as rn FROM deduped
+    )
+    SELECT success_story, satisfaction, program, full_name FROM ranked WHERE rn <= 2
+    ORDER BY program, satisfaction DESC`, p),
+    sql.query(`SELECT barriers, e.program, COUNT(*) as count FROM surveys s
+      JOIN enrolments e ON e.id = s.enrolment_id
+      WHERE barriers IS NOT NULL AND barriers != 'None' ${sf.replace("s.", "s.")}
+      GROUP BY barriers, e.program ORDER BY count DESC LIMIT 30`, p),
   ])
   return {
     total: parseInt(totalRes.rows[0].c),
     byStage: stageRes.rows,
     byCountry: countryRes.rows,
     programPerformance: programRes.rows,
+    stageByProgram: stageByProgramRes.rows,
     surveyStats: surveyRes.rows[0],
     bySource: sourceRes.rows,
     byAgeGroup: ageRes.rows,
     byGender: genderRes.rows,
+    testimonials: testimonialsRes.rows,
+    barriersByProgram: barriersRes.rows,
   }
 }
 
-export async function getPipelineClients(limit = 200) {
-  const result = await sql`
-    SELECT c.id, c.full_name, c.country_of_origin, c.stage, c.source,
-      c.primary_language, c.immigration_stream, c.created_at,
-      e.program, e.funder, e.enrolled_at,
-      COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
-      COUNT(o.id) as outcomes_total
-    FROM clients c
-    JOIN enrolments e ON e.client_id = c.id
-    LEFT JOIN outcomes o ON o.enrolment_id = e.id
-    GROUP BY c.id, e.id
-    ORDER BY c.created_at DESC
-    LIMIT ${limit}`
+export async function getPipelineClients(perStage = 30) {
+  // Take the oldest N clients per stage to ensure varied "days in pipeline"
+  const result = await sql.query(`
+    WITH base AS (
+      SELECT c.id, c.full_name, c.country_of_origin, c.stage, c.source,
+        c.primary_language, c.immigration_stream, c.created_at,
+        e.program, e.funder, e.enrolled_at,
+        COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
+        COUNT(o.id) as outcomes_total
+      FROM clients c
+      JOIN enrolments e ON e.client_id = c.id
+      LEFT JOIN outcomes o ON o.enrolment_id = e.id
+      GROUP BY c.id, e.id
+    ),
+    ranked AS (
+      SELECT *, ROW_NUMBER() OVER (PARTITION BY stage ORDER BY enrolled_at ASC) as rn FROM base
+    )
+    SELECT id, full_name, country_of_origin, stage, source, primary_language, immigration_stream, created_at, program, funder, enrolled_at, outcomes_achieved, outcomes_total
+    FROM ranked WHERE rn <= $1
+    ORDER BY stage, enrolled_at ASC`, [perStage])
   return result.rows
 }
 
@@ -486,6 +679,18 @@ export async function addClientNote(clientId: string, author: string, content: s
     VALUES (${clientId}, ${author}, ${content}, ${noteType})
     RETURNING *`
   return result.rows[0]
+}
+
+export async function getPendingSurveys() {
+  const result = await sql`
+    SELECT c.id, c.full_name, c.stage, e.program, e.funder, e.enrolled_at,
+      EXTRACT(EPOCH FROM (NOW() - e.enrolled_at))::int / 86400 as days_waiting
+    FROM clients c
+    JOIN enrolments e ON e.client_id = c.id
+    LEFT JOIN surveys s ON s.client_id = c.id
+    WHERE c.stage = 'survey' AND s.id IS NULL
+    ORDER BY e.enrolled_at ASC`
+  return result.rows
 }
 
 export async function getClientSurvey(clientId: string) {
@@ -590,9 +795,9 @@ export async function applyRLS() {
 }
 
 export async function getClientsForExport(programs: string[]) {
-  const programList = programs.join("','")
   const result = await sql.query(
-    `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
+    `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream,
+      c.created_at, c.age_group, c.gender, c.country_of_origin, c.source, c.stage,
       e.id as enrolment_id, e.program, e.funder, e.consent_cross_program, e.enrolled_at,
       json_agg(json_build_object('tier', o.tier, 'label', o.label, 'achieved', o.achieved)) FILTER (WHERE o.id IS NOT NULL) as outcomes
      FROM clients c
@@ -609,7 +814,7 @@ export async function getClientsForExport(programs: string[]) {
 export async function getRecentClients(limit = 20) {
   const result = await sql.query(
     `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.stage,
-      c.country_of_origin, c.created_at,
+      c.country_of_origin, c.age_group, c.created_at,
       e.program, e.funder, e.enrolled_at,
       COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
       COUNT(o.id) as outcomes_total
@@ -631,7 +836,8 @@ export async function getMonthlyIntakeTrend() {
       DATE_TRUNC('month', created_at) as month_date,
       COUNT(*) as count
     FROM clients
-    WHERE created_at >= NOW() - INTERVAL '12 months'
+    WHERE created_at >= DATE_TRUNC('month', NOW()) - INTERVAL '12 months'
+      AND created_at < DATE_TRUNC('month', NOW())
     GROUP BY month_date
     ORDER BY month_date ASC`
   return result.rows

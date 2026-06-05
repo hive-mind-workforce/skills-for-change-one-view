@@ -10,9 +10,14 @@ const COLORS: Record<string, string> = {
 }
 
 const LABELS: Record<string, string> = {
-  settlement: "Settlement", employment: "Employment", language: "Language",
-  mental_health: "Mental Health", trades: "Trades", mentoring: "Mentoring",
-  youth: "Youth", women: "Women's",
+  settlement: "Settlement Services",
+  employment: "Employment Services",
+  language: "Language Training",
+  mental_health: "Mental Health",
+  trades: "Skilled Trades",
+  mentoring: "Mentoring",
+  youth: "Youth Programs",
+  women: "Women's Programs",
 }
 
 export default function ProgramBadge({ program }: { program: string }) {

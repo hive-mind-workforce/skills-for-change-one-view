@@ -63,6 +63,20 @@ export function programColor(p: string): string {
   return PROGRAM_COLORS[p] ?? "#94a3b8"
 }
 
+const COUNTRY_NAMES: Record<string, string> = {
+  SO: "Somalia", IN: "India", SY: "Syria", PH: "Philippines", CO: "Colombia",
+  NG: "Nigeria", ET: "Ethiopia", UA: "Ukraine", MX: "Mexico", CN: "China",
+  PK: "Pakistan", BD: "Bangladesh", KE: "Kenya", GH: "Ghana", JM: "Jamaica",
+  BR: "Brazil", EG: "Egypt", IR: "Iran", AF: "Afghanistan", TZ: "Tanzania",
+  CA: "Canada", US: "United States", GB: "United Kingdom", FR: "France",
+  DE: "Germany", AU: "Australia", RU: "Russia", TR: "Turkey", ID: "Indonesia",
+  VN: "Vietnam", MR: "Mauritania", SD: "Sudan", SS: "South Sudan", ER: "Eritrea",
+}
+
+export function countryName(code: string): string {
+  return COUNTRY_NAMES[code] ?? code
+}
+
 export function getRole(searchParams: Record<string, string> | URLSearchParams): string {
   if (searchParams instanceof URLSearchParams) {
     return searchParams.get("role") ?? "admin"

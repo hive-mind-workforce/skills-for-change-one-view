@@ -1,110 +1,320 @@
 # OneView by Skills for Change
-> Outcomes tracking and funder reporting platform for immigrants and refugees in Toronto.
+> Capture once, report to every funder. Outcomes tracking and funder reporting platform for immigrants and refugees in Toronto.
 
 ## Purpose
 
-OneView allows Skills for Change staff to capture client data once and automatically generate reports for 4 funders (IRCC, Employment Ontario, United Way, City of Toronto) across 8 programs. It includes AI narrative generation, funder CSV export, privacy compliance, and RBAC.
+OneView allows Skills for Change staff to record client data once and automatically generate compliance-ready reports for 4 funders (IRCC, Employment Ontario, United Way, City of Toronto) across 8 programs. Features include: client intake, pipeline stage tracking, outcome recording, funder CSV export, AI narrative generation, AI Q&A, exit surveys, case notes, audit logging, and program analytics.
 
 ## Base URL
 
 https://sfc-oneview.vercel.app
 
-## API Endpoints
+---
 
-### GET /api/health
-Returns: {status:"ok", db:true, version:"1.0.0"}
-Auth: Public
+## Authentication and Authorization
 
-### GET /api/init
-Initializes database tables and seeds demo data if empty.
-Returns: {initialized:true, seeded:boolean}
-Auth: Public
+OneView supports three access roles. In the current demo deployment, roles are passed as a URL query parameter. This mechanism is a placeholder: production will replace it with JWT-based sessions and an identity provider (SSO or OAuth 2.0) so that roles are asserted server-side and cannot be spoofed.
 
-### GET /api/clients
-Returns all clients with enrolments and outcome counts.
-Returns: {clients:[{id,full_name,primary_language,immigration_stream,program,funder,consent_cross_program,enrolled_at,outcomes_achieved,outcomes_total}], metrics:{total,active,crossProgram,outcomesAchievedPct,byProgram}}
-Auth: Caseworker or higher
+| Role        | Demo auth method          | Permissions |
+|-------------|---------------------------|-------------|
+| admin       | ?role=admin               | Full access: all programs, all clients, export, reset, audit log |
+| caseworker  | ?role=caseworker          | Create clients, read own program, case notes, surveys |
+| viewer      | ?role=viewer              | Read-only dashboards, no PII fields returned |
+| ai_agent    | Authorization: Bearer <ONEVIEW_API_KEY> | /api/query and /api/export only |
 
-### POST /api/clients
-Create a new client.
-Body: {full_name:string, primary_language:string, immigration_stream:string, program:string, funder?:string, consent_cross_program?:boolean}
-Returns: {clientId:string, enrolId:string} (201)
-Auth: Caseworker or higher
+Default role when no query param is present: admin (demo convenience only; production will require explicit authentication).
 
-### POST /api/export
-Generate a funder-specific CSV.
-Body: {funder:"ircc"|"eo"|"uw"|"city"}
-Returns: {headers:string[], rows:string[][], funder:string, label:string, count:number}
-Auth: Admin
+AI Agent calls must include the header: `Authorization: Bearer <ONEVIEW_API_KEY>`
 
-### POST /api/draft-report
-Generate AI narrative for a funder report.
-Body: {funder:string, period:string, forceLive?:boolean}
-Returns: {narrative:string, cached:boolean, metrics:object}
-Auth: Admin
-
-### POST /api/query
-Ask a question about program metrics.
-Body: {question:string}
-Returns: {answer:string, metrics:object}
-Auth: Caseworker or higher
-
-### POST /api/reset
-Truncate all tables and re-seed 16,247 demo clients.
-Body: {}
-Returns: {success:true, message:string}
-Auth: Admin only
-
-### GET /api/provider
-Returns current LLM provider.
-Returns: {provider:"gemini"|"claude"|"groq"}
-Auth: Public
-
-## Authentication
-
-Demo mode: add ?role=admin|caseworker|viewer to any URL.
-AI Agent mode: Authorization: Bearer <ONEVIEW_API_KEY> header.
-Default role when no param: admin.
-
-## Programs and Funders
-
-settlement -> ircc
-language -> ircc
-employment -> eo
-trades -> eo
-mental_health -> uw
-youth -> uw
-mentoring -> city
-women -> city
-
-## Privacy Rules
-
-PHI Wall: mental_health program data is ALWAYS excluded from cross-program queries. This is a PHIPA requirement enforced at SQL level.
-
-Consent: Set consent_cross_program=true in enrolments for cross-program data sharing. Requires verbal client consent.
+---
 
 ## Data Model
 
-clients: id(uuid), full_name, primary_language, immigration_stream, created_at
-enrolments: id, client_id, program, funder, consent_cross_program(bool), enrolled_at
-outcomes: id, enrolment_id, tier(immediate|intermediate|ultimate), label, achieved(bool), recorded_at
-audit_log: id, action, entity, detail(jsonb), user_role, source_ip, at
-report_cache: id, funder, period, narrative, created_at
+### clients
+id (uuid, PK), full_name (text), primary_language (text), immigration_stream (text), stage (text), source (text), country_of_origin (text), age_group (text), gender (text), phone (text, nullable), email (text, nullable), created_at (timestamptz)
+
+stage values: outreach, vetting, eligibility, intake, training, placement, survey, complete, dropped
+
+age_group values: 18-24, 25-34, 35-44, 45-54, 55+
+
+source values: referral, partner, walk-in, online, event, direct
+
+immigration_stream values: refugee, skilled_worker, family, international_student, asylum_seeker, temporary_worker
+
+### enrolments
+id (uuid, PK), client_id (uuid -> clients), program (text), funder (text), consent_cross_program (bool, default false), enrolled_at (timestamptz)
+
+### outcomes
+id (uuid, PK), enrolment_id (uuid -> enrolments), tier (text), label (text), achieved (bool), recorded_at (timestamptz)
+
+tier values: immediate, intermediate, ultimate
+
+### surveys
+id (uuid, PK), client_id (uuid -> clients), enrolment_id (uuid -> enrolments), satisfaction (int 1-5), would_recommend (bool), barriers (text, nullable), success_story (text, nullable), created_at (timestamptz)
+
+### audit_log
+id (uuid, PK), action (text), entity (text), detail (jsonb), user_role (text), source_ip (text), at (timestamptz)
+
+### report_cache
+id (uuid, PK), funder (text), period (text), narrative (text), created_at (timestamptz)
+
+---
+
+## Programs and Funders
+
+| Program      | Funder | Funder full name             |
+|--------------|--------|------------------------------|
+| settlement   | ircc   | Immigration, Refugees and Citizenship Canada |
+| language     | ircc   | Immigration, Refugees and Citizenship Canada |
+| employment   | eo     | Employment Ontario           |
+| trades       | eo     | Employment Ontario           |
+| mental_health| uw     | United Way Greater Toronto   |
+| youth        | uw     | United Way Greater Toronto   |
+| mentoring    | city   | City of Toronto              |
+| women        | city   | City of Toronto              |
+
+---
+
+## Pipeline Stages
+
+Clients move through 9 stages in order:
+1. outreach: Initial contact, not yet assessed
+2. vetting: Background suitability check
+3. eligibility: Formal eligibility determination
+4. intake: Enrolled in program (active client)
+5. training: Receiving services
+6. placement: Placed in job, housing, or community role
+7. survey: Services complete, awaiting exit survey
+8. complete: Journey finished with survey submitted
+9. dropped: Exited without completing program
+
+---
+
+## Outcome Tiers and Labels by Program
+
+Each enrolment has three outcomes, one per tier. Achieved = true means the outcome was met.
+
+settlement: immediate="Needs assessment completed", intermediate="Service plan activated", ultimate="Settlement goals achieved"
+employment: immediate="Skills gap identified", intermediate="Job search skills built", ultimate="Employment secured"
+language: immediate="Language assessment done", intermediate="Language benchmark improved", ultimate="Language goal reached"
+mental_health: immediate="Mental health screen done", intermediate="Coping strategies learned", ultimate="Wellbeing improved"
+trades: immediate="Trade aptitude assessed", intermediate="Certification earned", ultimate="Trades employment secured"
+mentoring: immediate="Mentor matched", intermediate="Milestone check-in completed", ultimate="Mentorship goals met"
+youth: immediate="Youth intake completed", intermediate="Life skills developed", ultimate="Education or employment achieved"
+women: immediate="Safety plan created", intermediate="Skills training completed", ultimate="Economic independence achieved"
+
+---
+
+## Privacy Rules
+
+### PHI Wall
+mental_health program data is ALWAYS excluded from cross-program queries regardless of consent. This is a PHIPA hard requirement enforced at the SQL layer on every cross-program query:
+  AND e.program != 'mental_health'
+No role, API key, or consent flag can override this.
+
+### Consent Levels
+1. Program consent (automatic): client data used only for that program's funder reporting
+2. Cross-program consent (explicit opt-in): consent_cross_program=true in enrolments; required for aggregate cross-program dashboards
+3. Dashboard aggregation (implied): anonymized aggregate metrics only, no PII
+
+### Applicable Privacy Laws by Program
+- settlement, language: Federal Privacy Act
+- employment, trades: FIPPA (Ontario)
+- mental_health: PHIPA (PHI Wall always active)
+- youth: CYFSA Part X
+- mentoring, women: MFIPPA (City of Toronto)
+
+---
+
+## API Reference
+
+### GET /api/health
+Returns platform status and DB connectivity.
+Response: {status:"ok", db:true, version:"1.0.0"}
+Auth: Public
+
+### GET /api/init
+Initializes database schema and seeds demo data if tables are empty.
+Response: {initialized:true, seeded:boolean, clientCount:number}
+Auth: Public
+Note: Seeds 16,247 demo clients across all 8 programs with realistic distributions.
+
+### GET /api/migrate
+Runs CREATE TABLE IF NOT EXISTS for all 6 tables. Safe to call on an existing database.
+Response: {migrated:true}
+Auth: Public
+
+### GET /api/clients
+Returns all clients with enrolment details and outcome summary metrics.
+Query params: program (filter by program), stage (filter by stage)
+Response: {clients:[{id, full_name, primary_language, immigration_stream, stage, source, country_of_origin, age_group, gender, program, funder, consent_cross_program, enrolled_at, outcomes_achieved, outcomes_total}], metrics:{total, active, crossProgram, outcomesAchievedPct, byProgram}}
+Auth: Caseworker+
+
+### POST /api/clients
+Create a new client with enrolment and default outcomes.
+Body: {full_name:string, primary_language:string, immigration_stream:string, program:string, funder?:string, consent_cross_program?:boolean, stage?:string, source?:string, country_of_origin?:string, age_group?:string, gender?:string, phone?:string, email?:string}
+Response: {clientId:string, enrolId:string} (201)
+Auth: Caseworker+
+
+### POST /api/export
+Generate a funder-specific compliance CSV for upload to funder portals.
+Body: {funder:"ircc"|"eo"|"uw"|"city"}
+Response: {headers:string[], rows:string[][], funder:string, label:string, count:number}
+Auth: Admin
+
+### POST /api/draft-report
+Generate an AI narrative for a funder period report. Checks cache first; use forceLive:true to bypass.
+Body: {funder:string, period:string, forceLive?:boolean}
+Response: {narrative:string, cached:boolean, metrics:object}
+Auth: Admin
+
+### POST /api/query
+Ask a natural language question about program metrics. AI answer grounded in live database metrics.
+Body: {question:string}
+Response: {answer:string, metrics:object}
+Auth: Caseworker+ or AI Agent (Bearer token)
+
+### POST /api/reset
+Truncates all tables and re-seeds 16,247 demo clients. Destructive.
+Body: {}
+Response: {success:true, message:string}
+Auth: Admin
+
+### GET /api/provider
+Returns the currently configured LLM provider.
+Response: {provider:"gemini"|"claude"|"groq"}
+Auth: Public
+
+### GET /api/analytics
+Returns program analytics, survey statistics, and outcome trends.
+Response: {programs:[{program, funder, enrolled, outcomesAchievedPct, satisfaction}], surveys:{total, avgSatisfaction, wouldRecommendPct}, outcomesByTier:{immediate, intermediate, ultimate}, ageDistribution:object, genderDistribution:object}
+Auth: Caseworker+
+
+### GET /api/pipeline
+Returns client counts by pipeline stage across all programs.
+Response: {stages:[{stage, count}], total:number}
+Auth: Caseworker+
+
+### GET /api/journey
+Returns a full client journey including enrolment, outcomes, case notes, and survey.
+Query params: clientId (required)
+Response: {client:object, enrolment:object, outcomes:[object], notes:[object], survey:object|null}
+Auth: Caseworker+
+
+### GET /api/pending-surveys
+Returns clients in the "survey" pipeline stage who have not yet submitted an exit survey.
+Response: {clients:[{id, full_name, program, enrolled_at, surveyUrl}], count:number}
+Auth: Caseworker+
+
+### POST /api/survey
+Submit an exit survey for a client. Moves client stage to "complete".
+Body: {clientId:string, enrolmentId:string, satisfaction:number(1-5), would_recommend:boolean, barriers?:string, success_story?:string}
+Response: {surveyId:string} (201)
+Auth: Public (survey links are sent to clients directly)
+
+### GET /api/survey/[id]
+Retrieve a submitted survey result for a specific client.
+Response: {survey:{id, satisfaction, would_recommend, barriers, success_story, created_at}}
+Auth: Caseworker+
+
+### GET /api/notes
+Retrieve case notes for a client.
+Query params: clientId (required)
+Response: {notes:[{id, content, user_role, created_at}]}
+Auth: Caseworker+
+
+### POST /api/notes
+Add a case note for a client.
+Body: {clientId:string, content:string}
+Response: {noteId:string} (201)
+Auth: Caseworker+
+
+### GET /api/audit
+Retrieve audit log entries, most recent first.
+Query params: limit (default 100), entity (filter by entity type)
+Response: {entries:[{id, action, entity, detail, user_role, source_ip, at}]}
+Auth: Admin
+
+### GET /api/ai-insights
+Generate AI-powered program insights. Falls back to 5 rule-based statistical comparisons if no LLM key is configured: best program vs org average outcome rate, programs below average, top intake channel by volume, and client satisfaction vs the 3.8 sector benchmark.
+Response: {insights:[{title:string, body:string, source:"llm"|"rule-based"}]}
+Auth: Caseworker+
+
+---
 
 ## Environment Variables
 
-LLM_PROVIDER: gemini (default), claude, or groq
+LLM_PROVIDER: gemini (default) | claude | groq
 LLM_API_KEY: API key for the selected LLM provider
-POSTGRES_URL: Vercel Postgres connection string
-ONEVIEW_API_KEY: Bearer token for AI Agent role
+POSTGRES_URL: Vercel Postgres connection string (auto-injected on Vercel)
+POSTGRES_PRISMA_URL: Pooled Postgres connection
+POSTGRES_URL_NON_POOLING: Direct (non-pooled) Postgres connection
+POSTGRES_USER, POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_DATABASE: Individual connection params
+ONEVIEW_API_KEY: Bearer token granting ai_agent role access to /api/query and /api/export
 
-## Reset Demo Data
+---
 
-POST /api/reset truncates all tables and re-seeds 16,247 demo clients across 8 programs.
+## Survey Flow
+
+When a client reaches the "survey" stage:
+1. GET /api/pending-surveys returns the client with a pre-constructed survey URL
+2. Caseworker sends the link (email or SMS) to the client
+3. Client opens /survey/[clientId] and fills out the form (no login required)
+4. POST /api/survey records the response and patches the client stage to "complete"
+5. GET /api/journey?clientId=... returns the full journey including the survey result
+
+---
+
+## AI Capabilities
+
+POST /api/query: Ask anything about program metrics in plain English. Examples:
+- "How many clients completed employment in the last 90 days?"
+- "What is the outcome rate for trades compared to the organization average?"
+- "Which funder has the highest satisfaction score?"
+
+POST /api/draft-report: Generates a formal narrative suitable for submission to a funder. Includes outcome rates, satisfaction, cross-program summary (PHI Wall applied), and period comparison.
+
+GET /api/ai-insights: Proactive insights highlighting performance outliers, trends, and areas of concern.
+
+---
 
 ## Integration Notes
 
-Microsoft Forms: Configure Power Automate HTTP action to POST to /api/clients with mapped fields.
-Excel/SharePoint: Export historical records as CSV, map columns to OneView schema, bulk import via /api/clients.
-iCARE: Generate CSV via POST /api/export with funder="ircc", upload manually.
-EOIS-CaMS: Generate CSV via POST /api/export with funder="eo", upload manually.
+### Microsoft Power Automate
+Configure an HTTP action on form submission to POST /api/clients. Field mapping:
+- Full Name -> full_name
+- Language -> primary_language
+- Immigration Background -> immigration_stream
+- Program -> program
+- Consent Shared -> consent_cross_program (boolean)
+
+### Excel / SharePoint
+Export historical records as CSV. Map columns to OneView schema. Bulk import via repeated POST /api/clients calls.
+
+### iCARE (IRCC portal)
+Generate CSV: POST /api/export {funder:"ircc"}. Upload the downloaded CSV manually to the iCARE portal.
+
+### EOIS-CaMS (Employment Ontario portal)
+Generate CSV: POST /api/export {funder:"eo"}. Upload manually.
+
+### United Way ETO
+Generate CSV: POST /api/export {funder:"uw"}. Upload manually.
+
+### City of Toronto e-Service
+Generate CSV: POST /api/export {funder:"city"}. Upload manually.
+
+---
+
+## Demo Data
+
+Seeded on /api/init with 16,247 clients:
+- settlement: 2,847 clients
+- employment: 2,203 clients
+- language: 2,156 clients
+- mental_health: 1,891 clients
+- trades: 1,644 clients
+- mentoring: 1,956 clients
+- youth: 1,789 clients
+- women: 1,761 clients
+
+Distributions are deterministic and realistic: age skews young (18-34 = 75%), gender reflects newcomer population diversity, source weighted toward referrals and partner organizations, intake dates follow a power-curve with recent months heavier, outcome rates reflect a high-performing organization (72-97% by program and tier).

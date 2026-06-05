@@ -42,7 +42,7 @@ const LAYERS = [
 const ARCH_DIAGRAMS = [
   {
     title: "Database Schema (ERD)",
-    description: "Five tables with referential integrity. clients and enrolments are the core entities; outcomes, audit_log, and report_cache hang off them.",
+    description: "Six tables with referential integrity. clients and enrolments are the core entities; outcomes, surveys, audit_log, and report_cache hang off them.",
     id: "arch-erd",
     code: `erDiagram
     clients {
@@ -50,6 +50,13 @@ const ARCH_DIAGRAMS = [
         string full_name
         string primary_language
         string immigration_stream
+        string stage
+        string country_of_origin
+        string age_group
+        string gender
+        string phone
+        string email
+        string source
         timestamp created_at
     }
     enrolments {
@@ -68,6 +75,16 @@ const ARCH_DIAGRAMS = [
         boolean achieved
         timestamp recorded_at
     }
+    surveys {
+        uuid id PK
+        uuid client_id FK
+        uuid enrolment_id FK
+        int satisfaction
+        boolean would_recommend
+        text barriers
+        text success_story
+        timestamp created_at
+    }
     audit_log {
         uuid id PK
         string action
@@ -85,7 +102,9 @@ const ARCH_DIAGRAMS = [
         timestamp created_at
     }
     clients ||--o{ enrolments : "enrolled in"
-    enrolments ||--o{ outcomes : "tracks"`,
+    enrolments ||--o{ outcomes : "tracks"
+    clients ||--o{ surveys : "exit survey"
+    enrolments ||--o{ surveys : "linked to"`,
   },
   {
     title: "System Context",
@@ -135,7 +154,12 @@ const ARCH_DIAGRAMS = [
     J --> K[SQL metrics\nas JSON]
     K --> L[LLM narrative\ngrounded in data]
     L --> M[(report_cache)]
-    I -->|Staff uploads| N[Funder portal]`,
+    I -->|Staff uploads| N[Funder portal]
+    C --> O{stage = survey?}
+    O -->|Yes| P[Survey link\nsent to client]
+    P --> Q[POST /api/survey\nClient submits]
+    Q --> R[(surveys)]
+    R --> F`,
   },
   {
     title: "RBAC Permissions",

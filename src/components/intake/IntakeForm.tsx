@@ -21,7 +21,7 @@ const FUNDER_MAP: Record<string,string> = {
 const FUNDER_LABELS: Record<string,string> = { ircc:"IRCC",eo:"Employment Ontario",uw:"United Way",city:"City of Toronto" }
 const SOURCES = ["Walk-in","Referral from partner","Online search","Community event","Previous client","Other"]
 const AGE_GROUPS = ["18-24","25-34","35-44","45-54","55+"]
-const GENDERS = ["Man","Woman","Non-binary","Prefer not to say"]
+const GENDERS = ["Woman","Man","Non-binary","Two-Spirit","Transgender woman","Transgender man","Genderfluid","Agender","Gender non-conforming","Genderqueer","Bigender","Questioning","Self-describe…","Prefer not to say"]
 
 interface FormState {
   // Personal
@@ -31,6 +31,7 @@ interface FormState {
   country_of_origin: string
   age_group: string
   gender: string
+  gender_self_describe: string
   phone: string
   email: string
   source: string
@@ -51,6 +52,7 @@ export default function IntakeForm() {
     country_of_origin: "",
     age_group: "25-34",
     gender: "Prefer not to say",
+    gender_self_describe: "",
     phone: "",
     email: "",
     source: "Walk-in",
@@ -91,7 +93,7 @@ export default function IntakeForm() {
           // Forward-compatible fields
           country_of_origin: form.country_of_origin,
           age_group: form.age_group,
-          gender: form.gender,
+          gender: form.gender === "Self-describe…" ? (form.gender_self_describe.trim() || "Self-describe…") : form.gender,
           phone: form.phone,
           email: form.email,
           source: form.source,
@@ -108,6 +110,7 @@ export default function IntakeForm() {
         country_of_origin: "",
         age_group: "25-34",
         gender: "Prefer not to say",
+        gender_self_describe: "",
         phone: "",
         email: "",
         source: "Walk-in",
@@ -186,6 +189,14 @@ export default function IntakeForm() {
             <select value={form.gender} onChange={e => update("gender", e.target.value)} className={inputClass("")}>
               {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
+            {form.gender === "Self-describe…" && (
+              <input
+                value={form.gender_self_describe}
+                onChange={e => update("gender_self_describe", e.target.value)}
+                placeholder="Please describe your gender identity"
+                className={`${inputClass("")} mt-2`}
+              />
+            )}
           </div>
         </div>
 

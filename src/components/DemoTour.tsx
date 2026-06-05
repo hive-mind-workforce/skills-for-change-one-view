@@ -63,7 +63,7 @@ export default function DemoTour() {
           element: "[data-tour=analytics]",
           popover: {
             title: "Step 1: Understand the data",
-            description: "Marcus opens Analytics. World map, monthly intake trend, program performance, demographic breakdown, and satisfaction scores — all from the same database, no pivot tables.",
+            description: "Marcus opens Analytics. World map, monthly intake trend, program performance, demographic breakdown, and satisfaction scores: all from the same database, no pivot tables.",
             side: "right",
             onNextClick: () => {
               router.push(`/analytics${qs}`)

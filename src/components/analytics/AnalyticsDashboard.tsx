@@ -3,14 +3,15 @@ import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import {
   Star, Briefcase, TrendingDown, CheckSquare, Globe, Target,
-  ThumbsUp, Users, TrendingUp, Lightbulb, Activity,
+  ThumbsUp, Users, TrendingUp, Lightbulb, Activity, AlertCircle, Quote,
+  ChevronDown, ChevronUp, Zap,
 } from "lucide-react"
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   AreaChart, Area, LineChart, Line, CartesianGrid, PieChart, Pie, Legend,
 } from "recharts"
 import ProgramBadge from "@/components/ProgramBadge"
-import { programColor, programShortLabel } from "@/lib/helpers"
+import { programColor, programLabel, programShortLabel, countryName } from "@/lib/helpers"
 
 // Dynamically import the map to avoid SSR issues with react-simple-maps
 const WorldMap = dynamic(() => import("./WorldMap"), {
@@ -44,9 +45,18 @@ interface BySourceRow {
 
 interface ByProgramRow {
   program: string
-  total: string | number
-  placed: string | number
-  dropped: string | number
+  total: number
+  placed: number
+  dropped: number
+  avg_satisfaction: number | null
+  recommend_pct: number | null
+  survey_count: number
+}
+
+interface StageProgramRow {
+  stage: string
+  program: string
+  count: string | number
 }
 
 interface SurveyStats {
@@ -60,17 +70,33 @@ interface MonthlyRow {
   count: string | number
 }
 
+interface Testimonial {
+  success_story: string
+  satisfaction: number
+  program: string
+  full_name: string
+}
+
+interface BarrierRow {
+  barriers: string
+  program: string
+  count: string | number
+}
+
 interface AnalyticsData {
   byCountry: ByCountryRow[]
   byAgeGroup: ByAgeGroupRow[]
   byGender: ByGenderRow[]
   bySource: BySourceRow[]
   byProgram: ByProgramRow[]
+  stageByProgram: StageProgramRow[]
   surveyStats: SurveyStats
   placementCount: string | number
   droppedCount: string | number
   totalClients: string | number
   monthlyTrend?: MonthlyRow[]
+  testimonials?: Testimonial[]
+  barriersByProgram?: BarrierRow[]
 }
 
 interface AnalyticsDashboardProps {
@@ -136,9 +162,16 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedProgram, setSelectedProgram] = useState<string | null>(null)
+  const [surveyProgram, setSurveyProgram] = useState<string>("all")
+  const [interval, setInterval] = useState<string>("all")
+  const [aiInsights, setAiInsights] = useState<Array<{ title: string; body: string; type: string; program: string }> | null>(null)
+  const [insightsLoading, setInsightsLoading] = useState(false)
 
   useEffect(() => {
-    fetch("/api/analytics")
+    setLoading(true)
+    setSelectedProgram(null)
+    fetch(`/api/analytics${interval !== "all" ? `?interval=${interval}` : ""}`)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
@@ -161,7 +194,18 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
             total: Number(p.clients),
             placed: Math.round(Number(p.clients) * Number(p.outcome_rate ?? 0) / 100),
             dropped: 0,
+            avg_satisfaction: p.avg_satisfaction != null ? Number(p.avg_satisfaction) : null,
+            recommend_pct: p.recommend_pct != null ? Number(p.recommend_pct) : null,
+            survey_count: Number(p.survey_count ?? 0),
           })),
+          stageByProgram: raw.stageByProgram ?? [],
+          testimonials: (raw.testimonials ?? []).map((t: any) => ({
+            success_story: String(t.success_story ?? ""),
+            satisfaction: Number(t.satisfaction ?? 0),
+            program: String(t.program ?? ""),
+            full_name: String(t.full_name ?? ""),
+          })),
+          barriersByProgram: raw.barriersByProgram ?? [],
           surveyStats: {
             avg_satisfaction: Number(surveyRaw.avg_sat ?? 0),
             total: surveyTotal,
@@ -181,7 +225,32 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
         setError(e.message)
         setLoading(false)
       })
-  }, [])
+  }, [interval])
+
+  // Fetch AI insights once data is available
+  useEffect(() => {
+    if (!data) return
+    setAiInsights(null)
+    setInsightsLoading(true)
+    const summary = {
+      totalClients: data.totalClients,
+      programPerformance: data.byProgram?.slice(0, 8),
+      surveyStats: data.surveyStats,
+      bySource: data.bySource?.slice(0, 5),
+      byCountry: data.byCountry?.slice(0, 5),
+    }
+    fetch("/api/ai-insights", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ analytics: summary }),
+    })
+      .then(r => r.json())
+      .then(res => {
+        if (res.insights?.length) setAiInsights(res.insights)
+      })
+      .catch(() => {})
+      .finally(() => setInsightsLoading(false))
+  }, [data])
 
   if (loading) return <LoadingSkeleton />
 
@@ -216,12 +285,29 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
   }))
 
   // Program data
-  const byProgram = (data.byProgram ?? []).map((r) => ({
-    program: r.program,
-    total: Number(r.total),
-    placed: Number(r.placed),
-    dropped: Number(r.dropped),
-  }))
+  const byProgram = data.byProgram ?? []
+
+  // Per-program stage breakdown for drill-down
+  const stageByProgram = data.stageByProgram ?? []
+
+  // Avg outcome rate across all programs for comparison
+  const avgOutcomeRate = byProgram.length > 0
+    ? byProgram.reduce((s, p) => s + (p.total > 0 ? (p.placed / p.total) * 100 : 0), 0) / byProgram.length
+    : 0
+
+  // Programs below average (need attention)
+  const belowAvgPrograms = byProgram.filter(p => p.total > 0 && (p.placed / p.total) * 100 < avgOutcomeRate - 5)
+  const aboveAvgPrograms = byProgram.filter(p => p.total > 0 && (p.placed / p.total) * 100 > avgOutcomeRate + 10)
+
+  // Selected program detail
+  const selectedProgramData = selectedProgram ? byProgram.find(p => p.program === selectedProgram) ?? null : null
+  const selectedStages = stageByProgram
+    .filter((r: any) => r.program === selectedProgram)
+    .map((r: any) => ({ stage: String(r.stage), count: Number(r.count) }))
+    .sort((a, b) => {
+      const ORDER = ["outreach","vetting","eligibility","intake","training","placement","survey","complete"]
+      return ORDER.indexOf(a.stage) - ORDER.indexOf(b.stage)
+    })
 
   // Age group data sorted
   const ageData = AGE_GROUP_ORDER
@@ -233,15 +319,34 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
 
   const maxAge = Math.max(1, ...ageData.map((d) => d.count))
 
-  // Gender data
+  // Gender data: normalize legacy seed values to inclusive labels
+  const KNOWN_GENDERS = new Set(["Woman","Man","Non-binary","Two-Spirit","Transgender woman","Transgender man","Genderfluid","Agender","Gender non-conforming","Genderqueer","Bigender","Questioning","Prefer not to say","Neutrois","Demi-girl"])
+  const GENDER_LABEL: Record<string, string> = {
+    female: "Woman", male: "Man", non_binary: "Non-binary", prefer_not_to_say: "Prefer not to say",
+  }
+  function normalizeGender(raw: string): string {
+    if (GENDER_LABEL[raw]) return GENDER_LABEL[raw]
+    if (KNOWN_GENDERS.has(raw)) return raw
+    return `Self-described`
+  }
   const genderData = (data.byGender ?? []).map((r) => ({
-    label: String(r.gender).charAt(0).toUpperCase() + String(r.gender).slice(1),
+    label: normalizeGender(String(r.gender)),
     count: Number(r.count),
   }))
   const totalGender = genderData.reduce((s, r) => s + r.count, 0) || 1
 
-  const GENDER_COLORS = ["text-indigo-600 dark:text-indigo-400", "text-rose-600 dark:text-rose-400", "text-cyan-600 dark:text-cyan-400"]
-  const GENDER_BG = ["bg-indigo-500", "bg-rose-500", "bg-cyan-500"]
+  const GENDER_COLORS = [
+    "text-indigo-600 dark:text-indigo-400", "text-rose-600 dark:text-rose-400",
+    "text-cyan-600 dark:text-cyan-400", "text-amber-600 dark:text-amber-400",
+    "text-violet-600 dark:text-violet-400", "text-emerald-600 dark:text-emerald-400",
+    "text-pink-600 dark:text-pink-400", "text-sky-600 dark:text-sky-400",
+    "text-orange-600 dark:text-orange-400", "text-teal-600 dark:text-teal-400",
+  ]
+  const GENDER_BG = [
+    "bg-indigo-500", "bg-rose-500", "bg-cyan-500", "bg-amber-500",
+    "bg-violet-500", "bg-emerald-500", "bg-pink-500", "bg-sky-500",
+    "bg-orange-500", "bg-teal-500",
+  ]
 
   // Source data
   const sourceData = (data.bySource ?? []).map((r) => ({
@@ -260,12 +365,17 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
     : 0
 
   // Key insights
-  const topProgram = byProgram.reduce((a, b) => (Number(b.total) > Number(a.total) ? b : a), byProgram[0])
-  const bestOutcomeProgram = byProgram.reduce((a, b) => {
-    const pctA = Number(a.total) > 0 ? Number(a.placed) / Number(a.total) : 0
-    const pctB = Number(b.total) > 0 ? Number(b.placed) / Number(b.total) : 0
+  const topProgram = byProgram.length > 0 ? byProgram.reduce((a, b) => (b.total > a.total ? b : a), byProgram[0]) : null
+  const bestOutcomeProgram = byProgram.length > 0 ? byProgram.reduce((a, b) => {
+    const pctA = a.total > 0 ? a.placed / a.total : 0
+    const pctB = b.total > 0 ? b.placed / b.total : 0
     return pctB > pctA ? b : a
-  }, byProgram[0])
+  }, byProgram[0]) : null
+  const worstOutcomeProgram = byProgram.length > 0 ? byProgram.filter(p => p.total > 100).reduce((a, b) => {
+    const pctA = a.total > 0 ? a.placed / a.total : 1
+    const pctB = b.total > 0 ? b.placed / b.total : 1
+    return pctB < pctA ? b : a
+  }, byProgram.filter(p => p.total > 100)[0] ?? byProgram[0]) : null
   const topSource = sourceData[0]
   const topCountry = (data.byCountry ?? []).reduce((a: any, b: any) => (Number(b.count) > Number(a.count) ? b : a), data.byCountry?.[0] ?? { country_of_origin: "N/A", count: 0 })
 
@@ -281,8 +391,53 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
     return { funder, total }
   }).filter(f => f.total > 0)
 
+  // Testimonials filtered by selected survey program
+  const allTestimonials: Testimonial[] = data.testimonials ?? []
+  const filteredTestimonials = surveyProgram === "all"
+    ? allTestimonials
+    : allTestimonials.filter(t => t.program === surveyProgram)
+
+  // Top barriers aggregated for the selected program
+  const barriersByProgram: BarrierRow[] = data.barriersByProgram ?? []
+  const topBarriers = (surveyProgram === "all"
+    ? Object.entries(barriersByProgram.reduce((acc: Record<string, number>, r) => {
+        acc[r.barriers] = (acc[r.barriers] ?? 0) + Number(r.count); return acc
+      }, {})).map(([b, c]) => ({ barriers: b, count: c }))
+    : barriersByProgram.filter(r => r.program === surveyProgram).map(r => ({ barriers: r.barriers, count: Number(r.count) }))
+  ).sort((a, b) => Number(b.count) - Number(a.count)).slice(0, 5)
+
+  // Per-program satisfaction for the survey view
+  const programSurveyStats = byProgram.filter(p => p.survey_count > 0 && p.avg_satisfaction != null)
+
+  const INTERVALS = [
+    { key: "1d", label: "24h" },
+    { key: "7d", label: "7 days" },
+    { key: "30d", label: "30 days" },
+    { key: "90d", label: "Quarter" },
+    { key: "180d", label: "6 months" },
+    { key: "365d", label: "1 year" },
+    { key: "all", label: "All time" },
+  ]
+
   return (
     <div className="space-y-8">
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 0. TIME INTERVAL SELECTOR                                            */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Showing:</span>
+        {INTERVALS.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setInterval(key)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${interval === key ? "bg-emerald-500 text-white" : "glass border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]"}`}
+          >
+            {label}
+          </button>
+        ))}
+        {loading && <span className="text-xs text-slate-400 animate-pulse ml-2">Loading…</span>}
+      </div>
 
       {/* ------------------------------------------------------------------ */}
       {/* 1. HERO METRICS ROW                                                  */}
@@ -370,57 +525,125 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
       {/* 3. PROGRAM OUTCOMES GRID                                             */}
       {/* ------------------------------------------------------------------ */}
       <section id="analytics-programs">
-        <div className="flex items-center gap-2 mb-4">
-          <Target size={18} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-          <h2 className="font-sora text-xl text-slate-900 dark:text-white">Program Performance</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Target size={18} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+            <h2 className="font-sora text-xl text-slate-900 dark:text-white">Program Performance</h2>
+          </div>
+          <span className="text-xs text-slate-500 dark:text-slate-400">Click a program to drill down</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {byProgram.map(({ program, total, placed, dropped }) => {
+          {byProgram.map(({ program, total, placed, avg_satisfaction, recommend_pct, survey_count }) => {
             const placePct = total > 0 ? (placed / total) * 100 : 0
-            const dropPct = total > 0 ? (dropped / total) * 100 : 0
             const color = programColor(program)
+            const isSelected = selectedProgram === program
+            const isBelow = total > 100 && placePct < avgOutcomeRate - 5
             return (
-              <div key={program} className="glass rounded-xl p-4 flex flex-col gap-3 glass-hover">
+              <button
+                key={program}
+                onClick={() => setSelectedProgram(isSelected ? null : program)}
+                className={`glass rounded-xl p-4 flex flex-col gap-3 text-left transition-all duration-200 ${isSelected ? "ring-2 ring-emerald-500/60 bg-emerald-500/[0.04]" : "glass-hover"}`}
+              >
                 <div className="flex items-center justify-between">
                   <ProgramBadge program={program} />
-                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">
-                    {total.toLocaleString()}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {isBelow && <AlertCircle size={12} className="text-amber-500" />}
+                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+                      {total.toLocaleString()}
+                    </span>
+                    {isSelected ? <ChevronUp size={12} className="text-slate-400" /> : <ChevronDown size={12} className="text-slate-400" />}
+                  </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">Placement</span>
+                    <span className="text-slate-600 dark:text-slate-400">Outcome rate</span>
                     <span className="font-medium" style={{ color }}>{placePct.toFixed(0)}%</span>
                   </div>
                   <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${placePct}%`, background: color }}
-                    />
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${placePct}%`, background: color }} />
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">Drop-off</span>
-                    <span className="text-amber-600 dark:text-amber-400 font-medium">{dropPct.toFixed(0)}%</span>
+                {avg_satisfaction != null && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 dark:text-slate-400">Satisfaction</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-medium">{avg_satisfaction.toFixed(1)}/5</span>
                   </div>
-                  <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-amber-400 dark:bg-amber-500 rounded-full transition-all duration-500"
-                      style={{ width: `${dropPct}%` }}
-                    />
-                  </div>
-                </div>
+                )}
 
-                <div className="text-xs text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-white/[0.06]">
-                  {programShortLabel(program)}
-                </div>
-              </div>
+                {survey_count > 0 && recommend_pct != null && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 dark:text-slate-400">Recommend</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">{recommend_pct.toFixed(0)}%</span>
+                  </div>
+                )}
+              </button>
             )
           })}
         </div>
+
+        {/* Drill-down panel */}
+        {selectedProgramData && (
+          <div className="mt-4 glass rounded-xl p-5 border border-emerald-500/20 space-y-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-sora text-lg text-slate-900 dark:text-white">{programLabel(selectedProgramData.program)}</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{selectedProgramData.total.toLocaleString()} enrolled clients</p>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-right">
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Outcome rate</p>
+                  <p className="font-sora text-xl font-bold" style={{ color: programColor(selectedProgramData.program) }}>
+                    {selectedProgramData.total > 0 ? ((selectedProgramData.placed / selectedProgramData.total) * 100).toFixed(0) : 0}%
+                  </p>
+                </div>
+                {selectedProgramData.avg_satisfaction != null && (
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Avg satisfaction</p>
+                    <p className="font-sora text-xl font-bold text-amber-600 dark:text-amber-400">{selectedProgramData.avg_satisfaction.toFixed(1)}/5</p>
+                  </div>
+                )}
+                {selectedProgramData.recommend_pct != null && (
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Recommend</p>
+                    <p className="font-sora text-xl font-bold text-emerald-600 dark:text-emerald-400">{selectedProgramData.recommend_pct.toFixed(0)}%</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {selectedStages.length > 0 && (
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium mb-3">Client Pipeline</p>
+                <div className="flex gap-1 items-end h-24">
+                  {selectedStages.map(({ stage, count }) => {
+                    const maxCount = Math.max(...selectedStages.map(s => s.count))
+                    const pct = maxCount > 0 ? (count / maxCount) * 100 : 0
+                    return (
+                      <div key={stage} className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{count >= 1000 ? (count/1000).toFixed(1)+"k" : count}</span>
+                        <div className="w-full rounded-t-sm transition-all" style={{ height: `${Math.max(pct, 4)}%`, background: programColor(selectedProgramData.program), opacity: 0.6 + pct * 0.004 }} />
+                        <span className="text-[10px] text-slate-400 capitalize truncate w-full text-center">{stage}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/[0.06] border border-blue-500/20">
+              <Lightbulb size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {selectedProgramData.total > 0 && (selectedProgramData.placed / selectedProgramData.total) * 100 < avgOutcomeRate - 5
+                  ? `Outcome rate is ${(avgOutcomeRate - (selectedProgramData.placed / selectedProgramData.total) * 100).toFixed(0)}pts below the org average. Consider additional caseworker support and barrier assessment for clients in the training stage.`
+                  : selectedProgramData.total > 0 && (selectedProgramData.placed / selectedProgramData.total) * 100 > avgOutcomeRate + 10
+                  ? `Top performer: ${(((selectedProgramData.placed / selectedProgramData.total) * 100) - avgOutcomeRate).toFixed(0)}pts above org average. Document the service model and consider replicating approaches across other programs.`
+                  : `Performing close to the org average of ${avgOutcomeRate.toFixed(0)}%. Monitor intake funnel and training completion rates to identify optimization opportunities.`}
+              </p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ------------------------------------------------------------------ */}
@@ -431,7 +654,7 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
           <Users size={18} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
           <h2 className="font-sora text-xl text-slate-900 dark:text-white">Demographic Breakdown</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
 
           {/* Age Groups */}
           <div className="glass rounded-xl p-5">
@@ -597,50 +820,154 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
       {/* ------------------------------------------------------------------ */}
       {byProgram.length > 0 && (
         <section id="analytics-insights">
-          <div className="flex items-center gap-2 mb-4">
-            <Lightbulb size={18} className="text-amber-500 flex-shrink-0" />
-            <h2 className="font-sora text-xl text-slate-900 dark:text-white">Key Insights</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Lightbulb size={18} className="text-amber-500 flex-shrink-0" />
+              <h2 className="font-sora text-xl text-slate-900 dark:text-white">Actionable Insights</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {insightsLoading && (
+                <span className="text-xs text-slate-400 animate-pulse">AI analyzing…</span>
+              )}
+              {!insightsLoading && aiInsights && (
+                <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/[0.08] border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                  <Zap size={10} /> AI-powered
+                </span>
+              )}
+              {!insightsLoading && !aiInsights && (
+                <span className="text-xs text-slate-400">Calculated from live data</span>
+              )}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              {
-                label: "Largest program by enrolment",
-                value: topProgram ? programShortLabel(topProgram.program) : "N/A",
-                sub: topProgram ? `${Number(topProgram.total).toLocaleString()} clients enrolled` : "",
-                color: "text-indigo-600 dark:text-indigo-400",
-                bg: "bg-indigo-500/[0.06] border-indigo-500/20",
-              },
-              {
-                label: "Highest outcome rate",
-                value: bestOutcomeProgram && Number(bestOutcomeProgram.total) > 0
-                  ? `${((Number(bestOutcomeProgram.placed) / Number(bestOutcomeProgram.total)) * 100).toFixed(0)}%`
-                  : "N/A",
-                sub: bestOutcomeProgram ? programShortLabel(bestOutcomeProgram.program) : "",
-                color: "text-emerald-600 dark:text-emerald-400",
-                bg: "bg-emerald-500/[0.06] border-emerald-500/20",
-              },
-              {
-                label: "Top intake source",
-                value: topSource ? (topSource.source.charAt(0).toUpperCase() + topSource.source.slice(1)) : "N/A",
-                sub: topSource ? `${Number(topSource.count).toLocaleString()} clients via ${topSource.source}` : "",
-                color: "text-violet-600 dark:text-violet-400",
-                bg: "bg-violet-500/[0.06] border-violet-500/20",
-              },
-              {
-                label: "Most common country of origin",
-                value: topCountry?.country_of_origin ?? "N/A",
-                sub: `${Number(topCountry?.count ?? 0).toLocaleString()} clients`,
-                color: "text-cyan-600 dark:text-cyan-400",
-                bg: "bg-cyan-500/[0.06] border-cyan-500/20",
-              },
-            ].map((insight, i) => (
-              <div key={i} className={`rounded-xl p-4 border ${insight.bg}`}>
-                <p className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider mb-1">{insight.label}</p>
-                <p className={`font-sora text-2xl font-bold ${insight.color}`}>{insight.value}</p>
-                <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{insight.sub}</p>
+
+          {/* AI insights panel */}
+          {aiInsights && aiInsights.length > 0 && (
+            <div className="space-y-3 mb-3">
+              {aiInsights.map((insight, i) => {
+                const colorMap = {
+                  success: { bg: "bg-emerald-500/[0.05] border-emerald-500/20", icon: "text-emerald-500", Icon: TrendingUp },
+                  warning: { bg: "bg-amber-500/[0.05] border-amber-500/20", icon: "text-amber-500", Icon: AlertCircle },
+                  info: { bg: "bg-blue-500/[0.05] border-blue-500/20", icon: "text-blue-500", Icon: Lightbulb },
+                }
+                const style = colorMap[insight.type as keyof typeof colorMap] ?? colorMap.info
+                const Icon = style.Icon
+                return (
+                  <div key={i} className={`flex items-start gap-3 p-4 rounded-xl border ${style.bg}`}>
+                    <Icon size={16} className={`${style.icon} flex-shrink-0 mt-0.5`} />
+                    <div>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{insight.title}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{insight.body}</p>
+                      {insight.program && insight.program !== "all" && (
+                        <div className="mt-1"><ProgramBadge program={insight.program} /></div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Rule-based insights (shown while loading or as fallback) */}
+          {(!aiInsights || insightsLoading) && (
+          <div className="space-y-3">
+            {/* Best performer */}
+            {bestOutcomeProgram && bestOutcomeProgram.total > 0 && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-500/[0.05] border border-emerald-500/20">
+                <TrendingUp size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {programLabel(bestOutcomeProgram.program)} leads with {((bestOutcomeProgram.placed / bestOutcomeProgram.total) * 100).toFixed(0)}% outcome rate
+                    {avgOutcomeRate > 0 && ` (${(((bestOutcomeProgram.placed / bestOutcomeProgram.total) * 100) - avgOutcomeRate).toFixed(0)}pts above avg)`}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Document and replicate the service model. Share best practices across caseworker teams.
+                  </p>
+                </div>
               </div>
-            ))}
+            )}
+
+            {/* Programs needing attention */}
+            {belowAvgPrograms.length > 0 && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/[0.05] border border-amber-500/20">
+                <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {belowAvgPrograms.length} program{belowAvgPrograms.length > 1 ? "s" : ""} below average outcome rate: {belowAvgPrograms.map(p => programShortLabel(p.program)).join(", ")}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Review intake-to-training conversion. Consider caseload review and eligibility bottleneck analysis.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Top source */}
+            {topSource && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-indigo-500/[0.05] border border-indigo-500/20">
+                <Users size={16} className="text-indigo-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {Number(topSource.count).toLocaleString()} clients reached via {topSource.source.charAt(0).toUpperCase() + topSource.source.slice(1)}, your strongest intake channel
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {sourceData.length > 1 && sourceData[1]
+                      ? `Second channel (${sourceData[1].source}) brings ${Number(sourceData[1].count).toLocaleString()}. Invest in both to diversify intake risk.`
+                      : "Diversify intake channels to reduce dependency on a single source."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Satisfaction insight */}
+            {avgSatisfaction > 0 && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-violet-500/[0.05] border border-violet-500/20">
+                <Star size={16} className="text-violet-500 flex-shrink-0 mt-0.5 fill-violet-500" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {avgSatisfaction >= 4.0
+                      ? `Client satisfaction is strong at ${avgSatisfaction.toFixed(1)}/5, above the sector benchmark of 3.8`
+                      : `Client satisfaction (${avgSatisfaction.toFixed(1)}/5) is below the 4.0 target; review service gaps`}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {surveyTotal > 0
+                      ? `Based on ${surveyTotal.toLocaleString()} survey responses. ${recommendPct}% would recommend Skills for Change to others.`
+                      : "Increase survey completion rate to improve reporting confidence."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Country diversity */}
+            {topCountry && Number(topCountry.count) > 0 && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-cyan-500/[0.05] border border-cyan-500/20">
+                <Globe size={16} className="text-cyan-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    Clients from {(data.byCountry ?? []).length} countries; top origin is {countryName(topCountry.country_of_origin)} ({Number(topCountry.count).toLocaleString()} clients, {((Number(topCountry.count) / totalClients) * 100).toFixed(0)}% of total)
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Ensure language and cultural support capacity matches top-origin communities. Review language training waitlists.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Above-average programs */}
+            {aboveAvgPrograms.length > 1 && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-500/[0.05] border border-blue-500/20">
+                <CheckSquare size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {aboveAvgPrograms.length} programs consistently exceed targets: {aboveAvgPrograms.map(p => programShortLabel(p.program)).join(", ")}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Allocate these as showcase programs for funder reporting and board presentations.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
+          )}
         </section>
       )}
 
@@ -681,69 +1008,125 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
       {/* 9. SURVEY INSIGHTS PANEL                                             */}
       {/* ------------------------------------------------------------------ */}
       <section id="analytics-survey">
-        <div className="glass rounded-xl p-6">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <h2 className="font-sora text-xl text-slate-900 dark:text-white mb-1">
-                Survey Insights
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm">
-                Based on {surveyTotal.toLocaleString()} client surveys
+        <div className="space-y-4">
+          {/* Header + program selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <CheckSquare size={18} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+              <h2 className="font-sora text-xl text-slate-900 dark:text-white">Survey Insights</h2>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {["all", ...byProgram.filter(p => p.survey_count > 0 && p.program !== "mental_health").map(p => p.program)].map(prog => (
+                <button
+                  key={prog}
+                  onClick={() => setSurveyProgram(prog)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${surveyProgram === prog ? "bg-emerald-500 text-white" : "glass border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]"}`}
+                >
+                  {prog === "all" ? "All Programs" : programShortLabel(prog)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Org-level metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Avg Satisfaction", value: (() => {
+                if (surveyProgram === "all") return avgSatisfaction.toFixed(1) + "/5"
+                const p = byProgram.find(x => x.program === surveyProgram)
+                return p?.avg_satisfaction != null ? p.avg_satisfaction.toFixed(1) + "/5" : "N/A"
+              })(), color: "text-amber-600 dark:text-amber-400", icon: Star },
+              { label: "Would Recommend", value: (() => {
+                if (surveyProgram === "all") return recommendPct + "%"
+                const p = byProgram.find(x => x.program === surveyProgram)
+                return p?.recommend_pct != null ? p.recommend_pct.toFixed(0) + "%" : "N/A"
+              })(), color: "text-emerald-600 dark:text-emerald-400", icon: ThumbsUp },
+              { label: "Survey Responses", value: (() => {
+                if (surveyProgram === "all") return surveyTotal.toLocaleString()
+                const p = byProgram.find(x => x.program === surveyProgram)
+                return p ? p.survey_count.toLocaleString() : "0"
+              })(), color: "text-violet-600 dark:text-violet-400", icon: CheckSquare },
+              { label: "Response Rate", value: (() => {
+                if (surveyProgram === "all") return totalClients > 0 ? ((surveyTotal / totalClients) * 100).toFixed(0) + "%" : "0%"
+                const p = byProgram.find(x => x.program === surveyProgram)
+                return p && p.total > 0 ? ((p.survey_count / p.total) * 100).toFixed(0) + "%" : "0%"
+              })(), color: "text-indigo-600 dark:text-indigo-400", icon: Activity },
+            ].map(({ label, value, color, icon: Icon }) => (
+              <div key={label} className="glass rounded-xl p-4 flex flex-col gap-1">
+                <span className="text-xs text-slate-500 dark:text-slate-400">{label}</span>
+                <span className={`font-sora text-2xl font-bold ${color}`}>{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Per-program satisfaction comparison (only shown for "all") */}
+          {surveyProgram === "all" && programSurveyStats.length > 0 && (
+            <div className="glass rounded-xl p-5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium mb-3">Satisfaction by Program</p>
+              <div className="space-y-2.5">
+                {programSurveyStats.sort((a, b) => (b.avg_satisfaction ?? 0) - (a.avg_satisfaction ?? 0)).map(p => (
+                  <div key={p.program} className="flex items-center gap-3">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">{programShortLabel(p.program)}</span>
+                    <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${((p.avg_satisfaction ?? 0) / 5) * 100}%`, background: programColor(p.program) }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200 w-10 text-right">{p.avg_satisfaction?.toFixed(1)}/5</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Top barriers */}
+          {topBarriers.length > 0 && (
+            <div className="glass rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertCircle size={14} className="text-amber-500 flex-shrink-0" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">Top Barriers to Progress</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {topBarriers.map(({ barriers, count }) => (
+                  <span key={barriers} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-amber-500/30 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300">
+                    {barriers}
+                    <span className="text-amber-500 font-semibold">{Number(count).toLocaleString()}</span>
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                Address these barriers in program design and intake support to improve completion rates.
               </p>
             </div>
+          )}
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <CheckSquare size={12} />
-              {surveyTotal.toLocaleString()} completed
-            </span>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {/* Avg Satisfaction */}
-            <div className="flex flex-col items-start gap-2">
-              <span className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-medium">
-                Avg Satisfaction
-              </span>
-              <span className="font-sora text-4xl text-amber-500 dark:text-amber-400 leading-none">
-                {avgSatisfaction.toFixed(1)}
-              </span>
-              <StarRating rating={avgSatisfaction} />
-              <span className="text-slate-500 dark:text-slate-400 text-xs">out of 5.0</span>
-            </div>
-
-            {/* Would Recommend */}
-            <div className="flex flex-col items-start gap-2">
-              <span className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-medium">
-                Would Recommend
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="font-sora text-4xl text-emerald-600 dark:text-emerald-400 leading-none">
-                  {recommendPct}%
-                </span>
-                <ThumbsUp size={20} className="text-emerald-500 dark:text-emerald-400 mb-1" />
+          {/* Testimonials */}
+          {filteredTestimonials.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Quote size={16} className="text-emerald-500 flex-shrink-0" />
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-medium">Client Testimonials</p>
               </div>
-              <span className="text-slate-500 dark:text-slate-400 text-xs">
-                {recommendCount.toLocaleString()} of {surveyTotal.toLocaleString()} respondents
-              </span>
-            </div>
-
-            {/* Response Rate */}
-            <div className="flex flex-col items-start gap-2">
-              <span className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-medium">
-                Response Rate
-              </span>
-              <span className="font-sora text-4xl text-violet-600 dark:text-violet-400 leading-none">
-                {totalClients > 0 ? ((surveyTotal / totalClients) * 100).toFixed(0) : "0"}%
-              </span>
-              <div className="h-1.5 w-full max-w-[120px] bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-violet-500 dark:bg-violet-400 rounded-full"
-                  style={{ width: `${totalClients > 0 ? (surveyTotal / totalClients) * 100 : 0}%` }}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {filteredTestimonials.slice(0, 6).map((t, i) => (
+                  <div key={i} className="glass rounded-xl p-4 flex flex-col gap-3">
+                    <div className="flex items-start gap-2">
+                      <Quote size={14} className="text-emerald-400 flex-shrink-0 mt-0.5 rotate-180" />
+                      <p className="text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">{t.success_story}</p>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{t.full_name}</span>
+                        <ProgramBadge program={t.program} />
+                      </div>
+                      <StarRating rating={t.satisfaction} />
+                    </div>
+                  </div>
+                ))}
               </div>
-              <span className="text-slate-500 dark:text-slate-400 text-xs">of all clients surveyed</span>
             </div>
-          </div>
+          )}
         </div>
       </section>
 

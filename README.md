@@ -1,4 +1,4 @@
-# OneView — Skills for Change
+# OneView: Skills for Change
 
 **Capture once, report to every funder.**
 
@@ -35,16 +35,16 @@ Charity registration: 121471858RR0001
 
 ## Features
 
-- **Single intake form** — register a client once, data flows to all 8 programs and 4 funders
-- **Funder-specific CSV export** — columns shaped to each funder's exact specification
-- **AI narrative reports** — one-click Q1/Q2/annual report generation with cache
-- **Real-time outcomes dashboard** — immediate, intermediate, and ultimate outcome tiers tracked from day one
-- **PHI Wall** — PHIPA-compliant hard wall on mental health data enforced at the SQL layer
-- **Cross-program consent** — explicit opt-in stored per enrolment, never assumed
-- **Interactive help screen** — 6 tabs covering architecture, privacy, API, and integrations
-- **Demo tour** — 8-step guided walkthrough (click "Start Demo" in the header)
-- **RBAC** — Admin, Caseworker, Viewer, and AI Agent roles
-- **Power Automate ready** — Microsoft Forms webhook integration, zero staff behavior change
+- **Single intake form**, register a client once, data flows to all 8 programs and 4 funders
+- **Funder-specific CSV export**, columns shaped to each funder's exact specification
+- **AI narrative reports**, one-click Q1/Q2/annual report generation with cache
+- **Real-time outcomes dashboard**, immediate, intermediate, and ultimate outcome tiers tracked from day one
+- **PHI Wall**, PHIPA-compliant hard wall on mental health data enforced at the SQL layer
+- **Cross-program consent**, explicit opt-in stored per enrolment, never assumed
+- **Interactive help screen with 8 tabs** covering architecture, privacy, API, and integrations
+- **Demo tour**, 8-step guided walkthrough (click "Start Demo" in the header)
+- **RBAC**, Admin, Caseworker, Viewer, and AI Agent roles
+- **Power Automate ready**, Microsoft Forms webhook integration, zero staff behavior change
 
 ---
 
@@ -74,7 +74,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Visit http://localhost:3000. On first load, `/api/init` seeds 19,140 demo clients across all 8 programs.
+Visit http://localhost:3010. On first load, `/api/init` seeds 19,140 demo clients across all 8 programs.
 
 ### Environment Variables
 
@@ -125,6 +125,13 @@ The live demo runs as admin by default: https://sfc-oneview.vercel.app/?role=adm
 | POST | /api/query | Caseworker+ | AI Q&A grounded in live metrics |
 | POST | /api/reset | Admin | Truncate and re-seed database |
 | GET | /api/provider | Public | Current LLM provider |
+| GET | /api/analytics | Caseworker+ | Program analytics and survey stats |
+| GET | /api/pipeline | Caseworker+ | Client pipeline by stage |
+| GET | /api/journey | Caseworker+ | Full client journey with notes and survey |
+| POST | /api/survey | Public | Submit client exit survey |
+| GET | /api/pending-surveys | Caseworker+ | Clients awaiting survey response |
+| GET | /api/ai-insights | Caseworker+ | AI-generated program insights |
+| GET | /api/audit | Admin+ | Audit log entries |
 
 Full OpenAPI 3.1 spec: [`/public/openapi.json`](./public/openapi.json)
 
@@ -132,7 +139,7 @@ Full OpenAPI 3.1 spec: [`/public/openapi.json`](./public/openapi.json)
 
 ## Privacy and Compliance
 
-**PHI Wall:** All cross-program SQL queries include `AND e.program != 'mental_health'`. This is a PHIPA hard rule enforced at the database layer — no role, consent flag, or API parameter can override it.
+**PHI Wall:** All cross-program SQL queries include `AND e.program != 'mental_health'`. This is a PHIPA hard rule enforced at the database layer; no role, consent flag, or API parameter can override it.
 
 | Program | Privacy Law |
 |---|---|
@@ -142,18 +149,19 @@ Full OpenAPI 3.1 spec: [`/public/openapi.json`](./public/openapi.json)
 | Youth | CYFSA Part X |
 
 Consent is tracked at three levels:
-1. **Program consent** (automatic) — data used for that program's funder only
-2. **Cross-program consent** (explicit opt-in) — stored as `consent_cross_program = true`
-3. **Dashboard aggregation** (implied) — anonymized aggregate metrics only
+1. **Program consent** (automatic): data used for that program's funder only
+2. **Cross-program consent** (explicit opt-in): stored as `consent_cross_program = true`
+3. **Dashboard aggregation** (implied): anonymized aggregate metrics only
 
 ---
 
 ## Data Model
 
 ```sql
-clients        (id, full_name, primary_language, immigration_stream, created_at)
+clients        (id, full_name, primary_language, immigration_stream, stage, country_of_origin, age_group, gender, phone, email, source, created_at)
 enrolments     (id, client_id, program, funder, consent_cross_program, enrolled_at)
 outcomes       (id, enrolment_id, tier, label, achieved, recorded_at)
+surveys        (id, client_id, enrolment_id, satisfaction, would_recommend, barriers, success_story, created_at)
 audit_log      (id, action, entity, detail jsonb, user_role, source_ip, at)
 report_cache   (id, funder, period, narrative, created_at)
 ```
@@ -218,4 +226,8 @@ All changes on feature branches. PR to `dev` for preview. Promote to `main` for 
 
 MIT License. See [LICENSE](./LICENSE).
 
-Built with care for [Skills for Change](https://skillsforchange.org/) — serving newcomers and underserved communities in Toronto since 1982.
+Built with care for [Skills for Change](https://skillsforchange.org/), serving newcomers and underserved communities in Toronto since 1982.
+
+## Credits
+
+Built by **Pivot Point** at the Mastercard Changeworks Change-a-thon 2026.

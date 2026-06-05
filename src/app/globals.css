@@ -134,7 +134,7 @@
   --font-sora: 'Sora', sans-serif;
   --font-inter: 'Inter', sans-serif;
 
-  /* Structural theme tokens — updated by ThemeProvider via .dark class */
+  /* Structural theme tokens: updated by ThemeProvider via .dark class */
   --ov-bg:           #f8fafc;
   --ov-header-bg:    #ffffff;
   --ov-nav-bottom:   #ffffff;
@@ -164,7 +164,7 @@ html.dark {
   --ov-tick-color:    #94a3b8;
 }
 
-/* Glass morphism — light and dark */
+/* Glass morphism: light and dark */
 .glass {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
