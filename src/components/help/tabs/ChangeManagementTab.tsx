@@ -12,7 +12,7 @@ const WHY_FAILS = [
   },
   {
     title: "Past system failures",
-    desc: "Skills for Change has tried new software before that didn't stick. Skepticism is earned. That's why this rollout starts with champions, not mandates.",
+    desc: "Change takes time. That's why this rollout starts with champions, not mandates: early adopters demonstrate value, and the rest of the team follows on their own terms.",
   },
 ]
 
