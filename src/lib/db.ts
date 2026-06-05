@@ -34,6 +34,8 @@ export async function initDB() {
   await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS country_of_origin text DEFAULT 'CA'`
   await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS age_group text DEFAULT '25-34'`
   await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS gender text DEFAULT 'prefer_not_to_say'`
+  await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS phone text`
+  await sql`ALTER TABLE clients ADD COLUMN IF NOT EXISTS email text`
   await sql`
     CREATE TABLE IF NOT EXISTS enrolments (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -512,12 +514,15 @@ export async function createClient(data: {
   country_of_origin?: string
   age_group?: string
   gender?: string
+  phone?: string
+  email?: string
 }) {
   const clientResult = await sql`
-    INSERT INTO clients (full_name, primary_language, immigration_stream, stage, source, country_of_origin, age_group, gender)
+    INSERT INTO clients (full_name, primary_language, immigration_stream, stage, source, country_of_origin, age_group, gender, phone, email)
     VALUES (${data.full_name}, ${data.primary_language}, ${data.immigration_stream},
       ${data.stage ?? 'intake'}, ${data.source ?? 'direct'}, ${data.country_of_origin ?? 'CA'},
-      ${data.age_group ?? '25-34'}, ${data.gender ?? 'prefer_not_to_say'})
+      ${data.age_group ?? '25-34'}, ${data.gender ?? 'prefer_not_to_say'},
+      ${data.phone ?? null}, ${data.email ?? null})
     RETURNING id`
   const clientId = clientResult.rows[0].id
 

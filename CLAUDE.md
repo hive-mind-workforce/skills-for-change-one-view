@@ -49,7 +49,7 @@ public/openapi.json    Full OpenAPI 3.1 spec
 ## Data Model
 
 ```sql
-clients        (id, full_name, primary_language, immigration_stream, stage, country_of_origin, age_group, gender, source, created_at)
+clients        (id, full_name, primary_language, immigration_stream, stage, country_of_origin, age_group, gender, phone, email, source, created_at)
 enrolments     (id, client_id->clients, program, funder, consent_cross_program, enrolled_at)
 outcomes       (id, enrolment_id->enrolments, tier, label, achieved, recorded_at)
 surveys        (id, client_id->clients, enrolment_id->enrolments, satisfaction, would_recommend, barriers, success_story, created_at)

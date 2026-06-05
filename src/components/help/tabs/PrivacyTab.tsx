@@ -81,7 +81,7 @@ const ENCRYPTION_DETAILS = [
       "No direct database access from the browser. All queries run server-side in Next.js API routes. The database is never exposed on a public port.",
       "Admin role is enforced at the API layer for export, reset, and report generation. Demo mode uses ?role=admin query param; production replaces this with JWT claims.",
       "The PHI Wall is a Postgres Row Level Security policy (phi_wall) on the enrolments table. Cross-program queries add a redundant WHERE filter for defense in depth.",
-      "PII (full_name) is available to Caseworker and Admin roles. Viewer role is read-only by UI convention; field-level filtering is applied in production via JWT claims.",
+      "PII (full_name, phone, email) is available to Caseworker and Admin roles. Viewer role is read-only by UI convention; field-level filtering is applied in production via JWT claims.",
     ],
   },
 ]

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { full_name, program, primary_language = "", immigration_stream = "", funder = "", consent_cross_program = false } = body
+    const { full_name, program, primary_language = "", immigration_stream = "", funder = "", consent_cross_program = false, phone, email } = body
     if (!full_name || !program) {
       return Response.json({ error: "full_name and program are required" }, { status: 400 })
     }
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       mental_health: "uw", youth: "uw", mentoring: "city", women: "city",
     }
     const resolvedFunder = funder || programFunderMap[program] || "ircc"
-    const result = await createClient({ full_name, primary_language, immigration_stream, program, funder: resolvedFunder, consent_cross_program })
+    const result = await createClient({ full_name, primary_language, immigration_stream, program, funder: resolvedFunder, consent_cross_program, phone, email })
     await logAudit("create_client", "client", { full_name, program, funder: resolvedFunder }, "admin", req.headers.get("x-forwarded-for") ?? "")
     return Response.json(result, { status: 201 })
   } catch (err: any) {

@@ -31,7 +31,7 @@ AI Agent calls must include the header: `Authorization: Bearer <ONEVIEW_API_KEY>
 ## Data Model
 
 ### clients
-id (uuid, PK), full_name (text), primary_language (text), immigration_stream (text), stage (text), source (text), country_of_origin (text), age_group (text), gender (text), created_at (timestamptz)
+id (uuid, PK), full_name (text), primary_language (text), immigration_stream (text), stage (text), source (text), country_of_origin (text), age_group (text), gender (text), phone (text, nullable), email (text, nullable), created_at (timestamptz)
 
 stage values: outreach, vetting, eligibility, intake, training, placement, survey, complete, dropped
 
@@ -151,7 +151,7 @@ Auth: Caseworker+
 
 ### POST /api/clients
 Create a new client with enrolment and default outcomes.
-Body: {full_name:string, primary_language:string, immigration_stream:string, program:string, funder?:string, consent_cross_program?:boolean, stage?:string, source?:string, country_of_origin?:string, age_group?:string, gender?:string}
+Body: {full_name:string, primary_language:string, immigration_stream:string, program:string, funder?:string, consent_cross_program?:boolean, stage?:string, source?:string, country_of_origin?:string, age_group?:string, gender?:string, phone?:string, email?:string}
 Response: {clientId:string, enrolId:string} (201)
 Auth: Caseworker+
 
