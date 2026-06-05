@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { analytics } = body
 
-    const system = `You are a senior program analyst for Skills for Change, a Toronto nonprofit serving immigrants and refugees across 8 programs and multiple funders. You analyze program data and produce concise, actionable insights for program managers and funders. Be specific, evidence-based, and direct. Focus on what to do, not just what the data shows.`
+    const system = `You are a senior program analyst for Skills for Change, a Toronto nonprofit serving immigrants and refugees across multiple programs and multiple funders. You analyze program data and produce concise, actionable insights for program managers and funders. Be specific, evidence-based, and direct. Focus on what to do, not just what the data shows.`
 
     const user = `Analyze this program analytics data and return EXACTLY 5 actionable insights as a JSON array. Each insight must be an object with:
 - "title": short headline (max 10 words)

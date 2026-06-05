@@ -21,7 +21,7 @@ const PROGRAM_PHOTOS: Record<string, string> = {
 }
 
 const SIDEBAR_ITEMS = [
-  { icon: Users, title: "One intake, every program", desc: "A single registration feeds all 8 programs and multiple funders. No re-entry of client data.", color: "text-emerald-400" },
+  { icon: Users, title: "One intake, every program", desc: "A single registration feeds all its programs and multiple funders. No re-entry of client data.", color: "text-emerald-400" },
   { icon: Zap, title: "Power Automate ready", desc: "Microsoft Forms submissions route here automatically via Power Automate. Zero staff behavior change.", color: "text-indigo-400" },
   { icon: Shield, title: "Privacy by design", desc: "PHIPA wall enforced at database level. Cross-program consent is explicit and recorded.", color: "text-rose-400" },
   { icon: RefreshCw, title: "Real-time outcomes", desc: "Outcomes are seeded at intake and tracked through immediate, intermediate, and ultimate tiers.", color: "text-amber-400" },

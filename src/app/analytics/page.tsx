@@ -28,7 +28,7 @@ export default function AnalyticsPage() {
           <div>
             <h1 className="font-sora text-3xl text-slate-900 dark:text-white">Impact &amp; Insights</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-sm">
-              Real-time program outcomes, client origins, and funding metrics across all 8 programs.
+              Real-time program outcomes, client origins, and funding metrics across all programs.
             </p>
           </div>
         </div>

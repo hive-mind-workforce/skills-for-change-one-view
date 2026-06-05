@@ -122,10 +122,10 @@ export default function AboutTab() {
       <div className="glass rounded-xl p-8 text-center">
         <p className="text-emerald-600 dark:text-emerald-400 text-sm uppercase tracking-widest mb-2">Skills for Change · Toronto · Change-a-thon 2026</p>
         <h2 className="font-sora text-5xl text-slate-900 dark:text-white mb-3">OneView</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. One system of record across 8 programs and multiple funders, built to eliminate the fragmentation that costs Skills for Change weeks of staff time every quarter.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto">Capture once, report to every funder. One system of record across multiple programs and multiple funders, built to eliminate the fragmentation that costs Skills for Change weeks of staff time every quarter.</p>
         <div className="flex flex-wrap justify-center items-center gap-6 mt-8">
           <div className="text-center">
-            <div className="font-sora text-3xl text-emerald-500">8 programs</div>
+            <div className="font-sora text-3xl text-emerald-500">Multiple programs</div>
             <div className="text-slate-500 text-sm">one platform</div>
           </div>
           <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
