@@ -41,7 +41,7 @@ const PIPELINE_STAGES = [
     amara: "Amara joins Language classes (IRCC) and then Employment Services (Employment Ontario). Her case file, including Settlement history, is visible across authorized programs. Alongside, she accesses Mental Health counselling.",
     privacy: null,
     phiWall: true,
-    phiNote: "Mental Health records activate the PHI Wall immediately. Amara's counselling sessions are permanently siloed under PHIPA: invisible in cross-program view regardless of consent level. Enforced at the SQL layer.",
+    phiNote: "Mental Health records activate the PHI Wall immediately. Amara's counselling sessions are permanently siloed under PHIPA: invisible in cross-program view regardless of consent level. Enforced by a Postgres Row Level Security policy.",
     mainPrivacy: "Cross-program view shows Settlement and Language history to Employment caseworker. PHIPA records excluded structurally.",
   },
   {

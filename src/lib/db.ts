@@ -1,5 +1,24 @@
-import { sql, db } from "@vercel/postgres"
+import { sql, db, type VercelPoolClient } from "@vercel/postgres"
 import { randomUUID } from "crypto"
+
+// Runs fn inside a transaction with app.bypass_phi = true so that Postgres RLS
+// allows reading mental_health enrolment rows for legitimate single-program access.
+// SET LOCAL scopes the variable to the transaction only, preventing leakage.
+async function withPhiBypass<T>(fn: (conn: VercelPoolClient) => Promise<T>): Promise<T> {
+  const conn = await db.connect()
+  try {
+    await conn.query("BEGIN")
+    await conn.query("SET LOCAL app.bypass_phi = 'true'")
+    const result = await fn(conn)
+    await conn.query("COMMIT")
+    return result
+  } catch (e) {
+    await conn.query("ROLLBACK")
+    throw e
+  } finally {
+    conn.release()
+  }
+}
 
 export async function initDB() {
   await sql`
@@ -77,6 +96,7 @@ export async function initDB() {
       ALTER TABLE surveys ADD CONSTRAINT surveys_client_id_unique UNIQUE (client_id);
     END IF;
   END $$`
+  await applyRLS()
   await sql`CREATE TABLE IF NOT EXISTS placements (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id uuid REFERENCES clients(id) ON DELETE CASCADE,
@@ -437,8 +457,8 @@ export async function seedDatabase() {
 
 export async function getClients() {
   const [clientsRes, totalRes, programRes, crossRes, outcomesRes] = await Promise.all([
-    sql`
-      SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
+    withPhiBypass(conn => conn.query(
+      `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
         e.program, e.funder, e.consent_cross_program, e.enrolled_at,
         COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
         COUNT(o.id) as outcomes_total
@@ -447,10 +467,15 @@ export async function getClients() {
       LEFT JOIN outcomes o ON o.enrolment_id = e.id
       GROUP BY c.id, e.id
       ORDER BY c.created_at DESC
-      LIMIT 50`,
+      LIMIT 50`
+    )),
     sql`SELECT COUNT(*) as c FROM clients`,
-    sql`SELECT program, COUNT(*) as count FROM enrolments GROUP BY program ORDER BY count DESC`,
-    sql`SELECT COUNT(*) as c FROM enrolments WHERE consent_cross_program = true`,
+    withPhiBypass(conn => conn.query(
+      `SELECT program, COUNT(*) as count FROM enrolments GROUP BY program ORDER BY count DESC`
+    )),
+    withPhiBypass(conn => conn.query(
+      `SELECT COUNT(*) as c FROM enrolments WHERE consent_cross_program = true`
+    )),
     sql`SELECT COUNT(*) FILTER (WHERE achieved = true) as achieved, COUNT(*) as total FROM outcomes`,
   ])
 
@@ -559,34 +584,42 @@ export async function getAuditLogCount() {
 
 export async function searchClients(query: string, limit = 20) {
   const like = `%${query}%`
-  const result = await sql`
-    SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
-      COUNT(e.id) as enrolment_count,
-      array_agg(DISTINCT e.program) FILTER (WHERE e.program IS NOT NULL) as programs
-    FROM clients c
-    LEFT JOIN enrolments e ON e.client_id = c.id
-    WHERE c.full_name ILIKE ${like}
-    GROUP BY c.id
-    ORDER BY c.full_name
-    LIMIT ${limit}`
-  return result.rows
+  return withPhiBypass(async conn => {
+    const result = await conn.query(
+      `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
+        COUNT(e.id) as enrolment_count,
+        array_agg(DISTINCT e.program) FILTER (WHERE e.program IS NOT NULL) as programs
+      FROM clients c
+      LEFT JOIN enrolments e ON e.client_id = c.id
+      WHERE c.full_name ILIKE $1
+      GROUP BY c.id
+      ORDER BY c.full_name
+      LIMIT $2`,
+      [like, limit]
+    )
+    return result.rows
+  })
 }
 
 export async function getClientJourney(clientId: string) {
-  const clientRes = await sql`SELECT * FROM clients WHERE id = ${clientId}`
-  if (!clientRes.rows[0]) return null
-  const enrolRes = await sql`
-    SELECT e.id, e.program, e.funder, e.consent_cross_program, e.enrolled_at,
-      json_agg(
-        json_build_object('id', o.id, 'tier', o.tier, 'label', o.label, 'achieved', o.achieved, 'recorded_at', o.recorded_at)
-        ORDER BY CASE o.tier WHEN 'immediate' THEN 1 WHEN 'intermediate' THEN 2 ELSE 3 END
-      ) as outcomes
-    FROM enrolments e
-    LEFT JOIN outcomes o ON o.enrolment_id = e.id
-    WHERE e.client_id = ${clientId}
-    GROUP BY e.id
-    ORDER BY e.enrolled_at ASC`
-  return { client: clientRes.rows[0], enrolments: enrolRes.rows }
+  return withPhiBypass(async conn => {
+    const clientRes = await conn.query(`SELECT * FROM clients WHERE id = $1`, [clientId])
+    if (!clientRes.rows[0]) return null
+    const enrolRes = await conn.query(
+      `SELECT e.id, e.program, e.funder, e.consent_cross_program, e.enrolled_at,
+        json_agg(
+          json_build_object('id', o.id, 'tier', o.tier, 'label', o.label, 'achieved', o.achieved, 'recorded_at', o.recorded_at)
+          ORDER BY CASE o.tier WHEN 'immediate' THEN 1 WHEN 'intermediate' THEN 2 ELSE 3 END
+        ) as outcomes
+      FROM enrolments e
+      LEFT JOIN outcomes o ON o.enrolment_id = e.id
+      WHERE e.client_id = $1
+      GROUP BY e.id
+      ORDER BY e.enrolled_at ASC`,
+      [clientId]
+    )
+    return { client: clientRes.rows[0], enrolments: enrolRes.rows }
+  })
 }
 
 export async function getAnalyticsData(since?: string | null) {
@@ -659,26 +692,27 @@ export async function getAnalyticsData(since?: string | null) {
 }
 
 export async function getPipelineClients(perStage = 30) {
-  // Take the oldest N clients per stage to ensure varied "days in pipeline"
-  const result = await sql.query(`
-    WITH base AS (
-      SELECT c.id, c.full_name, c.country_of_origin, c.stage, c.source,
-        c.primary_language, c.immigration_stream, c.created_at,
-        e.program, e.funder, e.enrolled_at,
-        COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
-        COUNT(o.id) as outcomes_total
-      FROM clients c
-      JOIN enrolments e ON e.client_id = c.id
-      LEFT JOIN outcomes o ON o.enrolment_id = e.id
-      GROUP BY c.id, e.id
-    ),
-    ranked AS (
-      SELECT *, ROW_NUMBER() OVER (PARTITION BY stage ORDER BY enrolled_at ASC) as rn FROM base
-    )
-    SELECT id, full_name, country_of_origin, stage, source, primary_language, immigration_stream, created_at, program, funder, enrolled_at, outcomes_achieved, outcomes_total
-    FROM ranked WHERE rn <= $1
-    ORDER BY stage, enrolled_at ASC`, [perStage])
-  return result.rows
+  return withPhiBypass(async conn => {
+    const result = await conn.query(`
+      WITH base AS (
+        SELECT c.id, c.full_name, c.country_of_origin, c.stage, c.source,
+          c.primary_language, c.immigration_stream, c.created_at,
+          e.program, e.funder, e.enrolled_at,
+          COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
+          COUNT(o.id) as outcomes_total
+        FROM clients c
+        JOIN enrolments e ON e.client_id = c.id
+        LEFT JOIN outcomes o ON o.enrolment_id = e.id
+        GROUP BY c.id, e.id
+      ),
+      ranked AS (
+        SELECT *, ROW_NUMBER() OVER (PARTITION BY stage ORDER BY enrolled_at ASC) as rn FROM base
+      )
+      SELECT id, full_name, country_of_origin, stage, source, primary_language, immigration_stream, created_at, program, funder, enrolled_at, outcomes_achieved, outcomes_total
+      FROM ranked WHERE rn <= $1
+      ORDER BY stage, enrolled_at ASC`, [perStage])
+    return result.rows
+  })
 }
 
 export async function getClientNotes(clientId: string) {
@@ -696,24 +730,31 @@ export async function addClientNote(clientId: string, author: string, content: s
 }
 
 export async function getPendingSurveys() {
-  const result = await sql`
-    SELECT c.id, c.full_name, c.stage, e.program, e.funder, e.enrolled_at,
-      EXTRACT(EPOCH FROM (NOW() - e.enrolled_at))::int / 86400 as days_waiting
-    FROM clients c
-    JOIN enrolments e ON e.client_id = c.id
-    LEFT JOIN surveys s ON s.client_id = c.id
-    WHERE c.stage = 'survey' AND s.id IS NULL
-    ORDER BY e.enrolled_at ASC`
-  return result.rows
+  return withPhiBypass(async conn => {
+    const result = await conn.query(
+      `SELECT c.id, c.full_name, c.stage, e.program, e.funder, e.enrolled_at,
+        EXTRACT(EPOCH FROM (NOW() - e.enrolled_at))::int / 86400 as days_waiting
+      FROM clients c
+      JOIN enrolments e ON e.client_id = c.id
+      LEFT JOIN surveys s ON s.client_id = c.id
+      WHERE c.stage = 'survey' AND s.id IS NULL
+      ORDER BY e.enrolled_at ASC`
+    )
+    return result.rows
+  })
 }
 
 export async function getClientSurvey(clientId: string) {
-  const result = await sql`
-    SELECT s.*, e.program FROM surveys s
-    JOIN enrolments e ON e.id = s.enrolment_id
-    WHERE s.client_id = ${clientId}
-    ORDER BY s.completed_at DESC LIMIT 1`
-  return result.rows[0] ?? null
+  return withPhiBypass(async conn => {
+    const result = await conn.query(
+      `SELECT s.*, e.program FROM surveys s
+      JOIN enrolments e ON e.id = s.enrolment_id
+      WHERE s.client_id = $1
+      ORDER BY s.completed_at DESC LIMIT 1`,
+      [clientId]
+    )
+    return result.rows[0] ?? null
+  })
 }
 
 export async function updateClient(clientId: string, data: {
@@ -758,9 +799,8 @@ export async function updateEnrolment(enrolmentId: string, data: {
   }
   if (fields.length === 0) return
   values.push(enrolmentId)
-  await sql.query(
-    `UPDATE enrolments SET ${fields.join(", ")} WHERE id = $${i}`,
-    values
+  await withPhiBypass(conn =>
+    conn.query(`UPDATE enrolments SET ${fields.join(", ")} WHERE id = $${i}`, values)
   )
 }
 
@@ -795,8 +835,9 @@ export async function createSurvey(data: {
 }
 
 export async function applyRLS() {
-  // Postgres RLS: mental_health rows are only visible to connections with app.bypass_phi=true
   await sql`ALTER TABLE enrolments ENABLE ROW LEVEL SECURITY`
+  // FORCE ensures the policy applies even to the table owner (the app DB user)
+  await sql`ALTER TABLE enrolments FORCE ROW LEVEL SECURITY`
   await sql`
     CREATE POLICY IF NOT EXISTS phi_wall ON enrolments
     AS RESTRICTIVE
@@ -809,38 +850,42 @@ export async function applyRLS() {
 }
 
 export async function getClientsForExport(programs: string[]) {
-  const result = await sql.query(
-    `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream,
-      c.created_at, c.age_group, c.gender, c.country_of_origin, c.source, c.stage,
-      e.id as enrolment_id, e.program, e.funder, e.consent_cross_program, e.enrolled_at,
-      json_agg(json_build_object('tier', o.tier, 'label', o.label, 'achieved', o.achieved)) FILTER (WHERE o.id IS NOT NULL) as outcomes
-     FROM clients c
-     JOIN enrolments e ON e.client_id = c.id
-     LEFT JOIN outcomes o ON o.enrolment_id = e.id
-     WHERE e.program = ANY($1::text[])
-     GROUP BY c.id, e.id
-     ORDER BY e.enrolled_at DESC`,
-    [programs]
-  )
-  return result.rows
+  return withPhiBypass(async conn => {
+    const result = await conn.query(
+      `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream,
+        c.created_at, c.age_group, c.gender, c.country_of_origin, c.source, c.stage,
+        e.id as enrolment_id, e.program, e.funder, e.consent_cross_program, e.enrolled_at,
+        json_agg(json_build_object('tier', o.tier, 'label', o.label, 'achieved', o.achieved)) FILTER (WHERE o.id IS NOT NULL) as outcomes
+       FROM clients c
+       JOIN enrolments e ON e.client_id = c.id
+       LEFT JOIN outcomes o ON o.enrolment_id = e.id
+       WHERE e.program = ANY($1::text[])
+       GROUP BY c.id, e.id
+       ORDER BY e.enrolled_at DESC`,
+      [programs]
+    )
+    return result.rows
+  })
 }
 
 export async function getRecentClients(limit = 20) {
-  const result = await sql.query(
-    `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.stage,
-      c.country_of_origin, c.age_group, c.created_at,
-      e.program, e.funder, e.enrolled_at,
-      COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
-      COUNT(o.id) as outcomes_total
-     FROM clients c
-     JOIN enrolments e ON e.client_id = c.id
-     LEFT JOIN outcomes o ON o.enrolment_id = e.id
-     GROUP BY c.id, e.id
-     ORDER BY c.created_at DESC
-     LIMIT $1`,
-    [limit]
-  )
-  return result.rows
+  return withPhiBypass(async conn => {
+    const result = await conn.query(
+      `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.stage,
+        c.country_of_origin, c.age_group, c.created_at,
+        e.program, e.funder, e.enrolled_at,
+        COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
+        COUNT(o.id) as outcomes_total
+       FROM clients c
+       JOIN enrolments e ON e.client_id = c.id
+       LEFT JOIN outcomes o ON o.enrolment_id = e.id
+       GROUP BY c.id, e.id
+       ORDER BY c.created_at DESC
+       LIMIT $1`,
+      [limit]
+    )
+    return result.rows
+  })
 }
 
 export async function getMonthlyIntakeTrend() {

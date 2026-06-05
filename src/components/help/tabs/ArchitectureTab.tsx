@@ -17,7 +17,7 @@ const LAYERS = [
   ]},
   { id: "data", label: "Data + Privacy", nodes: [
     { id:"postgres", name:"Vercel Postgres", icon:"🗄️", color:"#10b981", desc:"Neon-backed Postgres via @vercel/postgres. 5 tables: clients, enrolments, outcomes, audit_log, report_cache.", steps:["CREATE TABLE IF NOT EXISTS for all 5 tables","gen_random_uuid() for PKs","Cascading deletes for referential integrity","Auto-seed 16,247 demo clients on first load"], code:'clients → enrolments\n  → outcomes\naudit_log | report_cache' },
-    { id:"phi-wall", name:"PHI Wall", icon:"🔒", color:"#f43f5e", desc:"PHIPA hard rule: mental_health records are ALWAYS siloed. Enforced at the database layer on every cross-program query. No role, consent flag, or configuration can override it.", steps:["Enforced at database layer, not application layer","Applies to every cross-program query automatically","No role or consent flag can override it","Violations are structurally impossible"], code:"Enforced at DB layer\nNo application override\nPHIPA s.29 compliant" },
+    { id:"phi-wall", name:"PHI Wall", icon:"🔒", color:"#f43f5e", desc:"PHIPA hard rule: mental_health records are ALWAYS siloed. A Postgres Row Level Security policy (FORCE) enforces this at the database layer. No role, consent flag, or application code can override it.", steps:["FORCE ROW LEVEL SECURITY on enrolments table","phi_wall policy: program != 'mental_health' OR bypass_phi=true","Legitimate access uses SET LOCAL app.bypass_phi in a transaction","Analytics and AI queries never set bypass: double-enforced"], code:"ALTER TABLE enrolments\n  FORCE ROW LEVEL SECURITY;\nCREATE POLICY phi_wall\n  USING (program != 'mental_health'\n    OR current_setting(\n      'app.bypass_phi', true) = 'true')" },
     { id:"consent", name:"Consent Model", icon:"✅", color:"#10b981", desc:"Three levels: program (auto), cross-program (explicit opt-in), dashboard aggregation (implied). Stored as consent_cross_program boolean.", steps:["Program consent: automatic on enrolment","Cross-program: caseworker checkbox + verbal consent","Aggregated dashboards: no PII, always allowed","Consent tracked in enrolments table"], code:"consent_cross_program: boolean\ndefault: false" },
     { id:"audit", name:"Audit Log", icon:"📝", color:"#6366f1", desc:"Every write operation logged to audit_log table. Tracks action, entity, user role, source IP, and timestamp.", steps:["create_client logged on intake","export logged on CSV download","ai_query logged on every question","report_generate logged on AI narrative"], code:"INSERT INTO audit_log\n(action, entity, detail,\n user_role, source_ip)" },
   ]},
@@ -243,7 +243,7 @@ const ARCH_DIAGRAMS = [
   },
   {
     title: "Privacy Architecture",
-    description: "Consent and compliance enforced structurally. The PHI Wall is a database constraint, not a policy document.",
+    description: "Consent and compliance enforced structurally. The PHI Wall is a Postgres Row Level Security policy, not a policy document.",
     id: "arch-privacy",
     code: `flowchart TD
     A[Data request] --> B{Program?}

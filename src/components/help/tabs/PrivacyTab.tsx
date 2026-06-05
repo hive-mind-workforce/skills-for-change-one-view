@@ -80,7 +80,7 @@ const ENCRYPTION_DETAILS = [
     points: [
       "No direct database access from the browser. All queries run server-side in Next.js API routes. The database is never exposed on a public port.",
       "Role-based access is enforced at the query layer: caseworker queries include a WHERE program = $1 filter; admin queries are unrestricted.",
-      "The PHI Wall (AND e.program != 'mental_health') is applied inside every cross-program SQL function: structural, not policy-dependent.",
+      "The PHI Wall is a Postgres Row Level Security policy (phi_wall) on the enrolments table. Cross-program queries add a redundant WHERE filter for defense in depth.",
       "Viewer role receives only aggregated, anonymized metrics. PII columns (full_name, phone, email) are never returned to Viewer-scoped requests.",
     ],
   },
