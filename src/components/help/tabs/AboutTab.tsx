@@ -132,7 +132,7 @@ export default function AboutTab() {
             <div className="w-px h-12 bg-slate-200 dark:bg-white/[0.08]" />
             <div className="text-center">
               <div className="font-sora text-3xl text-indigo-500">Multiple funders</div>
-              <div className="text-slate-500 text-sm">customized exports</div>
+              <div className="text-slate-500 text-sm">one data entry, custom exports</div>
             </div>
           </div>
           <div className="flex flex-wrap justify-center items-center gap-6">
