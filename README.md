@@ -2,7 +2,7 @@
 
 **Capture once, report to every funder.**
 
-OneView is a client outcomes tracking and funder reporting platform built for [Skills for Change](https://skillsforchange.org/), a Toronto nonprofit that has served newcomers and underserved communities since 1982. OneView eliminates duplicate data entry across 8 programs and 4 government funders, with AI-generated narrative reports and privacy-first architecture.
+OneView is a client outcomes tracking and funder reporting platform built for [Skills for Change](https://skillsforchange.org/), a Toronto nonprofit that has served newcomers and underserved communities since 1982. OneView eliminates duplicate data entry across multiple programs and government funders, with AI-generated narrative reports and privacy-first architecture.
 
 **Live demo:** https://sfc-oneview.vercel.app
 
@@ -26,8 +26,8 @@ Charity registration: 121471858RR0001
 | LINC Language Training | IRCC |
 | Employment Services | Employment Ontario |
 | Skilled Trades | Employment Ontario |
-| Mental Health and Wellness | Community Foundations |
-| Youth Programs | Community Foundations |
+| Mental Health and Wellness | United Way |
+| Youth Programs | United Way |
 | Mentoring for Change | City of Toronto |
 | Women's Programs | City of Toronto |
 
@@ -35,16 +35,23 @@ Charity registration: 121471858RR0001
 
 ## Features
 
-- **Single intake form**, register a client once, data flows to all 8 programs and 4 funders
-- **Funder-specific CSV export**, columns shaped to each funder's exact specification
-- **AI narrative reports**, one-click Q1/Q2/annual report generation with cache
-- **Real-time outcomes dashboard**, immediate, intermediate, and ultimate outcome tiers tracked from day one
-- **PHI Wall**, PHIPA-compliant hard wall on mental health data enforced at the SQL layer
-- **Cross-program consent**, explicit opt-in stored per enrolment, never assumed
-- **Interactive help screen with 8 tabs** covering architecture, privacy, API, and integrations
-- **Demo tour**, 8-step guided walkthrough (click "Start Demo" in the header)
-- **RBAC**, Admin, Caseworker, Viewer, and AI Agent roles
-- **Power Automate ready**, Microsoft Forms webhook integration, zero staff behavior change
+- **Single intake form**: register a client once, data flows to all programs and funders
+- **Client journey viewer**: full timeline from intake through pipeline stages, outcomes, case notes, and exit survey
+- **Pipeline board**: kanban-style view of clients by stage (outreach through complete)
+- **Outcome tracking**: immediate, intermediate, and ultimate outcome tiers seeded at intake
+- **Caseworker notes**: timestamped case notes per client with type tagging
+- **Exit survey**: unique per-client survey link, satisfaction rating, and success story capture
+- **Funder CSV export**: columns shaped to each funder's exact portal specification (iCARE, EOIS-CaMS)
+- **AI narrative reports**: one-click quarterly/annual report generation with cache
+- **AI Q&A**: natural language queries grounded in live program metrics
+- **AI program insights**: auto-generated actionable insights for program managers
+- **Analytics dashboard**: real-time outcome rates, client origins, survey stats, and funding metrics
+- **Audit log**: tamper-evident record of all data changes
+- **PHI Wall**: PHIPA-compliant hard wall on mental health data enforced at the database layer via Row Level Security
+- **Cross-program consent**: explicit opt-in stored per enrolment, never assumed
+- **RBAC**: Admin, Caseworker, Viewer, and AI Agent roles
+- **Demo tour**: guided walkthroughs for Client Journey and Funder Reporting flows
+- **Power Automate ready**: Microsoft Forms webhook integration, zero staff behavior change
 
 ---
 
@@ -74,7 +81,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Visit http://localhost:3010. On first load, `/api/init` seeds 19,140 demo clients across all 8 programs.
+Visit http://localhost:3010. On first load, `/api/init` seeds demo clients across all programs.
 
 ### Environment Variables
 
@@ -105,7 +112,7 @@ Add `?role=admin`, `?role=caseworker`, or `?role=viewer` to any URL to switch ro
 | Role | Access |
 |---|---|
 | `?role=admin` | Full access: all programs, export, reset, AI reports |
-| `?role=caseworker` | Program-scoped reads, create clients |
+| `?role=caseworker` | Program-scoped reads, create clients, manage journeys |
 | `?role=viewer` | Read-only dashboards, no PII |
 
 The live demo runs as admin by default: https://sfc-oneview.vercel.app/?role=admin
@@ -118,20 +125,33 @@ The live demo runs as admin by default: https://sfc-oneview.vercel.app/?role=adm
 |---|---|---|---|
 | GET | /api/health | Public | Uptime check |
 | GET | /api/init | Public | Init DB and seed if empty |
+| GET | /api/migrate | Public | Run schema migrations |
 | GET | /api/clients | Caseworker+ | List clients with metrics |
 | POST | /api/clients | Caseworker+ | Create client, enrolment, and outcomes |
+| GET | /api/clients/[id] | Caseworker+ | Get single client |
+| PATCH | /api/clients/[id] | Caseworker+ | Update client stage or fields |
+| GET | /api/clients/search | Caseworker+ | Search clients by name |
+| GET | /api/enrolments | Caseworker+ | List enrolments |
+| POST | /api/enrolments | Caseworker+ | Add program enrolment |
+| PATCH | /api/enrolments/[id] | Caseworker+ | Update enrolment |
+| PATCH | /api/outcomes/[id] | Caseworker+ | Toggle outcome achieved |
+| GET | /api/notes | Caseworker+ | Case notes for a client |
+| POST | /api/notes | Caseworker+ | Add case note |
+| GET | /api/journey | Caseworker+ | Full client journey with notes and survey |
+| GET | /api/recent-clients | Caseworker+ | Recently added clients |
+| GET | /api/pipeline | Caseworker+ | Client pipeline by stage |
+| GET | /api/analytics | Caseworker+ | Program analytics and survey stats |
+| GET | /api/ai-insights | Caseworker+ | AI-generated program insights |
+| GET | /api/pending-surveys | Caseworker+ | Clients awaiting survey response |
+| POST | /api/survey | Public | Submit client exit survey |
+| GET | /api/survey/[id] | Caseworker+ | Get survey result for client |
+| GET | /api/survey-form/[id] | Public | Survey form metadata |
 | POST | /api/export | Admin+ | Generate funder-specific CSV |
 | POST | /api/draft-report | Admin+ | AI narrative (cache-first) |
 | POST | /api/query | Caseworker+ | AI Q&A grounded in live metrics |
-| POST | /api/reset | Admin | Truncate and re-seed database |
-| GET | /api/provider | Public | Current LLM provider |
-| GET | /api/analytics | Caseworker+ | Program analytics and survey stats |
-| GET | /api/pipeline | Caseworker+ | Client pipeline by stage |
-| GET | /api/journey | Caseworker+ | Full client journey with notes and survey |
-| POST | /api/survey | Public | Submit client exit survey |
-| GET | /api/pending-surveys | Caseworker+ | Clients awaiting survey response |
-| GET | /api/ai-insights | Caseworker+ | AI-generated program insights |
 | GET | /api/audit | Admin+ | Audit log entries |
+| GET | /api/provider | Public | Current LLM provider |
+| POST | /api/reset | Admin | Truncate and re-seed database |
 
 Full OpenAPI 3.1 spec: [`/public/openapi.json`](./public/openapi.json)
 
@@ -139,7 +159,7 @@ Full OpenAPI 3.1 spec: [`/public/openapi.json`](./public/openapi.json)
 
 ## Privacy and Compliance
 
-**PHI Wall:** All cross-program SQL queries include `AND e.program != 'mental_health'`. This is a PHIPA hard rule enforced at the database layer; no role, consent flag, or API parameter can override it.
+**PHI Wall:** Mental Health records are walled off via Postgres Row Level Security (RLS). All cross-program SQL queries also include `AND e.program != 'mental_health'` as defense in depth. This is a PHIPA hard rule; no role, consent flag, or API parameter can override it.
 
 | Program | Privacy Law |
 |---|---|
@@ -162,6 +182,7 @@ clients        (id, full_name, primary_language, immigration_stream, stage, coun
 enrolments     (id, client_id, program, funder, consent_cross_program, enrolled_at)
 outcomes       (id, enrolment_id, tier, label, achieved, recorded_at)
 surveys        (id, client_id, enrolment_id, satisfaction, would_recommend, barriers, success_story, created_at)
+case_notes     (id, client_id, author, content, note_type, created_at)
 audit_log      (id, action, entity, detail jsonb, user_role, source_ip, at)
 report_cache   (id, funder, period, narrative, created_at)
 ```
@@ -207,7 +228,7 @@ Use `/api/export` to generate a CSV shaped to the government-mandated column spe
 ```bash
 npm test                # Jest unit tests
 npm run test:coverage   # Coverage report
-npm run test:e2e        # Playwright e2e (requires running dev server)
+npm run test:e2e        # Playwright e2e (requires running dev server on port 3010)
 npm run build           # Production build
 npm run lint            # ESLint
 ```
@@ -224,7 +245,7 @@ All changes on feature branches. PR to `dev` for preview. Promote to `main` for 
 
 ## License
 
-MIT License. See [LICENSE](./LICENSE).
+MIT License. Copyright (c) 2026 Skills for Change / Mastercard Changeworks™. See [LICENSE](./LICENSE).
 
 Built with care for [Skills for Change](https://skillsforchange.org/), serving newcomers and underserved communities in Toronto since 1982.
 
