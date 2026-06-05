@@ -178,7 +178,7 @@ export default function AboutTab() {
           {[
             {
               title: "One platform, multiple funders",
-              desc: "A single data entry point replaces multiple funder portals, two intake systems, and a quarterly spreadsheet cycle. Caseworkers stop copying data; funders stop receiving stale reports.",
+              desc: "A single data entry point feeds custom exports for every funder portal, replacing two intake systems and a quarterly spreadsheet cycle. Caseworkers stop copying data; funders stop receiving stale reports.",
             },
             {
               title: "Deploy in a week, full system in six months",
