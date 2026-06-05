@@ -209,7 +209,9 @@ export default function DemoTour() {
               const completeBtn = document.querySelector('[data-tour="journey-complete-btn"]') as HTMLButtonElement | null
               if (completeBtn) {
                 completeBtn.click()
-                await delay(1000)
+                // Wait until the dialog is actually rendered before advancing
+                await waitForElement('[data-tour="journey-complete-dialog"]', 4000)
+                await delay(200)
               }
             } catch { /* continue */ }
             finally { d.moveNext() }
@@ -224,10 +226,17 @@ export default function DemoTour() {
           side: "top" as const,
           onNextClick: async () => {
             try {
-              const sendBtn = Array.from(document.querySelectorAll("button")).find(b => b.textContent?.includes("Send Survey")) as HTMLButtonElement | null
+              // Ensure the dialog is open; re-open if it somehow closed
+              let sendBtn = Array.from(document.querySelectorAll("button")).find(b => b.textContent?.includes("Send Survey")) as HTMLButtonElement | null
+              if (!sendBtn) {
+                const completeBtn = document.querySelector('[data-tour="journey-complete-btn"]') as HTMLButtonElement | null
+                completeBtn?.click()
+                await waitForElement('[data-tour="journey-complete-dialog"]', 3000)
+                sendBtn = Array.from(document.querySelectorAll("button")).find(b => b.textContent?.includes("Send Survey")) as HTMLButtonElement | null
+              }
               if (sendBtn) {
                 sendBtn.click()
-                await delay(1000)
+                await delay(2000)
               }
               if (registeredClientId) {
                 router.push(`/survey/${registeredClientId}`)
