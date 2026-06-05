@@ -1,0 +1,895 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OneView API",
+    "description": "Client outcomes tracking and funder reporting API for Skills for Change. Capture once, report to every funder.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Skills for Change",
+      "url": "https://skillsforchange.org"
+    }
+  },
+  "servers": [
+    { "url": "https://skills-for-change-one-view.vercel.app", "description": "Production" },
+    { "url": "http://localhost:3010", "description": "Local development" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "ONEVIEW_API_KEY bearer token. Required on /api/export and /api/query when the env var is configured."
+      }
+    },
+    "schemas": {
+      "Client": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "full_name": { "type": "string" },
+          "primary_language": { "type": "string" },
+          "immigration_stream": { "type": "string" },
+          "stage": { "type": "string", "enum": ["outreach","vetting","eligibility","intake","training","placement","survey","complete","dropped"] },
+          "country_of_origin": { "type": "string" },
+          "age_group": { "type": "string" },
+          "gender": { "type": "string" },
+          "phone": { "type": "string", "nullable": true },
+          "email": { "type": "string", "format": "email", "nullable": true },
+          "source": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Enrolment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "client_id": { "type": "string", "format": "uuid" },
+          "program": { "type": "string", "enum": ["settlement","employment","language","mental_health","trades","mentoring","youth","women"] },
+          "funder": { "type": "string", "enum": ["ircc","eo","uw","city"] },
+          "consent_cross_program": { "type": "boolean" },
+          "enrolled_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Outcome": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "enrolment_id": { "type": "string", "format": "uuid" },
+          "tier": { "type": "string", "enum": ["immediate","intermediate","ultimate"] },
+          "label": { "type": "string" },
+          "achieved": { "type": "boolean" },
+          "recorded_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CaseNote": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "client_id": { "type": "string", "format": "uuid" },
+          "author_role": { "type": "string" },
+          "note_type": { "type": "string", "enum": ["interview","call","meeting","observation"] },
+          "content": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Survey": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "client_id": { "type": "string", "format": "uuid" },
+          "enrolment_id": { "type": "string", "format": "uuid" },
+          "satisfaction": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "would_recommend": { "type": "boolean" },
+          "barriers": { "type": "string" },
+          "success_story": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AuditEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "action": { "type": "string" },
+          "entity": { "type": "string" },
+          "detail": { "type": "object" },
+          "user_role": { "type": "string" },
+          "source_ip": { "type": "string" },
+          "at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "db": { "type": "boolean" },
+                    "version": { "type": "string", "example": "1.0.0" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/init": {
+      "get": {
+        "operationId": "initDb",
+        "summary": "Initialize database and seed demo data",
+        "description": "Creates tables if they do not exist and seeds 19,140 demo clients if the database is empty.",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Initialization result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "initialized": { "type": "boolean" },
+                    "seeded": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "clientCount": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/migrate": {
+      "get": {
+        "operationId": "migrateDb",
+        "summary": "Run CREATE TABLE IF NOT EXISTS migrations",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Migration result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "migrated": { "type": "boolean" },
+                    "tables": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/provider": {
+      "get": {
+        "operationId": "getProvider",
+        "summary": "Get current LLM provider",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Current provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": { "type": "string", "example": "gemini" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reset": {
+      "post": {
+        "operationId": "resetDb",
+        "summary": "Truncate and re-seed the database",
+        "description": "Requires role=admin query parameter.",
+        "tags": ["System"],
+        "parameters": [
+          { "name": "role", "in": "query", "required": true, "schema": { "type": "string", "enum": ["admin"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reset successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Admin role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/clients": {
+      "get": {
+        "operationId": "listClients",
+        "summary": "List all clients with metrics",
+        "tags": ["Clients"],
+        "responses": {
+          "200": {
+            "description": "Array of client records",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Client" } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createClient",
+        "summary": "Create a client with enrollment and seeded outcomes",
+        "tags": ["Clients"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["full_name", "program"],
+                "properties": {
+                  "full_name": { "type": "string" },
+                  "program": { "type": "string", "enum": ["settlement","employment","language","mental_health","trades","mentoring","youth","women"] },
+                  "primary_language": { "type": "string" },
+                  "immigration_stream": { "type": "string" },
+                  "country_of_origin": { "type": "string" },
+                  "age_group": { "type": "string" },
+                  "gender": { "type": "string" },
+                  "source": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "consent_cross_program": { "type": "boolean", "default": false },
+                  "consent_data_use": { "type": "boolean" },
+                  "consent_followup": { "type": "boolean" },
+                  "consent_aggregate": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Client created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Client" } } } },
+          "400": { "description": "Missing required fields", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/clients/search": {
+      "get": {
+        "operationId": "searchClients",
+        "summary": "Search clients by name",
+        "tags": ["Clients"],
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "description": "Search query (minimum 2 characters)", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching clients",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Client" } } } }
+          }
+        }
+      }
+    },
+    "/api/clients/{id}": {
+      "patch": {
+        "operationId": "updateClient",
+        "summary": "Update client profile fields or stage",
+        "tags": ["Clients"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "full_name": { "type": "string" },
+                  "primary_language": { "type": "string" },
+                  "immigration_stream": { "type": "string" },
+                  "stage": { "type": "string", "enum": ["outreach","vetting","eligibility","intake","training","placement","survey","complete","dropped"] },
+                  "country_of_origin": { "type": "string" },
+                  "age_group": { "type": "string" },
+                  "gender": { "type": "string" },
+                  "source": { "type": "string" },
+                  "role": { "type": "string", "description": "User role for audit logging" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
+          "404": { "description": "Client not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "operationId": "deleteClient",
+        "summary": "Delete a client and all related records",
+        "description": "Cascades to enrolments, outcomes, notes, and surveys.",
+        "tags": ["Clients"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "role", "in": "query", "required": true, "schema": { "type": "string", "enum": ["admin"] } }
+        ],
+        "responses": {
+          "200": { "description": "Deleted", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
+          "403": { "description": "Admin role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/recent-clients": {
+      "get": {
+        "operationId": "getRecentClients",
+        "summary": "Get the 20 most recently created clients",
+        "tags": ["Clients"],
+        "responses": {
+          "200": {
+            "description": "Recent clients",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Client" } } } }
+          }
+        }
+      }
+    },
+    "/api/enrolments": {
+      "post": {
+        "operationId": "createEnrolment",
+        "summary": "Enroll a client in an additional program",
+        "tags": ["Enrolments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["client_id", "program"],
+                "properties": {
+                  "client_id": { "type": "string", "format": "uuid" },
+                  "program": { "type": "string", "enum": ["settlement","employment","language","mental_health","trades","mentoring","youth","women"] },
+                  "consent_cross_program": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Enrolment created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Enrolment" } } } }
+        }
+      }
+    },
+    "/api/enrolments/{id}": {
+      "patch": {
+        "operationId": "updateEnrolment",
+        "summary": "Update enrolment consent flag",
+        "tags": ["Enrolments"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "consent_cross_program": { "type": "boolean" },
+                  "role": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } }
+        }
+      }
+    },
+    "/api/outcomes/{id}": {
+      "patch": {
+        "operationId": "toggleOutcome",
+        "summary": "Mark an outcome as achieved or not achieved",
+        "tags": ["Outcomes"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["achieved"],
+                "properties": {
+                  "achieved": { "type": "boolean" },
+                  "role": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } }
+        }
+      }
+    },
+    "/api/notes": {
+      "get": {
+        "operationId": "getNotes",
+        "summary": "Get case notes for a client",
+        "tags": ["Notes"],
+        "parameters": [
+          { "name": "clientId", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Case notes",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/CaseNote" } } } }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createNote",
+        "summary": "Add a case note for a client",
+        "tags": ["Notes"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["clientId", "content"],
+                "properties": {
+                  "clientId": { "type": "string", "format": "uuid" },
+                  "content": { "type": "string" },
+                  "noteType": { "type": "string", "enum": ["interview","call","meeting","observation"], "default": "observation" },
+                  "authorRole": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Note created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CaseNote" } } } }
+        }
+      }
+    },
+    "/api/journey": {
+      "get": {
+        "operationId": "getJourney",
+        "summary": "Get a client's full journey including enrolments, outcomes, notes, and survey",
+        "tags": ["Journey"],
+        "parameters": [
+          { "name": "clientId", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client journey",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "client": { "$ref": "#/components/schemas/Client" },
+                    "enrolments": { "type": "array", "items": { "$ref": "#/components/schemas/Enrolment" } },
+                    "notes": { "type": "array", "items": { "$ref": "#/components/schemas/CaseNote" } },
+                    "survey": { "$ref": "#/components/schemas/Survey" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pipeline": {
+      "get": {
+        "operationId": "getPipeline",
+        "summary": "Get clients grouped by pipeline stage",
+        "tags": ["Analytics"],
+        "responses": {
+          "200": {
+            "description": "Pipeline data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "clients": { "type": "array", "items": { "$ref": "#/components/schemas/Client" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics": {
+      "get": {
+        "operationId": "getAnalytics",
+        "summary": "Get program analytics and survey stats",
+        "tags": ["Analytics"],
+        "parameters": [
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["1d","7d","30d","90d","180d","365d","all"], "default": "all" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "byProgram": { "type": "array", "items": { "type": "object" } },
+                    "byStage": { "type": "array", "items": { "type": "object" } },
+                    "byCountry": { "type": "array", "items": { "type": "object" } },
+                    "surveyStats": { "type": "object" },
+                    "monthlyTrend": { "type": "array", "items": { "type": "object" } },
+                    "interval": { "type": "string" },
+                    "since": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pending-surveys": {
+      "get": {
+        "operationId": "getPendingSurveys",
+        "summary": "List clients in the Survey stage awaiting a response",
+        "tags": ["Surveys"],
+        "responses": {
+          "200": {
+            "description": "Pending surveys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pending": { "type": "array", "items": { "$ref": "#/components/schemas/Client" } },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/survey": {
+      "post": {
+        "operationId": "submitSurvey",
+        "summary": "Submit a client exit survey",
+        "tags": ["Surveys"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["clientId", "enrolmentId"],
+                "properties": {
+                  "clientId": { "type": "string", "format": "uuid" },
+                  "enrolmentId": { "type": "string", "format": "uuid" },
+                  "satisfaction": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "wouldRecommend": { "type": "boolean", "default": false },
+                  "barriers": { "type": "string" },
+                  "successStory": { "type": "string" },
+                  "role": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Survey submitted", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } }
+        }
+      }
+    },
+    "/api/survey/{clientId}": {
+      "get": {
+        "operationId": "getSurvey",
+        "summary": "Get the survey result for a client",
+        "tags": ["Surveys"],
+        "parameters": [
+          { "name": "clientId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Survey result",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "survey": { "$ref": "#/components/schemas/Survey" } } } } }
+          }
+        }
+      }
+    },
+    "/api/survey-form/{clientId}": {
+      "get": {
+        "operationId": "getSurveyForm",
+        "summary": "Get survey form metadata for a client",
+        "tags": ["Surveys"],
+        "parameters": [
+          { "name": "clientId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Survey form data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "client_name": { "type": "string" },
+                    "enrolment_id": { "type": "string", "format": "uuid" },
+                    "program": { "type": "string" },
+                    "already_submitted": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "operationId": "getAuditLog",
+        "summary": "Get audit log entries",
+        "description": "Requires role=admin query parameter.",
+        "tags": ["Compliance"],
+        "parameters": [
+          { "name": "role", "in": "query", "required": true, "schema": { "type": "string", "enum": ["admin"] } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 100 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rows": { "type": "array", "items": { "$ref": "#/components/schemas/AuditEntry" } },
+                    "total": { "type": "integer" },
+                    "limit": { "type": "integer" },
+                    "offset": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Admin role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/export": {
+      "post": {
+        "operationId": "exportFunderCSV",
+        "summary": "Generate a funder-specific CSV export",
+        "description": "Requires role=admin or a valid Bearer token when ONEVIEW_API_KEY is configured.",
+        "tags": ["Reporting"],
+        "security": [{ "bearerAuth": [] }, {}],
+        "parameters": [
+          { "name": "role", "in": "query", "schema": { "type": "string", "enum": ["admin"] } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["funder"],
+                "properties": {
+                  "funder": { "type": "string", "enum": ["ircc","eo","uw","city"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "CSV data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "headers": { "type": "array", "items": { "type": "string" } },
+                    "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } },
+                    "rawData": { "type": "array", "items": { "type": "object" } },
+                    "funder": { "type": "string" },
+                    "label": { "type": "string" },
+                    "count": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Admin role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/draft-report": {
+      "post": {
+        "operationId": "draftReport",
+        "summary": "Generate an AI narrative report for a funder",
+        "description": "Cache-first: returns a cached narrative if one exists for the same funder and period. Pass forceLive=true to regenerate.",
+        "tags": ["Reporting"],
+        "parameters": [
+          { "name": "role", "in": "query", "required": true, "schema": { "type": "string", "enum": ["admin"] } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["funder", "period"],
+                "properties": {
+                  "funder": { "type": "string", "enum": ["ircc","eo","uw","city"] },
+                  "period": { "type": "string", "description": "Human-readable period, e.g. 'Q1 2025'" },
+                  "forceLive": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated narrative",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "narrative": { "type": "string" },
+                    "cached": { "type": "boolean" },
+                    "metrics": { "type": "object" }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Admin role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/query": {
+      "post": {
+        "operationId": "queryAI",
+        "summary": "Ask a natural-language question about program data",
+        "description": "The LLM receives only verified aggregate metrics, no PII. Requires role=admin or caseworker, or a valid Bearer token.",
+        "tags": ["Reporting"],
+        "security": [{ "bearerAuth": [] }, {}],
+        "parameters": [
+          { "name": "role", "in": "query", "schema": { "type": "string", "enum": ["admin","caseworker"] } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["question"],
+                "properties": {
+                  "question": { "type": "string", "example": "How many clients completed employment training last month?" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answer": { "type": "string" },
+                    "metrics": { "type": "object" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/ai-insights": {
+      "post": {
+        "operationId": "getAiInsights",
+        "summary": "Generate AI-powered program insights from analytics data",
+        "tags": ["Reporting"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["analytics"],
+                "properties": {
+                  "analytics": { "type": "object", "description": "Analytics payload from GET /api/analytics" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "insights": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "title": { "type": "string" },
+                          "body": { "type": "string" },
+                          "type": { "type": "string", "enum": ["success","warning","info"] },
+                          "program": { "type": "string" }
+                        }
+                      }
+                    },
+                    "fallback": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "System", "description": "Health, initialization, and admin operations" },
+    { "name": "Clients", "description": "Client profile management" },
+    { "name": "Enrolments", "description": "Program enrollment management" },
+    { "name": "Outcomes", "description": "Outcome tracking" },
+    { "name": "Notes", "description": "Caseworker case notes" },
+    { "name": "Journey", "description": "Full client journey view" },
+    { "name": "Analytics", "description": "Program analytics and pipeline data" },
+    { "name": "Surveys", "description": "Client exit surveys" },
+    { "name": "Reporting", "description": "Funder exports and AI narrative generation" },
+    { "name": "Compliance", "description": "Audit log and PHIPA/FIPPA compliance" }
+  ]
+}

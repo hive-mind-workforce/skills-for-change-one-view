@@ -10,7 +10,7 @@ export default function AIAgentsTab() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         {[
-          { file:"CLAUDE.md", desc:"Build conventions, env vars, architecture, data model, API reference, integration guide. Start here.", link:"/CLAUDE.md", color:"#f59e0b" },
+          { file:"CLAUDE.md", desc:"Build conventions, env vars, architecture, data model, API reference, integration guide. Start here.", link:"https://github.com/hive-mind-workforce/skills-for-change-one-view/blob/main/CLAUDE.md", color:"#f59e0b" },
           { file:"/llms.txt", desc:"Answer.AI convention. Plain-text index of all endpoints, roles, data shapes, and integration notes.", link:"/llms.txt", color:"#10b981" },
           { file:"/openapi.json", desc:"Full OpenAPI 3.1 spec. Every route, request/response schema, auth model. Machine-readable.", link:"/openapi.json", color:"#6366f1" },
           { file:"/sitemap.xml", desc:"All public routes for SEO and AI crawlers.", link:"/sitemap.xml", color:"#8b5cf6" },
