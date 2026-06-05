@@ -646,10 +646,10 @@ export async function getAnalyticsData(since?: string | null) {
           SUM(CASE WHEN would_recommend THEN 1.0 ELSE 0 END) * 100.0 / COUNT(*) as rec_pct,
           COUNT(*) as survey_cnt
         FROM surveys GROUP BY enrolment_id
-      ) sa ON sa.enrolment_id = e.id AND e.program != 'mental_health'
-      WHERE 1=1 ${ef}
+      ) sa ON sa.enrolment_id = e.id
+      WHERE e.program != 'mental_health' ${ef}
       GROUP BY e.program ORDER BY clients DESC`, p),
-    sql.query(`SELECT c.stage, e.program, COUNT(*) as count FROM clients c JOIN enrolments e ON e.client_id = c.id WHERE 1=1 ${cf} GROUP BY c.stage, e.program`, p),
+    sql.query(`SELECT c.stage, e.program, COUNT(*) as count FROM clients c JOIN enrolments e ON e.client_id = c.id WHERE e.program != 'mental_health' ${cf} GROUP BY c.stage, e.program`, p),
     sql.query(`SELECT
       ROUND(AVG(satisfaction), 1) as avg_sat,
       COUNT(*) as total,
@@ -673,7 +673,7 @@ export async function getAnalyticsData(since?: string | null) {
     ORDER BY program, satisfaction DESC`, p),
     sql.query(`SELECT barriers, e.program, COUNT(*) as count FROM surveys s
       JOIN enrolments e ON e.id = s.enrolment_id
-      WHERE barriers IS NOT NULL AND barriers != 'None' ${sf.replace("s.", "s.")}
+      WHERE barriers IS NOT NULL AND barriers != 'None' AND e.program != 'mental_health' ${sf.replace("s.", "s.")}
       GROUP BY barriers, e.program ORDER BY count DESC LIMIT 30`, p),
   ])
   return {
@@ -839,14 +839,19 @@ export async function applyRLS() {
   // FORCE ensures the policy applies even to the table owner (the app DB user)
   await sql`ALTER TABLE enrolments FORCE ROW LEVEL SECURITY`
   await sql`
-    CREATE POLICY IF NOT EXISTS phi_wall ON enrolments
-    AS RESTRICTIVE
-    FOR ALL
-    TO PUBLIC
-    USING (
-      program != 'mental_health'
-      OR current_setting('app.bypass_phi', true) = 'true'
-    )`
+    DO $$ BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'phi_wall' AND tablename = 'enrolments'
+      ) THEN
+        CREATE POLICY phi_wall ON enrolments
+        AS RESTRICTIVE FOR ALL TO PUBLIC
+        USING (
+          program != 'mental_health'
+          OR current_setting('app.bypass_phi', true) = 'true'
+        );
+      END IF;
+    END $$`
 }
 
 export async function getClientsForExport(programs: string[]) {
