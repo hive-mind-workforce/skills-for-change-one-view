@@ -461,6 +461,7 @@ export async function getClients() {
   const [clientsRes, totalRes, programRes, crossRes, outcomesRes] = await Promise.all([
     withPhiBypass(conn => conn.query(
       `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
+        c.stage, c.gender, c.age_group, c.country_of_origin, c.source, c.phone, c.email,
         e.program, e.funder, e.consent_cross_program, e.enrolled_at,
         COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
         COUNT(o.id) as outcomes_total
@@ -592,6 +593,7 @@ export async function searchClients(query: string, limit = 20) {
   return withPhiBypass(async conn => {
     const result = await conn.query(
       `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.created_at,
+        c.stage, c.gender, c.age_group, c.country_of_origin, c.source, c.phone, c.email,
         COUNT(e.id) as enrolment_count,
         array_agg(DISTINCT e.program) FILTER (WHERE e.program IS NOT NULL) as programs
       FROM clients c
