@@ -217,6 +217,20 @@ export async function seedDatabase() {
     return "Prefer not to say"
   }
 
+  // Gender for women's program: woman-identified and non-binary only
+  function genderForWomensProgram(idx: number): string {
+    const v = (idx * 7919) % 1000
+    if (v < 700) return "Woman"
+    if (v < 800) return "Transgender woman"
+    if (v < 870) return "Non-binary"
+    if (v < 910) return "Two-Spirit"
+    if (v < 940) return "Genderfluid"
+    if (v < 965) return "Gender non-conforming"
+    if (v < 982) return "Genderqueer"
+    if (v < 993) return "Bigender"
+    return "Questioning"
+  }
+
   // Weighted source: referral/partner dominate, online growing, event/direct rare
   function sourceForIdx(idx: number): string {
     const v = (idx * 3571) % 100
@@ -324,7 +338,7 @@ export async function seedDatabase() {
           sourceForIdx(r.idx),
           COUNTRIES[(r.idx * 7 + Math.floor(r.idx / 3)) % COUNTRIES.length],
           ageForIdx(r.idx),
-          genderForIdx(r.idx),
+          program === "women" ? genderForWomensProgram(r.idx) : genderForIdx(r.idx),
           createdAtForIdx(r.idx),
         ])
         await conn.query(

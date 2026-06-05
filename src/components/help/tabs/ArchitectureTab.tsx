@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { X, Copy, CheckCircle, Maximize2 } from "lucide-react"
 import { useTheme } from "next-themes"
@@ -38,6 +38,59 @@ const LAYERS = [
     { id:"city-reports", name:"City Reports", icon:"🏙️", color:"#8b5cf6", desc:"City of Toronto Social Development reporting. Covers Mentoring and Women's programs.", steps:["Generate City-format CSV","Include goal achievement data","Submit via City reporting portal","Quarterly reporting cycle"], code:"city.csvHeaders:\n['File Number','Name',\n 'Program','Goals',...]" },
   ]},
 ]
+
+const RBAC_CHIP: Record<string, string> = {
+  full:   "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  read:   "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+  create: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+  qa:     "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20",
+  bearer: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
+}
+
+const RBAC_ROWS = [
+  { role: "Admin",      color: "text-emerald-600 dark:text-emerald-400", cells: [["Full","full"],["Full","full"],["Full","full"],["Full","full"],["Full","full"]] },
+  { role: "Caseworker", color: "text-indigo-600 dark:text-indigo-400",   cells: [["Read","read"],["Create","create"],["","none"],["Q&A only","qa"],["Read","read"]] },
+  { role: "Viewer",     color: "text-slate-500 dark:text-slate-400",     cells: [["Read","read"],["","none"],["","none"],["","none"],["Read","read"]] },
+  { role: "AI Agent",   color: "text-amber-600 dark:text-amber-400",     cells: [["","none"],["","none"],["API only","bearer"],["API only","bearer"],["","none"]] },
+] as const
+
+const RBAC_MATRIX: ReactNode = (
+  <div className="overflow-x-auto">
+    <table className="w-full text-xs">
+      <thead>
+        <tr className="border-b border-slate-200 dark:border-white/[0.08]">
+          <th className="text-left py-2.5 pr-6 text-slate-500 font-medium">Role</th>
+          {["Dashboard","Intake","Export","AI Reports","Help"].map(col => (
+            <th key={col} className="text-center px-4 py-2.5 text-slate-500 font-medium whitespace-nowrap">{col}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {RBAC_ROWS.map(row => (
+          <tr key={row.role} className="border-t border-slate-100 dark:border-white/[0.06]">
+            <td className={`py-3 pr-6 font-semibold whitespace-nowrap ${row.color}`}>{row.role}</td>
+            {row.cells.map(([label, variant], i) => (
+              <td key={i} className="px-4 py-3 text-center">
+                {variant === "none"
+                  ? <span className="text-slate-300 dark:text-slate-600 select-none">-</span>
+                  : <span className={`inline-flex px-2 py-0.5 rounded-full border font-medium ${RBAC_CHIP[variant]}`}>{label}</span>
+                }
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <div className="mt-4 flex flex-wrap gap-3 pt-3 border-t border-slate-100 dark:border-white/[0.06]">
+      {[["Full","full","all features"],["Read","read","view only, no PII export"],["Create","create","intake and enrolment"],["Q&A only","qa","no funder reports"],["API only","bearer","Bearer token, API-only"]] .map(([label, v, desc]) => (
+        <span key={v} className="flex items-center gap-1.5 text-slate-500">
+          <span className={`inline-flex px-2 py-0.5 rounded-full border font-medium ${RBAC_CHIP[v]}`}>{label}</span>
+          {desc}
+        </span>
+      ))}
+    </div>
+  </div>
+)
 
 const ARCH_DIAGRAMS = [
   {
@@ -165,6 +218,7 @@ const ARCH_DIAGRAMS = [
     title: "RBAC Permissions",
     description: "Four roles with explicit access boundaries. AI Agent uses a Bearer token for API-only access to export and query endpoints.",
     id: "arch-rbac",
+    component: RBAC_MATRIX,
     code: `graph LR
     subgraph roles [Roles]
         AD[Admin]
@@ -270,7 +324,7 @@ function MermaidDiagram({ code, id }: { code: string; id: string }) {
 
 interface Node { id:string; name:string; icon:string; color:string; desc:string; steps:string[]; code:string }
 
-interface DiagramEntry { title: string; description: string; id: string; code: string }
+interface DiagramEntry { title: string; description: string; id: string; code: string; component?: ReactNode }
 
 export default function ArchitectureTab() {
   const [selected, setSelected] = useState<Node|null>(null)
@@ -303,7 +357,7 @@ export default function ArchitectureTab() {
           </div>
         </div>
         <div className="flex-1 overflow-auto p-6 bg-[#050510]">
-          <MermaidDiagram code={zoomed.code} id={`zoom-${zoomed.id}`} />
+          {zoomed.component ?? <MermaidDiagram code={zoomed.code} id={`zoom-${zoomed.id}`} />}
         </div>
       </div>
     </>
@@ -392,7 +446,7 @@ export default function ArchitectureTab() {
             </div>
           </div>
           <div className="p-5 bg-slate-50 dark:bg-[#050510]">
-            <MermaidDiagram code={d.code} id={d.id} />
+            {d.component ?? <MermaidDiagram code={d.code} id={d.id} />}
           </div>
         </div>
       ))}
