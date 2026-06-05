@@ -161,10 +161,10 @@ export default function PrivacyTab() {
         <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Mental Health records are permanently siloed under the Personal Health Information Protection Act (PHIPA). No role, consent flag, or configuration can override this; it is enforced structurally at the database layer.</p>
         <div className="bg-rose-500/[0.06] border border-rose-500/20 rounded-lg p-4 space-y-2">
           {[
-            "Applied as AND e.program != 'mental_health' inside every cross-program SQL function.",
+            "Enforced by a Postgres Row Level Security policy (phi_wall) on the enrolments table: program != 'mental_health' OR bypass flag set.",
             "No application code path can retrieve mental health records in a cross-program context.",
             "Mental Health enrolments and outcomes are accessible only within the mental_health program scope.",
-            "Enforced at the query layer, not as a UI toggle or role permission that could be misconfigured.",
+            "Enforced at the database layer, not as a UI toggle or role permission that could be misconfigured.",
           ].map((point, i) => (
             <div key={i} className="flex items-start gap-2">
               <AlertTriangle size={12} className="text-rose-500 mt-0.5 flex-shrink-0" />
