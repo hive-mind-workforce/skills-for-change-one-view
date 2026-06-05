@@ -172,6 +172,14 @@ export default function DemoTour() {
           side: "bottom" as const,
           onNextClick: async () => {
             try {
+              // Complete any remaining outcomes (Mental Health) before closing
+              let remaining = document.querySelectorAll('button[title="Mark as achieved"]')
+              while (remaining.length > 0) {
+                ;(remaining[0] as HTMLButtonElement).click()
+                await waitForEvent("demo:journey-loaded", 4000)
+                await delay(150)
+                remaining = document.querySelectorAll('button[title="Mark as achieved"]')
+              }
               const completeBtn = document.querySelector('[data-tour="journey-complete-btn"]') as HTMLButtonElement | null
               completeBtn?.click()
               await delay(500)
