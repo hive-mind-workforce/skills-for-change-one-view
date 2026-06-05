@@ -219,11 +219,19 @@ export default function JourneyViewer() {
       const { program } = (e as CustomEvent).detail
       setNewProgram(program)
     }
+    function handleFillNote(e: Event) {
+      const { content, noteType: type } = (e as CustomEvent).detail
+      if (content) setNoteText(content)
+      if (type) setNoteType(type)
+      setAddingNote(true)
+    }
     window.addEventListener("demo:refresh-journey", handleRefresh)
     window.addEventListener("demo:set-new-program", handleSetNewProgram)
+    window.addEventListener("demo:fill-note", handleFillNote)
     return () => {
       window.removeEventListener("demo:refresh-journey", handleRefresh)
       window.removeEventListener("demo:set-new-program", handleSetNewProgram)
+      window.removeEventListener("demo:fill-note", handleFillNote)
     }
   }, [])
 
@@ -1048,7 +1056,7 @@ export default function JourneyViewer() {
           </div>
 
           {/* CASE NOTES SECTION */}
-          <div className="glass rounded-xl p-5 space-y-4">
+          <div className="glass rounded-xl p-5 space-y-4" data-tour="journey-notes">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <FileText size={18} className="text-slate-500 dark:text-slate-400" />

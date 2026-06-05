@@ -54,6 +54,8 @@ export default function DemoTour() {
 
     window.dispatchEvent(new CustomEvent("demo:fill-intake", { detail: {
       full_name: "Layla Hassan",
+      phone: "+1 416-555-0192",
+      email: "layla.hassan@email.com",
       primary_language: "Somali",
       immigration_stream: "Refugee",
       country_of_origin: "Somalia",
@@ -61,7 +63,7 @@ export default function DemoTour() {
       gender: "Woman",
       source: "Referral from partner",
       program: "employment",
-      consent_cross_program: false,
+      consent_cross_program: true,
       consent_data_use: true,
       consent_followup: true,
       consent_aggregate: true,
@@ -165,38 +167,69 @@ export default function DemoTour() {
         },
       },
       {
+        element: "[data-tour='journey-notes']",
+        popover: {
+          title: "Caseworker notes",
+          description: "Every client interaction is documented here. Click Next to add a progress note for Layla before closing her journey.",
+          side: "top" as const,
+          onNextClick: async () => {
+            try {
+              window.dispatchEvent(new CustomEvent("demo:fill-note", { detail: {
+                content: "Layla completed the resume workshop and three mock interviews. Strong candidate for software QA roles. Referred for job placement support.",
+                noteType: "interview",
+              }}))
+              await delay(400)
+              const saveBtn = Array.from(document.querySelectorAll("button")).find(b => b.textContent?.trim() === "Save Note") as HTMLButtonElement | null
+              if (saveBtn && !saveBtn.disabled) {
+                saveBtn.click()
+                await delay(800)
+              }
+            } catch { /* continue */ }
+            finally { d.moveNext() }
+          },
+        },
+      },
+      {
         element: "[data-tour='journey-complete-btn']",
         popover: {
           title: "Complete the journey",
-          description: "Click Next to advance Layla to the Survey stage and generate a unique survey link. OneView sends it to the client automatically.",
+          description: "Click Next to mark all Mental Health outcomes achieved, advance Layla to the Survey stage, and generate a unique survey link.",
           side: "bottom" as const,
           onNextClick: async () => {
             try {
-              // Complete any remaining outcomes (Mental Health) before closing
+              // Complete remaining MH outcomes using a fixed delay per toggle
               let remaining = document.querySelectorAll('button[title="Mark as achieved"]')
-              while (remaining.length > 0) {
+              let safetyCount = 0
+              while (remaining.length > 0 && safetyCount < 10) {
+                safetyCount++
                 ;(remaining[0] as HTMLButtonElement).click()
-                await waitForEvent("demo:journey-loaded", 4000)
-                await delay(150)
+                await delay(1800)
                 remaining = document.querySelectorAll('button[title="Mark as achieved"]')
               }
+              // Click the Complete Journey button to open the confirmation dialog
               const completeBtn = document.querySelector('[data-tour="journey-complete-btn"]') as HTMLButtonElement | null
-              completeBtn?.click()
-              await delay(500)
+              if (completeBtn) {
+                completeBtn.click()
+                await delay(800)
+              }
+              // Click "Send Survey & Complete" in the confirmation dialog
               const sendBtn = Array.from(document.querySelectorAll("button")).find(b => b.textContent?.includes("Send Survey")) as HTMLButtonElement | null
               if (sendBtn) {
                 sendBtn.click()
-                await delay(1500)
+                await delay(2000)
               }
-              router.push(`/survey/${registeredClientId}`)
-              await waitForEvent("demo:survey-form-ready", 10000)
-              window.dispatchEvent(new CustomEvent("demo:fill-survey", { detail: {
-                satisfaction: 5,
-                wouldRecommend: true,
-                barriers: "",
-                successStory: "Thanks to the employment program, I found a full-time role as a software tester within three months. Skills for Change changed everything for my family.",
-              }}))
-              await delay(400)
+              // Navigate to the survey page
+              if (registeredClientId) {
+                router.push(`/survey/${registeredClientId}`)
+                await waitForEvent("demo:survey-form-ready", 12000)
+                window.dispatchEvent(new CustomEvent("demo:fill-survey", { detail: {
+                  satisfaction: 5,
+                  wouldRecommend: true,
+                  barriers: "",
+                  successStory: "Thanks to the employment program, I found a full-time role as a software tester within three months. Skills for Change changed everything for my family.",
+                }}))
+                await delay(400)
+              }
             } catch { /* continue */ }
             finally { d.moveNext() }
           },

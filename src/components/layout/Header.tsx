@@ -25,7 +25,7 @@ export default function Header() {
     if (resetting) return
     setResetting(true)
     try {
-      await fetch("/api/reset", { method: "POST" })
+      await fetch(`/api/reset?role=${role}`, { method: "POST" })
       router.refresh()
       router.push(`/?role=admin`)
     } finally {
