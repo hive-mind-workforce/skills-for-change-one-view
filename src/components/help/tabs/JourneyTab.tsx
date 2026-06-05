@@ -58,7 +58,7 @@ const PIPELINE_STAGES = [
     color: "#a855f7",
     icon: "📝",
     amara: "An exit survey link is auto-sent when Amara's journey closes. She rates her experience 5/5, says she would recommend Skills for Change, and leaves a testimonial. Results aggregate to the analytics dashboard immediately.",
-    privacy: "Survey linked to client record by ID. Satisfaction and recommend-rate fed into program metrics. Testimonial anonymized before display.",
+    privacy: "Survey linked to client record by ID. Satisfaction and recommend-rate fed into program metrics. Success story displayed with the client's name and program on the analytics dashboard.",
   },
   {
     stage: "Completed",
