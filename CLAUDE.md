@@ -2,7 +2,7 @@
 
 > Capture once, report to every funder.
 
-OneView is a client outcomes tracking and funder reporting platform for Skills for Change, a Toronto nonprofit serving immigrants and refugees across 8 programs with 4 different funders.
+OneView is a client outcomes tracking and funder reporting platform for Skills for Change, a Toronto nonprofit serving immigrants and refugees across 8 programs with multiple funders.
 
 ## Quick Start
 

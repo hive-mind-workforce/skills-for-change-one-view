@@ -883,16 +883,15 @@ export async function getClientsForExport(programs: string[]) {
 export async function getRecentClients(limit = 20) {
   return withPhiBypass(async conn => {
     const result = await conn.query(
-      `SELECT c.id, c.full_name, c.primary_language, c.immigration_stream, c.stage,
-        c.country_of_origin, c.age_group, c.created_at,
-        e.program, e.funder, e.enrolled_at,
-        COUNT(o.id) FILTER (WHERE o.achieved = true) as outcomes_achieved,
-        COUNT(o.id) as outcomes_total
-       FROM clients c
-       JOIN enrolments e ON e.client_id = c.id
-       LEFT JOIN outcomes o ON o.enrolment_id = e.id
-       GROUP BY c.id, e.id
-       ORDER BY c.created_at DESC
+      `SELECT * FROM (
+         SELECT DISTINCT ON (c.id) c.id, c.full_name, c.primary_language, c.immigration_stream, c.stage,
+           c.country_of_origin, c.age_group, c.created_at,
+           e.program, e.funder, e.enrolled_at
+         FROM clients c
+         JOIN enrolments e ON e.client_id = c.id
+         ORDER BY c.id, c.created_at DESC
+       ) sub
+       ORDER BY created_at DESC
        LIMIT $1`,
       [limit]
     )

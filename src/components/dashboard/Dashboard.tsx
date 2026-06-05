@@ -135,7 +135,7 @@ function DashboardInner() {
             Lives Changed. Futures Built.
           </p>
           <p className="text-slate-300 mt-2 text-base md:text-lg">
-            Newcomers and refugees served across 8 programs and 4 funders
+            Newcomers and refugees served across 8 programs and multiple funders
           </p>
 
           {/* three hero stats */}

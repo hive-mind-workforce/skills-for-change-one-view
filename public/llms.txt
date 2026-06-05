@@ -3,7 +3,7 @@
 
 ## Purpose
 
-OneView allows Skills for Change staff to record client data once and automatically generate compliance-ready reports for 4 funders (IRCC, Employment Ontario, United Way, City of Toronto) across 8 programs. Features include: client intake, pipeline stage tracking, outcome recording, funder CSV export, AI narrative generation, AI Q&A, exit surveys, case notes, audit logging, and program analytics.
+OneView allows Skills for Change staff to record client data once and automatically generate compliance-ready reports for multiple funders (IRCC, Employment Ontario, United Way, City of Toronto) across 8 programs. Features include: client intake, pipeline stage tracking, outcome recording, funder CSV export, AI narrative generation, AI Q&A, exit surveys, case notes, audit logging, and program analytics.
 
 ## Base URL
 

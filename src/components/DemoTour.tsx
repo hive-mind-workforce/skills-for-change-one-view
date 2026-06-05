@@ -339,7 +339,7 @@ export default function DemoTour() {
       {
         element: "[data-tour='export-funders']",
         popover: {
-          title: "Four funders, exact column specs",
+          title: "Multiple funders, exact column specs",
           description: "Select any funder to generate a compliance-ready CSV shaped to their portal's exact specification. IRCC gets iCARE format. Employment Ontario gets EOIS-CaMS format. The file downloads in seconds.",
           side: "top" as const,
         },
