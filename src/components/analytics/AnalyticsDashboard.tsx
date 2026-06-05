@@ -178,10 +178,10 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
       })
       .then((raw: any) => {
         const stageRows: any[] = raw.byStage ?? []
-        const placementCount = Number(stageRows.find((r: any) => r.stage === "complete")?.count ?? 0)
-        const droppedCount = stageRows
-          .filter((r: any) => ["outreach", "vetting"].includes(r.stage))
+        const placementCount = stageRows
+          .filter((r: any) => ["complete", "survey", "placement"].includes(r.stage))
           .reduce((sum: number, r: any) => sum + Number(r.count), 0)
+        const droppedCount = Number(stageRows.find((r: any) => r.stage === "dropped")?.count ?? 0)
         const surveyRaw = raw.surveyStats ?? {}
         const surveyTotal = Number(surveyRaw.total ?? 0)
         const normalized: AnalyticsData = {
@@ -274,8 +274,9 @@ export default function AnalyticsDashboard({ role: _role }: AnalyticsDashboardPr
   const recommendCount = Number(data.surveyStats?.recommend_count) || 0
 
   const satisfactionPct = ((avgSatisfaction / 5) * 100).toFixed(0)
-  const placementPct = ((placementCount / totalClients) * 100).toFixed(0)
-  const dropoffPct = ((droppedCount / totalClients) * 100).toFixed(0)
+  const terminalClients = placementCount + droppedCount || 1
+  const placementPct = Math.round((placementCount / terminalClients) * 100).toString()
+  const dropoffPct = Math.round((droppedCount / terminalClients) * 100).toString()
   const recommendPct = surveyTotal > 0 ? ((recommendCount / surveyTotal) * 100).toFixed(0) : "0"
 
   // World map data
