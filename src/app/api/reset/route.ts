@@ -5,6 +5,10 @@ import { sql } from "@vercel/postgres"
 import { initDB, seedDatabase } from "@/lib/db"
 
 export async function POST(req: NextRequest) {
+  const role = new URL(req.url).searchParams.get("role")
+  if (role !== "admin") {
+    return Response.json({ error: "Admin role required" }, { status: 403 })
+  }
   try {
     await sql`TRUNCATE clients RESTART IDENTITY CASCADE`
     await sql`TRUNCATE audit_log RESTART IDENTITY`

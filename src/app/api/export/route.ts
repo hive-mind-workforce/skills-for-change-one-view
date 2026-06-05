@@ -3,7 +3,23 @@ import { NextRequest } from "next/server"
 import { getClientsForExport, logAudit } from "@/lib/db"
 import { generateCSVFromExport, FUNDERS } from "@/lib/funders"
 
+function checkAuth(req: NextRequest): Response | null {
+  const apiKey = process.env.ONEVIEW_API_KEY
+  const role = new URL(req.url).searchParams.get("role")
+  const auth = req.headers.get("authorization")
+  if (apiKey) {
+    if (auth !== `Bearer ${apiKey}` && role !== "admin") {
+      return Response.json({ error: "Unauthorized" }, { status: 401 })
+    }
+  } else if (role !== "admin") {
+    return Response.json({ error: "Admin role required" }, { status: 403 })
+  }
+  return null
+}
+
 export async function POST(req: NextRequest) {
+  const authError = checkAuth(req)
+  if (authError) return authError
   try {
     const { funder } = await req.json()
     const config = FUNDERS[funder]

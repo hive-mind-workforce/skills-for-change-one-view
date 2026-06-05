@@ -19,7 +19,7 @@ OneView supports three access roles. In the current demo deployment, roles are p
 |-------------|---------------------------|-------------|
 | admin       | ?role=admin               | Full access: all programs, all clients, export, reset, audit log |
 | caseworker  | ?role=caseworker          | Create clients, read own program, case notes, surveys |
-| viewer      | ?role=viewer              | Read-only dashboards, no PII fields returned |
+| viewer      | ?role=viewer              | Read-only dashboards; PII field filtering applied in production via JWT claims |
 | ai_agent    | Authorization: Bearer <ONEVIEW_API_KEY> | /api/query and /api/export only |
 
 Default role when no query param is present: admin (demo convenience only; production will require explicit authentication).
@@ -31,7 +31,7 @@ AI Agent calls must include the header: `Authorization: Bearer <ONEVIEW_API_KEY>
 ## Data Model
 
 ### clients
-id (uuid, PK), full_name (text), primary_language (text), immigration_stream (text), stage (text), source (text), country_of_origin (text), age_group (text), gender (text), phone (text, nullable), email (text, nullable), created_at (timestamptz)
+id (uuid, PK), full_name (text), primary_language (text), immigration_stream (text), stage (text), source (text), country_of_origin (text), age_group (text), gender (text), created_at (timestamptz)
 
 stage values: outreach, vetting, eligibility, intake, training, placement, survey, complete, dropped
 
@@ -94,14 +94,14 @@ Clients move through 9 stages in order:
 
 Each enrolment has three outcomes, one per tier. Achieved = true means the outcome was met.
 
-settlement: immediate="Needs assessment completed", intermediate="Service plan activated", ultimate="Settlement goals achieved"
-employment: immediate="Skills gap identified", intermediate="Job search skills built", ultimate="Employment secured"
-language: immediate="Language assessment done", intermediate="Language benchmark improved", ultimate="Language goal reached"
-mental_health: immediate="Mental health screen done", intermediate="Coping strategies learned", ultimate="Wellbeing improved"
-trades: immediate="Trade aptitude assessed", intermediate="Certification earned", ultimate="Trades employment secured"
-mentoring: immediate="Mentor matched", intermediate="Milestone check-in completed", ultimate="Mentorship goals met"
-youth: immediate="Youth intake completed", intermediate="Life skills developed", ultimate="Education or employment achieved"
-women: immediate="Safety plan created", intermediate="Skills training completed", ultimate="Economic independence achieved"
+settlement: immediate="Settlement needs assessment and service plan completed", intermediate="Referral to community, healthcare, or legal services completed", ultimate="Successfully settled and independently navigating life in Canada"
+employment: immediate="Canadian-format resume and cover letter developed", intermediate="Job interview coaching and placement support received", ultimate="Employment secured in field of qualification"
+language: immediate="CLBA language assessment and CLB level confirmed", intermediate="Intermediate to advanced language benchmarks achieved (CLB 4-6)", ultimate="Language goals met; eligible for citizenship or further education"
+mental_health: immediate="Initial individual counselling session completed", intermediate="Support group or wellness workshop attended", ultimate="Ongoing personalized mental health care plan established"
+trades: immediate="Pre-apprenticeship skills assessment and safety certifications completed", intermediate="Technical training and workplace readiness coaching underway", ultimate="Trade certification or apprenticeship placement secured"
+mentoring: immediate="Matched with industry-specific mentor in field of practice", intermediate="Three or more mentoring sessions completed; professional network expanded", ultimate="Career goal achieved through mentoring relationship"
+youth: immediate="Enrolled in youth program with paid training component secured", intermediate="Sector-specific skill workshops and career counselling completed", ultimate="Paid work placement or post-secondary education pathway launched"
+women: immediate="Program intake and skills assessment completed", intermediate="Skills training and sector-specific workshops attended", ultimate="Employment, certification, or career advancement achieved"
 
 ---
 
@@ -136,10 +136,10 @@ Auth: Public
 Initializes database schema and seeds demo data if tables are empty.
 Response: {initialized:true, seeded:boolean, clientCount:number}
 Auth: Public
-Note: Seeds 16,247 demo clients across all 8 programs with realistic distributions.
+Note: Seeds 19,140 demo clients across all 8 programs with realistic distributions.
 
 ### GET /api/migrate
-Runs CREATE TABLE IF NOT EXISTS for all 6 tables. Safe to call on an existing database.
+Runs CREATE TABLE IF NOT EXISTS for all 8 tables. Safe to call on an existing database.
 Response: {migrated:true}
 Auth: Public
 
@@ -151,7 +151,7 @@ Auth: Caseworker+
 
 ### POST /api/clients
 Create a new client with enrolment and default outcomes.
-Body: {full_name:string, primary_language:string, immigration_stream:string, program:string, funder?:string, consent_cross_program?:boolean, stage?:string, source?:string, country_of_origin?:string, age_group?:string, gender?:string, phone?:string, email?:string}
+Body: {full_name:string, primary_language:string, immigration_stream:string, program:string, funder?:string, consent_cross_program?:boolean, stage?:string, source?:string, country_of_origin?:string, age_group?:string, gender?:string}
 Response: {clientId:string, enrolId:string} (201)
 Auth: Caseworker+
 
@@ -174,7 +174,7 @@ Response: {answer:string, metrics:object}
 Auth: Caseworker+ or AI Agent (Bearer token)
 
 ### POST /api/reset
-Truncates all tables and re-seeds 16,247 demo clients. Destructive.
+Truncates all tables and re-seeds 19,140 demo clients. Destructive.
 Body: {}
 Response: {success:true, message:string}
 Auth: Admin
@@ -306,14 +306,14 @@ Generate CSV: POST /api/export {funder:"city"}. Upload manually.
 
 ## Demo Data
 
-Seeded on /api/init with 16,247 clients:
-- settlement: 2,847 clients
-- employment: 2,203 clients
-- language: 2,156 clients
-- mental_health: 1,891 clients
-- trades: 1,644 clients
-- mentoring: 1,956 clients
-- youth: 1,789 clients
-- women: 1,761 clients
+Seeded on /api/init with 19,140 clients:
+- settlement: 4,120 clients
+- employment: 5,380 clients
+- language: 3,010 clients
+- mental_health: 1,240 clients
+- trades: 980 clients
+- mentoring: 1,450 clients
+- youth: 1,620 clients
+- women: 1,340 clients
 
 Distributions are deterministic and realistic: age skews young (18-34 = 75%), gender reflects newcomer population diversity, source weighted toward referrals and partner organizations, intake dates follow a power-curve with recent months heavier, outcome rates reflect a high-performing organization (72-97% by program and tier).

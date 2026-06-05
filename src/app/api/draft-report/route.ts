@@ -6,6 +6,10 @@ import { FUNDERS } from "@/lib/funders"
 import { sql } from "@vercel/postgres"
 
 export async function POST(req: NextRequest) {
+  const role = new URL(req.url).searchParams.get("role")
+  if (role !== "admin") {
+    return Response.json({ error: "Admin role required" }, { status: 403 })
+  }
   try {
     const { funder, period, forceLive = false } = await req.json()
     const config = FUNDERS[funder]

@@ -54,7 +54,7 @@ const ENCRYPTION_DETAILS = [
     points: [
       "All browser-to-server traffic is HTTPS. HTTP connections are rejected at the edge (Vercel enforces redirect).",
       "Server-to-database connections use SSL/TLS with certificate verification. The POSTGRES_URL connection string includes sslmode=require.",
-      "API tokens (ONEVIEW_API_KEY bearer auth) are transmitted only over HTTPS and checked on every request before any data is returned.",
+      "API tokens (ONEVIEW_API_KEY bearer auth) are transmitted only over HTTPS. When ONEVIEW_API_KEY is configured, it is enforced on /api/query and /api/export before any data is returned.",
       "TLS 1.0 and 1.1 are disabled at the CDN layer. Minimum TLS 1.2; TLS 1.3 preferred.",
     ],
   },
@@ -79,9 +79,9 @@ const ENCRYPTION_DETAILS = [
     bg: "bg-violet-500/[0.04]",
     points: [
       "No direct database access from the browser. All queries run server-side in Next.js API routes. The database is never exposed on a public port.",
-      "Role-based access is enforced at the query layer: caseworker queries include a WHERE program = $1 filter; admin queries are unrestricted.",
+      "Admin role is enforced at the API layer for export, reset, and report generation. Demo mode uses ?role=admin query param; production replaces this with JWT claims.",
       "The PHI Wall is a Postgres Row Level Security policy (phi_wall) on the enrolments table. Cross-program queries add a redundant WHERE filter for defense in depth.",
-      "Viewer role receives only aggregated, anonymized metrics. PII columns (full_name, phone, email) are never returned to Viewer-scoped requests.",
+      "PII (full_name) is available to Caseworker and Admin roles. Viewer role is read-only by UI convention; field-level filtering is applied in production via JWT claims.",
     ],
   },
 ]

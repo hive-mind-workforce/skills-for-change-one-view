@@ -97,7 +97,7 @@ const TECH_STACK = [
   { name: "shadcn/ui", note: "Accessible component library" },
   { name: "Vercel Postgres (Neon)", note: "All client and outcomes data" },
   { name: "Recharts", note: "Program breakdown visualisations" },
-  { name: "driver.js", note: "8-step guided demo tour" },
+  { name: "driver.js", note: "16-step guided demo tour" },
   { name: "Vercel", note: "Deployment and preview environments" },
 ]
 
