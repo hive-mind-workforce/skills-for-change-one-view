@@ -125,7 +125,13 @@ export default function SurveyForm({ clientId }: Props) {
           <p className="text-slate-400 text-sm leading-relaxed">
             Your feedback has been received by Skills for Change. It helps us improve our programs for future clients.
           </p>
-          <p className="text-xs text-slate-500">You may close this window.</p>
+          <a
+            href={`/journeys?clientId=${clientId}`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-sm font-medium transition-colors"
+          >
+            ← Back to journey overview
+          </a>
+          <p className="text-xs text-slate-500">You may also close this window.</p>
         </div>
       </div>
     )

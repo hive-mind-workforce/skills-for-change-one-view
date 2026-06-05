@@ -744,7 +744,7 @@ export default function JourneyViewer() {
 
             {/* Complete Journey dialog */}
             {completingJourney && (
-              <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4 space-y-3">
+              <div className="border-t border-slate-100 dark:border-white/[0.08] pt-4 space-y-3" data-tour="journey-complete-dialog">
                 <div className="flex items-center gap-2">
                   <CheckCheck size={16} className="text-emerald-500" />
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Complete Client Journey</span>

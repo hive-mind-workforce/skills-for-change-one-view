@@ -50,7 +50,7 @@ export default function DemoTour() {
 
     router.push("/intake?role=admin")
     await waitForElement("#intake-form", 6000)
-    await delay(300)
+    await delay(400)
 
     window.dispatchEvent(new CustomEvent("demo:fill-intake", { detail: {
       full_name: "Layla Hassan",
@@ -68,11 +68,11 @@ export default function DemoTour() {
       consent_followup: true,
       consent_aggregate: true,
     }}))
-    await delay(200)
+    await delay(600)
 
     const d = driver({
       animate: true,
-      overlayColor: "rgba(6,6,16,0.88)",
+      overlayColor: "rgba(6,6,16,0.60)",
       smoothScroll: true,
       allowClose: true,
       stagePadding: 8,
@@ -86,7 +86,7 @@ export default function DemoTour() {
         element: "#intake-form",
         popover: {
           title: "Registering Layla Hassan",
-          description: "A refugee from Somalia enrolling in Employment Services. The form is pre-filled including data consent. Click Next to register her.",
+          description: "A refugee from Somalia enrolling in Employment Services. The form is pre-filled with contact details, demographics, and data consent including cross-program sharing. Click Next to register her.",
           side: "right" as const,
           onNextClick: async () => {
             try {
@@ -118,15 +118,14 @@ export default function DemoTour() {
           side: "bottom" as const,
           onNextClick: async () => {
             try {
-              // Toggle each employment outcome to achieved one at a time
+              // Mark each employment outcome achieved using a fixed delay per toggle
               for (let i = 0; i < 3; i++) {
                 const btn = document.querySelector('[data-tour="journey-outcomes"] button[title="Mark as achieved"]') as HTMLButtonElement | null
                 if (!btn) break
                 btn.click()
-                await waitForEvent("demo:journey-loaded", 5000)
-                await delay(150)
+                await delay(2500)
               }
-              // Open Add Program panel
+              // Open Add Program panel and pre-select Mental Health
               const addBtn = document.querySelector('[data-tour="journey-add-program"] button') as HTMLButtonElement | null
               addBtn?.click()
               await delay(500)
@@ -149,9 +148,9 @@ export default function DemoTour() {
               const enrolBtn = Array.from(buttons).find(b => b.textContent?.trim() === "Enroll") as HTMLButtonElement | null
               if (enrolBtn) {
                 enrolBtn.click()
-                await waitForEvent("demo:journey-loaded", 6000)
+                await waitForEvent("demo:journey-loaded", 8000)
                 await waitForElement('[data-tour="journey-phi-card"]', 3000)
-                await delay(200)
+                await delay(300)
               }
             } catch { /* continue */ }
             finally { d.moveNext() }
@@ -170,19 +169,29 @@ export default function DemoTour() {
         element: "[data-tour='journey-notes']",
         popover: {
           title: "Caseworker notes",
-          description: "Every client interaction is documented here. Click Next to add a progress note for Layla before closing her journey.",
+          description: "Every client interaction is documented here. Click Next to record a progress note and mark all Mental Health outcomes achieved before closing the journey.",
           side: "top" as const,
           onNextClick: async () => {
             try {
+              // Save the caseworker note
               window.dispatchEvent(new CustomEvent("demo:fill-note", { detail: {
-                content: "Layla completed the resume workshop and three mock interviews. Strong candidate for software QA roles. Referred for job placement support.",
+                content: "Layla completed the resume workshop and three mock interviews. Strong candidate for software QA roles. Referred for job placement support. Client motivated and ready to proceed.",
                 noteType: "interview",
               }}))
               await delay(400)
               const saveBtn = Array.from(document.querySelectorAll("button")).find(b => b.textContent?.trim() === "Save Note") as HTMLButtonElement | null
               if (saveBtn && !saveBtn.disabled) {
                 saveBtn.click()
-                await delay(800)
+                await delay(1000)
+              }
+              // Mark all remaining Mental Health outcomes achieved before advancing
+              let remaining = document.querySelectorAll('button[title="Mark as achieved"]')
+              let safetyCount = 0
+              while (remaining.length > 0 && safetyCount < 10) {
+                safetyCount++
+                ;(remaining[0] as HTMLButtonElement).click()
+                await delay(2500)
+                remaining = document.querySelectorAll('button[title="Mark as achieved"]')
               }
             } catch { /* continue */ }
             finally { d.moveNext() }
@@ -192,33 +201,34 @@ export default function DemoTour() {
       {
         element: "[data-tour='journey-complete-btn']",
         popover: {
-          title: "Complete the journey",
-          description: "Click Next to mark all Mental Health outcomes achieved, advance Layla to the Survey stage, and generate a unique survey link.",
+          title: "All outcomes achieved",
+          description: "All Employment and Mental Health outcomes are marked complete. Click Next to open the journey completion dialog and generate Layla's survey link.",
           side: "bottom" as const,
           onNextClick: async () => {
             try {
-              // Complete remaining MH outcomes using a fixed delay per toggle
-              let remaining = document.querySelectorAll('button[title="Mark as achieved"]')
-              let safetyCount = 0
-              while (remaining.length > 0 && safetyCount < 10) {
-                safetyCount++
-                ;(remaining[0] as HTMLButtonElement).click()
-                await delay(1800)
-                remaining = document.querySelectorAll('button[title="Mark as achieved"]')
-              }
-              // Click the Complete Journey button to open the confirmation dialog
               const completeBtn = document.querySelector('[data-tour="journey-complete-btn"]') as HTMLButtonElement | null
               if (completeBtn) {
                 completeBtn.click()
-                await delay(800)
+                await delay(1000)
               }
-              // Click "Send Survey & Complete" in the confirmation dialog
+            } catch { /* continue */ }
+            finally { d.moveNext() }
+          },
+        },
+      },
+      {
+        element: "[data-tour='journey-complete-dialog']",
+        popover: {
+          title: "Survey link ready to send",
+          description: "OneView generates a unique survey link for Layla. In production this goes to her by email automatically. Caseworkers can also copy and resend the link at any time. Click Next to send it and close the journey.",
+          side: "top" as const,
+          onNextClick: async () => {
+            try {
               const sendBtn = Array.from(document.querySelectorAll("button")).find(b => b.textContent?.includes("Send Survey")) as HTMLButtonElement | null
               if (sendBtn) {
                 sendBtn.click()
-                await delay(2000)
+                await delay(2500)
               }
-              // Navigate to the survey page
               if (registeredClientId) {
                 router.push(`/survey/${registeredClientId}`)
                 await waitForEvent("demo:survey-form-ready", 12000)
@@ -277,7 +287,7 @@ export default function DemoTour() {
 
     const d = driver({
       animate: true,
-      overlayColor: "rgba(6,6,16,0.88)",
+      overlayColor: "rgba(6,6,16,0.60)",
       smoothScroll: true,
       allowClose: true,
       stagePadding: 8,
